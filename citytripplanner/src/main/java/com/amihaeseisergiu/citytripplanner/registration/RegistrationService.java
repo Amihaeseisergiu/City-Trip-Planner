@@ -34,7 +34,7 @@ public class RegistrationService {
                 appUser.getLastName(),
                 appUser.getEmail(),
                 appUser.getPassword(),
-                AppUserRole.USER
+                AppUserRole.ROLE_USER
         );
         appUserService.signUpUser(user);
 

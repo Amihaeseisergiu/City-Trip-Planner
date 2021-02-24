@@ -2,20 +2,23 @@
       xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <link rel="stylesheet" href="/css/application.css"/>
-    <title>TODO list</title>
+    <title>Register</title>
 </head>
 <body>
 <form role="form" th:action="@{/register}" th:method="post" th:object="${user}">
-    <label>First Name</label>
+    <label for="firstName">First Name</label>
     <input type="text" id="firstName" name="firstName" th:field="*{firstName}">
 
-    <label>Last Name</label>
+    <label for="lastName">Last Name</label>
     <input type="text" id="lastName" name="lastName" th:field="*{lastName}">
 
-    <label>Email</label>
-    <input type="text" id="email" name="email" th:field="*{email}">
+    <div th:classappend="${#fields.hasErrors('email')}? 'has-error':''">
+        <label for="email">Email</label>
+        <input type="text" id="email" name="email" th:field="*{email}">
+        <p th:each="error : ${#fields.errors('email')}" th:text="${error}">Validation error</p>
+    </div>
 
-    <label>Password</label>
+    <label for="password">Password</label>
     <input type="password" id="password" name="password" th:field="*{password}">
 
     <input type="submit">

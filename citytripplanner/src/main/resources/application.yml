@@ -7,7 +7,7 @@ spring:
   datasource:
     password: 'test'
     url: jdbc:postgresql://localhost:5432/citytripplanner
-    username: 'postgres'
+    username:
   jpa:
     hibernate:
       ddl-auto: create-drop
