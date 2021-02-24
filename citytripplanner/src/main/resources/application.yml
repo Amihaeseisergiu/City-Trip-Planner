@@ -1,0 +1,30 @@
+server:
+  error:
+    include-message: always
+    include-binding-errors: always
+
+spring:
+  datasource:
+    password: 'test'
+    url: jdbc:postgresql://localhost:5432/citytripplanner
+    username: 'postgres'
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: cityplannernoreply@gmail.com
+    password: testcityplanner
+
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
