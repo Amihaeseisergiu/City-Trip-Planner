@@ -2,22 +2,60 @@
       xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <link rel="stylesheet" href="/css/application.css"/>
+    <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js" defer></script>
     <title>Login</title>
 </head>
-<body>
-<form role="form" th:action="@{/login}" th:method="post">
+<body class="bg-gray-100">
+    <div class="h-screen w-screen flex flex-col justify-start">
+        <div class="bg-white border-b-2">
+            <div class="flex items-center justify-center lg:justify-start">
+                <svg class="w-10 inline-block ml-10" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z" clip-rule="evenodd" />
+                </svg>
+                <a href="/">
+                    <h1 class="text-4xl p-5 font-body text-gray-900 leading-tight inline-block">City Trip Planner</h1>
+                </a>
+            </div>
+        </div>
 
-    <div th:if="${param.error}">
-        <div>Invalid username or password.</div>
+        <div class="h-auto flex justify-start items-center flex-col lg:flex-row lg:justify-center">
+
+            <div class="w-1/2 h-auto flex flex-col items-center lg:pl-20 lg:pr-20">
+                <h1 class="mt-12 text-4xl font-bold text-gray-900 leading-tight pb-10 md:text-6xl">
+                    Let's begin
+                </h1>
+                <form class="w-full max-w-md flex flex-col items-center justify-center
+                 bg-white rounded-xl shadow-2xl pl-6 pr-6 pb-6 pt-2" role="form" th:action="@{/login}" th:method="post">
+
+                    <div class="flex flex-col items-left justify-center">
+                        <div class="relative pt-14" x-data="{open: true}">
+                            <th:block th:if="${param.error}">
+                                <div class="absolute top-0 p-1 text-center bg-red-200 border-2 border-red-500 rounded-xl" x-show="open" @click.away="open = false">Invalid username or password.</div>
+                            </th:block>
+                        </div>
+
+                        <label class="text-indigo-400 font-bold" for="username">Username</label>
+                        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-grey-darker focus:outline-none focus:ring" type="text" id="username" name="username" placeholder="Username">
+
+                        <label class="pt-14 text-indigo-400 font-bold" for="password">Password</label>
+                        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-grey-darker focus:outline-none focus:ring" type="password" id="password" name="password" placeholder="*****">
+                    </div>
+
+                    <input class="mt-10 mb-3 w-1/2 bg-yellow-400 text-white text-sm py-3 px-5 rounded-lg
+                         shadow-lg uppercase tracking-wider font-semibold cursor-pointer sm:text-base hover:bg-yellow-300
+                          transition duration-500 ease-in-out transform hover:-translate-y-1 hover:scale-110
+                           active:bg-yellow-500" type="submit" value="Login">
+                    <a class="inline-block align-baseline font-bold text-sm text-indigo-300 hover:text-indigo-400" href="/register">
+                        Don't have an account?
+                    </a>
+                </form>
+            </div>
+
+            <div class="hidden lg:block w-1/2 h-3/4 max-w-2xl pt-16">
+                <img class="w-full h-full shadow-xl rounded-xl object-cover object-center " src="/img/planatrip2.jpg" alt="Planning a trip">
+            </div>
+
+        </div>
     </div>
-
-    <label for="username">Username</label>
-    <input type="text" id="username" name="username">
-
-    <label for="password">Password</label>
-    <input type="password" id="password" name="password">
-
-    <input type="submit">
-</form>
 </body>
 </html>

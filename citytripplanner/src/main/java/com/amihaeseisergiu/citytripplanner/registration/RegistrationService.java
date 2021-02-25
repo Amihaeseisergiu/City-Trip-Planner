@@ -30,8 +30,7 @@ public class RegistrationService {
         }
 
         AppUser user = new AppUser(
-                appUser.getFirstName(),
-                appUser.getLastName(),
+                appUser.getUsername(),
                 appUser.getEmail(),
                 appUser.getPassword(),
                 AppUserRole.ROLE_USER
@@ -43,7 +42,7 @@ public class RegistrationService {
 
         emailSender.send(
                 appUser.getEmail(),
-                buildEmail(appUser.getFirstName(), link)
+                buildEmail(appUser.getUsername(), link)
         );
     }
 
@@ -61,7 +60,7 @@ public class RegistrationService {
             throw new IllegalStateException("token expired");
         }
 
-        appUserService.enableAppUser(confirmationToken.getAppUser().getEmail());
+        appUserService.enableAppUser(confirmationToken.getAppUser().getUserName());
         confirmationTokenService.deleteConfirmationToken(confirmationToken.getId());
 
     }

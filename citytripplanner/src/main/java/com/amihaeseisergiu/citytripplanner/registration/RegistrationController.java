@@ -3,9 +3,7 @@ package com.amihaeseisergiu.citytripplanner.registration;
 import com.amihaeseisergiu.citytripplanner.appuser.AppUser;
 import com.amihaeseisergiu.citytripplanner.appuser.AppUserRepository;
 import lombok.AllArgsConstructor;
-import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
@@ -38,6 +36,14 @@ public class RegistrationController {
 
         if (userExists) {
             result.rejectValue("email", null, "There is already an account registered with that email");
+        }
+
+        userExists = appUserRepository
+                .findByUserName(appUser.getUsername())
+                .isPresent();
+
+        if (userExists) {
+            result.rejectValue("username", null, "There is already an account registered with that username");
         }
 
         if (result.hasErrors()) {

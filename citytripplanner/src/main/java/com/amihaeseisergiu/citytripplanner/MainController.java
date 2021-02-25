@@ -9,11 +9,11 @@ import java.util.List;
 
 @Controller
 @RequestMapping("/")
-public class TodoController {
+public class MainController {
+
     @GetMapping
-    public String list(Model model) {
-        model.addAttribute("todos", List.of(new Todo("Install Tailwind CSS"),
-                new Todo("Make awesome UI")));
+    public String index() {
+
         return "index";
     }
 }

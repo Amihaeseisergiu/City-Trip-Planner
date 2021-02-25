@@ -6,6 +6,7 @@
     "build-prod": "gulp build --env production"
   },
   "dependencies": {
+    "alpinejs": "^2.8.1",
     "autoprefixer": "^10.2.4",
     "tailwindcss": "^2.0.3",
     "uglifycss": "^0.0.29"

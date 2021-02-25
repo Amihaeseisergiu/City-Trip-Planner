@@ -4,15 +4,69 @@
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <link rel="stylesheet" href="/css/application.css"/>
-    <title>TODO list</title>
+    <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js" defer></script>
+    <title>City Trip Planner</title>
 </head>
-<body>
-<div>
-    <th:block th:if="${#authorization.expression('hasRole(''ROLE_USER'')')}">
-        <div>
-            Welcome <span sec:authentication="principal.username">User</span>
+<body class="bg-gray-100 h-screen w-screen">
+    <div class="bg-white border-b-2">
+        <div class="flex items-center justify-center lg:justify-start">
+            <svg class="w-10 inline-block ml-10" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z" clip-rule="evenodd" />
+            </svg>
+            <a href="/">
+                <h1 class="text-4xl p-5 font-body text-gray-900 leading-tight inline-block">City Trip Planner</h1>
+            </a>
         </div>
-    </th:block>
-</div>
+    </div>
+
+    <div class="lg:flex lg:mt-40">
+        <div class="px-8 py-12 max-w-md mx-auto sm:max-w-xl lg:w-1/2 lg:max-w-full">
+            <div class="xl:max-w-lg xl:ml-auto flex flex-col items-center lg:block">
+                <img class="mt-10 rounded-lg shadow-xl sm:h-64 sm:w-full sm:object-cover sm:object-center lg:hidden" src="/img/planatrip.jpg" alt="Planning a trip">
+
+                <th:block th:if="${#authorization.expression('hasRole(''ROLE_USER'')') == false}">
+                    <h1 class="mt-6 text-2xl font-bold text-gray-900 leading-tight sm:text-4xl sm:mt-8">
+                        Planning your trip has never been easier.
+                        <br>
+                        <span class="text-indigo-400">Make your own vacation.</span>
+                    </h1>
+
+                    <p class="mt-2 text-gray-600 sm:mt-4 sm:text-xl">
+                        City Trip Planner will help you in designing your imagined vacation
+                        so you don't have to worry about finding the perfect balance and can
+                        get straight to packing!
+                    </p>
+
+                    <div class="mt-4 sm:mt-6">
+                        <a href="/register" class="inline-block bg-yellow-400 text-white text-sm py-3 px-5 rounded-lg
+                         shadow-lg uppercase tracking-wider font-semibold cursor-pointer sm:text-base hover:bg-yellow-300
+                          transition duration-500 ease-in-out transform hover:-translate-y-1 hover:scale-110 active:bg-yellow-500">
+                            Start planning
+                        </a>
+                    </div>
+                </th:block>
+
+                <th:block th:if="${#authorization.expression('hasRole(''ROLE_USER'')')}">
+                    <h1 class="mt-6 text-4xl font-bold text-gray-900 leading-tight sm:text-6xl sm:mt-8">
+                        Welcome back,
+                        <br>
+                        <span class="text-indigo-400" sec:authentication="principal.username">User</span>
+                    </h1>
+
+                    <div class="mt-4 sm:mt-6">
+                        <a href="/map" class="inline-block bg-yellow-400 text-white text-sm py-3 px-5 rounded-lg
+                         shadow-lg uppercase tracking-wider font-semibold cursor-pointer sm:text-base hover:bg-yellow-300
+                          transition duration-500 ease-in-out transform hover:-translate-y-1 hover:scale-110 active:bg-yellow-500">
+                            Continue to the map
+                        </a>
+                    </div>
+                </th:block>
+            </div>
+        </div>
+
+        <div class="hidden lg:block lg:w-1/2">
+            <img class="h-full shadow-xl rounded-xl object-cover object-center" src="/img/planatrip.jpg" alt="Planning a trip">
+        </div>
+    </div>
 </body>
 </html>
