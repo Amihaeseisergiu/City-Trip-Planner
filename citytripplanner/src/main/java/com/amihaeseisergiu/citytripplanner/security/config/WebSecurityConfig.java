@@ -31,13 +31,15 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                             "/login/**",
                             "/"
                             )
-                        .permitAll()
-                        .anyRequest()
-                        .authenticated()
+                    .permitAll()
+                    .anyRequest()
+                    .authenticated().and().rememberMe().key("secret").userDetailsService(appUserService)
                 .and()
                     .formLogin()
-                    .loginPage("/login")
-                    .permitAll();
+                        .loginPage("/login")
+                    .and()
+                        .logout()
+                .permitAll();
     }
 
     @Override

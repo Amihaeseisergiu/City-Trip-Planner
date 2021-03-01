@@ -1,0 +1,153 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <link rel="stylesheet" href="/css/application.css"/>
+    <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js" defer></script>
+
+    <script async
+            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBIwzALxUPNbatRBj3Xi1Uhp0fFzwWNBkE&callback=initMap&libraries=places&v=weekly"
+    ></script>
+
+    <title>Map</title>
+</head>
+<body class="bg-gray-100">
+<div class="h-screen w-screen flex flex-col justify-start">
+    <div class="bg-white border-b-2 flex flex-col justify-center items-center lg:flex-row lg:justify-between">
+        <div class="flex items-center justify-center lg:justify-start">
+            <svg class="w-10 inline-block lg:ml-10" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z" clip-rule="evenodd" />
+            </svg>
+            <a href="/">
+                <h1 class="text-4xl p-5 font-body text-gray-900 leading-tight inline-block">City Trip Planner</h1>
+            </a>
+        </div>
+        <a class="text-2xl p-5 font-bold text-gray-900 leading-tight inline-block lg:mr-10
+                  cursor-pointer transition duration-500 ease-in-out transform hover:translate-x-4" href="#" th:href="@{/logout}">
+            Logout
+            <svg class="w-8 inline-block hover" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+        </a>
+    </div>
+
+    <div class="h-full flex justify-start items-center flex-col lg:flex-row lg:justify-center">
+
+        <div class="w-full h-1/2 p-5 lg:w-1/4 lg:h-full">
+
+            <div class="h-full p-8 bg-white rounded-3xl shadow-2xl flex flex-col items-center justify-start overflow-auto">
+                <button class="w-full bg-yellow-400 text-white text-sm py-3 px-5 rounded-lg
+                         shadow-lg uppercase tracking-wider font-semibold cursor-pointer sm:text-base hover:bg-yellow-300
+                          transition duration-500 ease-in-out transform hover:-translate-y-0.5 hover:scale-105 active:bg-yellow-500"
+                        id="test">
+                    Test
+                </button>
+
+                <div class="flex flex-col items-center justify-center p-2" id="fill">
+
+                </div>
+            </div>
+
+        </div>
+
+        <div class="w-full h-1/2 p-5 lg:w-3/4 lg:h-full">
+            <div class="h-full rounded-3xl shadow-2xl" id="map"></div>
+            <div id="infowindow-content">
+                <img id="place-icon" src="" height="16" width="16" />
+                <span id="place-name" class="title"></span><br />
+                Place ID <span id="place-id"></span><br />
+                <span id="place-address"></span>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+    <script>
+        function initMap() {
+            const origin = { lat: -33.871, lng: 151.197 };
+            const map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 18,
+                center: origin,
+            });
+            new ClickEventHandler(map, origin);
+        }
+
+        function isIconMouseEvent(e) {
+            return "placeId" in e;
+        }
+
+        class ClickEventHandler {
+            constructor(map, origin) {
+                this.origin = origin;
+                this.map = map;
+                this.directionsService = new google.maps.DirectionsService();
+                this.directionsRenderer = new google.maps.DirectionsRenderer();
+                this.directionsRenderer.setMap(map);
+                this.placesService = new google.maps.places.PlacesService(map);
+                this.infowindow = new google.maps.InfoWindow();
+                this.infowindowContent = document.getElementById("infowindow-content");
+                this.infowindow.setContent(this.infowindowContent);
+                // Listen for clicks on the map.
+                this.map.addListener("click", this.handleClick.bind(this));
+            }
+            handleClick(event) {
+                console.log("You clicked on: " + event.latLng);
+
+                // If the event has a placeId, use it.
+                if (isIconMouseEvent(event)) {
+                    console.log("You clicked on place:" + event.placeId);
+                    // Calling e.stop() on the event prevents the default info window from
+                    // showing.
+                    // If you call stop here when there is no placeId you will prevent some
+                    // other map click event handlers from receiving the event.
+                    event.stop();
+
+                    if (event.placeId) {
+                        this.calculateAndDisplayRoute(event.placeId);
+                        this.getPlaceInformation(event.placeId);
+                    }
+                }
+            }
+            calculateAndDisplayRoute(placeId) {
+                const me = this;
+                this.directionsService.route(
+                    {
+                        origin: this.origin,
+                        destination: { placeId: placeId },
+                        travelMode: this.google.maps.TravelMode.WALKING,
+                    },
+                    (response, status) => {
+                        if (status === "OK") {
+                            me.directionsRenderer.setDirections(response);
+                        } else {
+                            window.alert("Directions request failed due to " + status);
+                        }
+                    }
+                );
+            }
+            getPlaceInformation(placeId) {
+                const me = this;
+                this.placesService.getDetails({ placeId: placeId }, (place, status) => {
+                    if (
+                        status === "OK" &&
+                        place &&
+                        place.geometry &&
+                        place.geometry.location
+                    ) {
+                        me.infowindow.close();
+                        me.infowindow.setPosition(place.geometry.location);
+                        me.infowindowContent.children["place-icon"].src = place.icon;
+                        me.infowindowContent.children["place-photo"].src = place.photos[0].getUrl()
+                        me.infowindowContent.children["place-name"].textContent = place.name;
+                        me.infowindowContent.children["place-id"].textContent = place.place_id;
+                        me.infowindowContent.children["place-address"].textContent =
+                            place.formatted_address;
+                        me.infowindow.open(me.map);
+                    }
+                });
+            }
+        }
+
+    </script>
+</body>
+</html>
