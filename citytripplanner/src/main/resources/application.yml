@@ -10,7 +10,7 @@ spring:
     username:
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: create-drop
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -29,3 +29,11 @@ spring:
           auth: true
           starttls:
             enable: true
+
+foursquare:
+  client:
+    id: HMWXKUFZDF0RIHHG4N2XRB1JUV1NQSYLI0DOPKS2MMOBTQ4T
+    secret: 1LEG5IOOKCDTU45LW0AOQKGNJG42Y1AO5ZR1PKER4O2ME1JP
+
+  endpoint: https://api.foursquare.com/v2/
+  version: 20210302

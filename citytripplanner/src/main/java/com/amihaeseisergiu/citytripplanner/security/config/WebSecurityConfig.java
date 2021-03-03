@@ -29,7 +29,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                             "/img/**",
                             "/register/**",
                             "/login/**",
-                            "/"
+                            "/",
+                            "/poi/**"
                             )
                     .permitAll()
                     .anyRequest()
