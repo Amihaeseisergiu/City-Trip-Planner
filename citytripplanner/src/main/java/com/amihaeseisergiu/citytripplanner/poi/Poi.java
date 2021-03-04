@@ -1,5 +1,6 @@
 package com.amihaeseisergiu.citytripplanner.poi;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
 import javax.persistence.Entity;
@@ -24,5 +25,6 @@ public class Poi {
     private String iconPrefix;
     private String iconSuffix;
 
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private LocalDateTime expiresAt;
 }
