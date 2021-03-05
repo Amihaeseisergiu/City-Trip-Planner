@@ -17,9 +17,9 @@ public class PoiController {
     private final PoiDetailsService poiDetailsService;
 
     @GetMapping
-    List<Poi> getPoisFromCenter(@RequestParam(value = "ll") List<String> center)
+    List<Poi> getPoisFromCenter(@RequestParam(value = "ll") List<String> center, @RequestParam(value = "radius") Double radius)
     {
-        return poiService.getPoisFromCenter(Double.valueOf(center.get(0)), Double.valueOf(center.get(1)), 50, 10.0);
+        return poiService.getPoisFromCenter(Double.valueOf(center.get(0)), Double.valueOf(center.get(1)), 50, radius);
     }
 
     @GetMapping("/{id}")

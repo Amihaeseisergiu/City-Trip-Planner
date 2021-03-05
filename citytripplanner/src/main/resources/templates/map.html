@@ -4,13 +4,22 @@
     <link rel="stylesheet" href="/css/application.css"/>
     <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js" defer></script>
 
-    <script async
-            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBIwzALxUPNbatRBj3Xi1Uhp0fFzwWNBkE&callback=initMap&libraries=places&v=weekly"
-    ></script>
+    <script src='https://unpkg.com/@turf/turf/turf.min.js'></script>
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.css' rel='stylesheet' />
 
     <title>Map</title>
 </head>
 <body class="bg-gray-100">
+<style>
+    .marker {
+        display: block;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        padding: 0;
+    }
+</style>
 <div class="h-screen w-screen flex flex-col justify-start">
     <div class="bg-white border-b-2 flex flex-col justify-center items-center lg:flex-row lg:justify-between">
         <div class="flex items-center justify-center lg:justify-start">
@@ -42,20 +51,13 @@
                     Test
                 </button>
 
-                <div class="flex flex-col items-center justify-center p-2" id="fill">
-
-                </div>
             </div>
 
         </div>
 
         <div class="w-full h-1/2 p-5 lg:w-3/4 lg:h-full">
-            <div class="h-full rounded-3xl shadow-2xl" id="map"></div>
-            <div id="infowindow-content">
-                <img id="place-icon" src="" height="16" width="16" />
-                <span id="place-name" class="title"></span><br />
-                Place ID <span id="place-id"></span><br />
-                <span id="place-address"></span>
+            <div class="h-full rounded-3xl shadow-2xl focus:outline-none" id="map">
+
             </div>
         </div>
 
@@ -63,90 +65,93 @@
 </div>
 
     <script>
-        function initMap() {
-            const origin = { lat: -33.871, lng: 151.197 };
-            const map = new google.maps.Map(document.getElementById("map"), {
-                zoom: 18,
-                center: origin,
-            });
-            new ClickEventHandler(map, origin);
-        }
+        mapboxgl.accessToken = 'pk.eyJ1Ijoic2VyZ2VhbnQyMTciLCJhIjoiY2tsdmFyMHE0MGNubzJvbXdlYWk0MXJ2YyJ9.we4if4fwI21YHCqgBURLzQ';
+        let map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/streets-v11',
+            center: [27.60, 47.16],
+            zoom: 12
+        });
 
-        function isIconMouseEvent(e) {
-            return "placeId" in e;
-        }
+        let geoLocate = new mapboxgl.GeolocateControl({
+            positionOptions: {
+                enableHighAccuracy: true
+            },
+            trackUserLocation: true
+        });
 
-        class ClickEventHandler {
-            constructor(map, origin) {
-                this.origin = origin;
-                this.map = map;
-                this.directionsService = new google.maps.DirectionsService();
-                this.directionsRenderer = new google.maps.DirectionsRenderer();
-                this.directionsRenderer.setMap(map);
-                this.placesService = new google.maps.places.PlacesService(map);
-                this.infowindow = new google.maps.InfoWindow();
-                this.infowindowContent = document.getElementById("infowindow-content");
-                this.infowindow.setContent(this.infowindowContent);
-                // Listen for clicks on the map.
-                this.map.addListener("click", this.handleClick.bind(this));
-            }
-            handleClick(event) {
-                console.log("You clicked on: " + event.latLng);
+        map.addControl(geoLocate);
+        let addedMarkers = [];
 
-                // If the event has a placeId, use it.
-                if (isIconMouseEvent(event)) {
-                    console.log("You clicked on place:" + event.placeId);
-                    // Calling e.stop() on the event prevents the default info window from
-                    // showing.
-                    // If you call stop here when there is no placeId you will prevent some
-                    // other map click event handlers from receiving the event.
-                    event.stop();
-
-                    if (event.placeId) {
-                        this.calculateAndDisplayRoute(event.placeId);
-                        this.getPlaceInformation(event.placeId);
-                    }
+        function addPOIs(lat, lng, radius)
+        {
+            const url = `http://localhost:8080/poi?ll=${lat},${lng}&radius=${radius}`;
+            fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
                 }
-            }
-            calculateAndDisplayRoute(placeId) {
-                const me = this;
-                this.directionsService.route(
+            })
+                .then(response => response.json())
+                .then(data => {
+                    for(const poi of data)
                     {
-                        origin: this.origin,
-                        destination: { placeId: placeId },
-                        travelMode: this.google.maps.TravelMode.WALKING,
-                    },
-                    (response, status) => {
-                        if (status === "OK") {
-                            me.directionsRenderer.setDirections(response);
-                        } else {
-                            window.alert("Directions request failed due to " + status);
+                        if(!addedMarkers.some(e => e.poi.id === poi.id))
+                        {
+                            let el = document.createElement('div');
+                            el.className = 'marker';
+                            el.style.backgroundImage =
+                                `url(${poi.iconPrefix}bg_` +
+                                32 +
+                                `${poi.iconSuffix}`;
+                            el.style.width = 32 + 'px';
+                            el.style.height = 32 + 'px';
+
+                            let marker = new mapboxgl.Marker(el)
+                                .setLngLat([poi.lng, poi.lat])
+                                .addTo(map);
+                            addedMarkers.push({
+                                poi,
+                                marker
+                            });
                         }
                     }
-                );
-            }
-            getPlaceInformation(placeId) {
-                const me = this;
-                this.placesService.getDetails({ placeId: placeId }, (place, status) => {
-                    if (
-                        status === "OK" &&
-                        place &&
-                        place.geometry &&
-                        place.geometry.location
-                    ) {
-                        me.infowindow.close();
-                        me.infowindow.setPosition(place.geometry.location);
-                        me.infowindowContent.children["place-icon"].src = place.icon;
-                        me.infowindowContent.children["place-photo"].src = place.photos[0].getUrl()
-                        me.infowindowContent.children["place-name"].textContent = place.name;
-                        me.infowindowContent.children["place-id"].textContent = place.place_id;
-                        me.infowindowContent.children["place-address"].textContent =
-                            place.formatted_address;
-                        me.infowindow.open(me.map);
-                    }
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
                 });
-            }
         }
+
+        let initialPoint = null;
+        let movedPoint = null;
+
+        geoLocate.on('geolocate', function(e) {
+            initialPoint = [e.coords.longitude, e.coords.latitude];
+        });
+
+        map.on('load', function() {
+            initialPoint = [map.getCenter().lng, map.getCenter().lat];
+        });
+
+        map.on('moveend', function() {
+            movedPoint = [map.getCenter().lng, map.getCenter().lat];
+            let distance = turf.distance(initialPoint, movedPoint, {units: 'kilometers'});
+
+            if(map.getZoom() >= 12 && distance >= 3)
+            {
+                console.log('To load');
+
+                const lat = map.getCenter().lat;
+                const lng = map.getCenter().lng;
+                let radiusPoint = [map.getBounds()._ne.lng, map.getBounds()._ne.lat];
+                let radius = turf.distance([lng, lat], radiusPoint, {units: 'kilometers'});
+
+                addPOIs(lat, lng, radius / 4);
+                initialPoint = movedPoint;
+                console.log(addedMarkers);
+            }
+
+        });
 
     </script>
 </body>
