@@ -10,16 +10,6 @@
 
     <title>Map</title>
 </head>
-<body class="bg-gray-100">
-<style>
-    .marker {
-        display: block;
-        border: none;
-        border-radius: 50%;
-        cursor: pointer;
-        padding: 0;
-    }
-</style>
 <div class="h-screen w-screen flex flex-col justify-start">
     <div class="bg-white border-b-2 flex flex-col justify-center items-center lg:flex-row lg:justify-between">
         <div class="flex items-center justify-center lg:justify-start">
@@ -83,6 +73,64 @@
         map.addControl(geoLocate);
         let addedMarkers = [];
 
+        function getPOIDetails(id, name, marker)
+        {
+            const url = `http://localhost:8080/poi/${id}`;
+            fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                let hoursHTML = ``;
+                for(const hours of data.poiHours)
+                {
+                    hoursHTML += `` +
+                        `<div class="">` +
+                            `<p class="text-center border-b-2 font-bold text-gray-600">` +
+                            `Day: ${hours.dayName ? hours.dayName : "unavailable"}` +
+                            `</p>` +
+                            `<p class="text-center border-b-2 font-bold text-gray-600">` +
+                            `Opening: ${hours.openingAt ? hours.openingAt : "unavailable"}` +
+                            `</p>` +
+                            `<p class="text-center border-b-2 font-bold text-gray-600">` +
+                            `Closing: ${hours.closingAt ? hours.closingAt : "unavailable"}` +
+                            `</p>` +
+                        `</div>`;
+                }
+
+                let html = `` +
+                `<p class="mb-2 border-b-2 font-bold text-2xl text-center text-indigo-400">` +
+                `${name}` +
+                `</p>` +
+                    (data.photoPrefix ? `<img class="rounded-b-3xl shadow-xl" src="${data.photoPrefix}500${data.photoSuffix}">` : "") +
+                `<div class="overflow-auto max-h-40">` +
+                    `<p class="mt-4 w-full text-center border-b-2 font-bold text-gray-600">` +
+                        `Phone: ${data.formattedPhone ? data.formattedPhone : "unavailable"}` +
+                    `</p>` +
+                    `<p class="mt-4 w-full text-center border-b-2 font-bold text-gray-600">` +
+                        `Rating: ${data.rating ? data.rating : "unavailable"}` +
+                    `</p>` +
+                    `<p class="mt-4 w-full text-center border-b-2 font-bold text-gray-600">` +
+                        `Type: ${data.type ? data.type : "unavailable"}` +
+                    `</p>` +
+                    `<p class="mt-4 w-full text-center border-b-2 font-bold text-gray-600">` +
+                        `Price Tier: ${data.priceTier ? data.priceTier : "unavailable"}` +
+                    `</p>` +
+                    `${hoursHTML}` +
+                `</div>`;
+
+                let popUp = new mapboxgl.Popup().setHTML(html);
+                marker.setPopup(popUp);
+                marker.togglePopup();
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        }
+
         function addPOIs(lat, lng, radius)
         {
             const url = `http://localhost:8080/poi?ll=${lat},${lng}&radius=${radius}`;
@@ -99,11 +147,8 @@
                         if(!addedMarkers.some(e => e.poi.id === poi.id))
                         {
                             let el = document.createElement('div');
-                            el.className = 'marker';
-                            el.style.backgroundImage =
-                                `url(${poi.iconPrefix}bg_` +
-                                32 +
-                                `${poi.iconSuffix}`;
+                            el.className = "block rounded-full p-0 border-none cursor-pointer";
+                            el.style.backgroundImage = `url(${poi.iconPrefix}bg_` + 32 + `${poi.iconSuffix}`;
                             el.style.width = 32 + 'px';
                             el.style.height = 32 + 'px';
 
@@ -113,6 +158,13 @@
                             addedMarkers.push({
                                 poi,
                                 marker
+                            });
+
+                            marker.getElement().addEventListener('click', function(e) {
+                                if(marker.getPopup() == null)
+                                {
+                                    getPOIDetails(poi.id, poi.name, marker);
+                                }
                             });
                         }
                     }
@@ -131,22 +183,27 @@
 
         map.on('load', function() {
             initialPoint = [map.getCenter().lng, map.getCenter().lat];
+
+            const lat = map.getCenter().lat;
+            const lng = map.getCenter().lng;
+            let radiusPoint = [map.getBounds()._ne.lng, map.getBounds()._ne.lat];
+            let radius = turf.distance([lng, lat], radiusPoint, {units: 'kilometers'});
+            addPOIs(lat, lng, radius / 2);
         });
 
         map.on('moveend', function() {
             movedPoint = [map.getCenter().lng, map.getCenter().lat];
             let distance = turf.distance(initialPoint, movedPoint, {units: 'kilometers'});
 
-            if(map.getZoom() >= 12 && distance >= 3)
+            const lat = map.getCenter().lat;
+            const lng = map.getCenter().lng;
+            let radiusPoint = [map.getBounds()._ne.lng, map.getBounds()._ne.lat];
+            let radius = turf.distance([lng, lat], radiusPoint, {units: 'kilometers'});
+
+            if(map.getZoom() >= 12 && distance >= radius / 4)
             {
-                console.log('To load');
-
-                const lat = map.getCenter().lat;
-                const lng = map.getCenter().lng;
-                let radiusPoint = [map.getBounds()._ne.lng, map.getBounds()._ne.lat];
-                let radius = turf.distance([lng, lat], radiusPoint, {units: 'kilometers'});
-
-                addPOIs(lat, lng, radius / 4);
+                console.log("Loading")
+                addPOIs(lat, lng, radius / 2);
                 initialPoint = movedPoint;
                 console.log(addedMarkers);
             }

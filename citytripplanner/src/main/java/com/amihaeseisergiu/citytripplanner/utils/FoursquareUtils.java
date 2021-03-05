@@ -198,8 +198,8 @@ public class FoursquareUtils {
             Double lat = gson.fromJson(location.get("lat"), Double.class);
             Double lng = gson.fromJson(location.get("lng"), Double.class);
 
-            String iconPrefix = null;
-            String iconSuffix = null;
+            String iconPrefix = "/img/unknown_category_";
+            String iconSuffix = ".png";
 
             JsonArray categories = venue.getAsJsonArray("categories");
 
