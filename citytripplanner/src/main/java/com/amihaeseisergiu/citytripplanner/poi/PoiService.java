@@ -18,7 +18,7 @@ public class PoiService {
         List<Poi> databasePois = poiRepository.findPoiByDistance(lat, lng, radius);
         System.out.println(databasePois.size());
 
-        if(databasePois.size() < 10)
+        if(databasePois.size() < 5)
         {
             List<Poi> pois = foursquareUtils.fetchNewPois(lat + "," + lng, limit);
             poiRepository.saveAll(pois);

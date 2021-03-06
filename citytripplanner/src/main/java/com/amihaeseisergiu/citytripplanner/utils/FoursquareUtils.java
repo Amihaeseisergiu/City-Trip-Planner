@@ -50,15 +50,24 @@ public class FoursquareUtils {
         JsonObject all = gson.fromJson(ret, JsonObject.class);
         JsonObject response = all.getAsJsonObject("response");
         JsonObject hours = response.getAsJsonObject("hours");
+        JsonObject popular = response.getAsJsonObject("popular");
 
         List<PoiHours> poiHours = new ArrayList<>();
         List<String> dayNames = List.of("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday");
         Pattern pattern = Pattern.compile("(\\d\\d)(\\d\\d)");
 
+        JsonArray timeFrames = null;
         if(hours.has("timeframes"))
         {
-            JsonArray timeFrames = hours.getAsJsonArray("timeframes");
+            timeFrames = hours.getAsJsonArray("timeframes");
+        }
+        else if(popular.has("timeframes"))
+        {
+            timeFrames = popular.getAsJsonArray("timeframes");
+        }
 
+        if(timeFrames != null)
+        {
             for(JsonElement e : timeFrames)
             {
                 JsonObject element = e.getAsJsonObject();
@@ -167,7 +176,7 @@ public class FoursquareUtils {
 
     public List<Poi> fetchNewPois(String center, Integer limit)
     {
-        String url = endPoint + "venues/search?client_id={client_id}&client_secret={client_secret}&v={version}&" +
+        String url = endPoint + "venues/explore?client_id={client_id}&client_secret={client_secret}&v={version}&" +
                                 "ll={center}&limit={limit}";
         RestTemplate restTemplate = new RestTemplate();
 
@@ -185,11 +194,14 @@ public class FoursquareUtils {
         Gson gson = new GsonBuilder().create();
         JsonObject all = gson.fromJson(ret, JsonObject.class);
         JsonObject response = all.getAsJsonObject("response");
-        JsonArray venuesArray = response.getAsJsonArray("venues");
+        JsonArray groups = response.getAsJsonArray("groups");
+        JsonObject groupsIn = groups.get(0).getAsJsonObject();
+        JsonArray items = groupsIn.getAsJsonArray("items");
 
-        for(JsonElement e : venuesArray)
+        for(JsonElement e : items)
         {
-            JsonObject venue = e.getAsJsonObject();
+            JsonObject item = e.getAsJsonObject();
+            JsonObject venue = item.getAsJsonObject("venue");
 
             String id = gson.fromJson(venue.get("id"), String.class);
             String name = gson.fromJson(venue.get("name"), String.class);
@@ -198,8 +210,8 @@ public class FoursquareUtils {
             Double lat = gson.fromJson(location.get("lat"), Double.class);
             Double lng = gson.fromJson(location.get("lng"), Double.class);
 
-            String iconPrefix = "/img/unknown_category_";
-            String iconSuffix = ".png";
+            String iconPrefix = null;
+            String iconSuffix = null;
 
             JsonArray categories = venue.getAsJsonArray("categories");
 
@@ -212,7 +224,10 @@ public class FoursquareUtils {
                 iconSuffix = gson.fromJson(icon.get("suffix"), String.class);
             }
 
-            venues.add(new  Poi(id, name, lat, lng, iconPrefix, iconSuffix, LocalDateTime.now().plusDays(1)));
+            if(iconPrefix != null)
+            {
+                venues.add(new  Poi(id, name, lat, lng, iconPrefix, iconSuffix, LocalDateTime.now().plusDays(1)));
+            }
 
         }
 
