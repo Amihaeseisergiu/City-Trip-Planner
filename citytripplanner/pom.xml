@@ -72,6 +72,10 @@
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.choco-solver</groupId>
+			<artifactId>choco-solver</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>
