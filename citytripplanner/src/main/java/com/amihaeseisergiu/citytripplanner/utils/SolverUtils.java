@@ -22,8 +22,8 @@ public class SolverUtils {
 
         int dayStart = 360;
         int dayEnd = 1080;
-        int[] openingTimes = new int[]{360, 360, 360, 360};
-        int[] closingTimes = new int[]{1080, 1080, 1080, 1080};
+        int[] openingTimes = new int[]{760, 800, 900, 760};
+        int[] closingTimes = new int[]{820, 1080, 960, 1080};
         int[] visitDurations = new int[]{60, 60, 60, 60};
 
         int[][] timeCost = new int[][]{
@@ -48,37 +48,43 @@ public class SolverUtils {
         IntVar[] succCost = model.intVarArray("succCost", n, 0, Arrays.stream(visitDurations).sum() + max * n);
         IntVar totalTimeCost = model.intVar("Total time cost", 0, Arrays.stream(visitDurations).sum() + max * n);
 
-        for (int i = 0; i < n; i++) {
-
-            Tuples tuples = new Tuples(true);
+        for (int i = 0; i < n; i++)
+        {
             for (int j = 0; j < n; j++)
             {
                 if(j != i && j != 0)
                 {
-                    tuples.add(j, timeCost[i][j] + visitDurations[i]);
+                    model.ifThen(
+                            model.arithm(succ[i], "=", j),
+                            model.arithm(succCost[i], "=", model.intVar(openingTimes[j]).sub(visitTimesEn[i].add(timeCost[i][j])).max(0)
+                                    .add(timeCost[i][j]).add(visitDurations[i]).intVar())
+                    );
                 }
                 else if(j != i)
                 {
-                    tuples.add(j, visitDurations[i]);
+                    model.ifThen(
+                            model.arithm(succ[i], "=", j),
+                            model.arithm(succCost[i], "=", visitDurations[i])
+                    );
                 }
             }
-
-            model.table(succ[i], succCost[i], tuples).post();
         }
 
         model.inverseChanneling(pred, succ).post();
 
-        /*
-        succ[n - 1] = model.intVar(n); //or 0 if its a subCircuit
-        succCost[n - 1] = model.intVar(visitDurations[n - 1]);
-        model.path(succ, model.intVar(0), model.intVar(n - 1)).post();
-        */
-
         for(int i = 0; i < n; i++)
         {
-            model.arithm(visitTimesEn[i], "=", visitTimesSt[i], "+", succCost[i]).post(); //replace succCost[i] with visitDuration[i] to get visit w/o transit
+            model.arithm(visitTimesEn[i], "=", visitTimesSt[i], "+", visitDurations[i]).post();
             if(i > 0)
-                model.element(visitTimesSt[i], visitTimesEn, pred[i], 0).post();
+            {
+                for(int j = 0; j < n; j++)
+                {
+                    model.ifThen(
+                            model.arithm(pred[i], "=", j),
+                            model.arithm(visitTimesSt[i], "=", visitTimesSt[j], "+", succCost[j])
+                    );
+                }
+            }
         }
 
         model.sum(succCost, "=", totalTimeCost).post();
@@ -113,6 +119,11 @@ public class SolverUtils {
             for (int i = 0; i < n; i++)
             {
                 System.out.printf("vEn[%d]=%d ", i, visitTimesEn[i].getValue());
+            }
+            System.out.println();
+            for (int i = 0; i < n; i++)
+            {
+                System.out.printf("sCo[%d]=%d ", i, succCost[i].getValue());
             }
             System.out.printf("\nTotal time cost = %d\n", totalTimeCost.getValue());
         }
