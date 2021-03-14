@@ -54,11 +54,12 @@ function getPOIDetails(id, name, marker)
             }
 
             let html = `
-                    <div class="flex flex-row items-center justify-between mb-2 border-b-2">
+                    <div class="flex flex-row items-center justify-between mb-2">
                         <p class="font-bold text-2xl text-indigo-400">
                             ${name}
                         </p>
-                        <button class="p-1 border-green-400 border-2 text-gray-600 hover:bg-green-400 hover:text-white
+                        <button id="poi_add_${id}"
+                                class="p-1 border-green-400 border-2 text-gray-600 hover:bg-green-400 hover:text-white
                                 focus:outline-none rounded-xl transition ease-out duration-600">
                             <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -83,14 +84,71 @@ function getPOIDetails(id, name, marker)
                         ${hoursHTML}
                     </div>`;
 
-            let popUp = new mapboxgl.Popup().setHTML(html);
+            let popUp = new mapboxgl.Popup({className: `mapbox-gl-popup-${id}`}).setHTML(html);
             marker.setPopup(popUp);
             marker.togglePopup();
+
             addedMarkers.find( ({poi}) => poi.id === id)['details'] = data;
+
+            document.getElementById(`poi_add_${id}`).addEventListener('click', function() {
+                addPOItoDay(id);
+            });
         })
         .catch((error) => {
             console.error('Error:', error);
         });
+}
+
+function addPOItoDay(id)
+{
+    if(currentSelectedDay && !currentSelectedDay.pois.find( ({poi}) => poi.id === id))
+    {
+        let el = addedMarkers.find( ({poi}) => poi.id === id);
+        currentSelectedDay.pois.push(el);
+
+        if('colours' in el)
+        {
+            el['colours'].push(currentSelectedDay.colour);
+            let boxShadowString = `0 0 0 3px ${el['colours'][0]}`;
+
+            for(let i = 1; i < el['colours'].length; i++)
+            {
+                boxShadowString += `, 0 0 0 ${(i + 1) * 3}px ${el['colours'][i]}`
+            }
+
+            el['marker']._element.style.boxShadow = boxShadowString;
+        }
+        else
+        {
+            el['colours'] = [currentSelectedDay.colour];
+            el['marker']._element.style.boxShadow = `0 0 0 3px ${el['colours'][0]}`;
+        }
+
+        let poiContainer = document.getElementById(`poiContainer_${currentSelectedDay.id}`);
+
+        const div = document.createElement('div');
+
+        div.className = 'relative m-2 border border-gray-300 rounded-xl';
+        div.id = `poi_${id}_day_${currentSelectedDay.id}`;
+        div.innerHTML = `
+            ${el['details'].photoPrefix ? `<img class="w-full h-10 shadow-xl rounded-xl object-cover object-center" alt="POI Photo"
+            src="${el['details'].photoPrefix}500${el['details'].photoSuffix}">` : ""}
+        `;
+
+
+        if(poiContainer.innerText === 'No Locations have been added')
+        {
+            document.getElementById(`poiContainer_${currentSelectedDay.id}`).innerHTML = div.innerHTML;
+            document.getElementById(`poiContainerParent_${currentSelectedDay.id}`).style.maxHeight =
+                document.getElementById(`poiContainerParent_${currentSelectedDay.id}`).scrollHeight + 'px';
+        }
+        else
+        {
+            document.getElementById(`poiContainer_${currentSelectedDay.id}`).appendChild(div);
+            document.getElementById(`poiContainerParent_${currentSelectedDay.id}`).style.maxHeight =
+                document.getElementById(`poiContainerParent_${currentSelectedDay.id}`).scrollHeight + 'px';
+        }
+    }
 }
 
 function addPOIs(lat, lng, radius)
@@ -196,7 +254,7 @@ function addDayElement(id, dayName, date, dayStart, dayEnd, colour) {
                 </svg>
             </div>
         </div>
-        <div class="relative overflow-hidden transition-all max-h-0 duration-700"
+        <div class="relative overflow-hidden transition-all max-h-0 duration-700" id="poiContainerParent_${id}"
              x-ref="dayContainer_${id}" x-bind:style="selected == ${id} ? 'max-height: ' + $refs.dayContainer_${id}.scrollHeight + 'px' : ''">
             <div class="p-6" id="poiContainer_${id}">
                 No Locations have been added
@@ -206,7 +264,8 @@ function addDayElement(id, dayName, date, dayStart, dayEnd, colour) {
 
     document.getElementById('daysContainer').appendChild(div);
 
-    if (document.getElementById('daysContainer').classList.contains("hidden")) {
+    if (document.getElementById('daysContainer').classList.contains("hidden"))
+    {
         document.getElementById('daysContainer').classList.remove("hidden");
     }
 }
