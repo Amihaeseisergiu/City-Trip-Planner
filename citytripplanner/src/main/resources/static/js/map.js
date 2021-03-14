@@ -1,5 +1,12 @@
 mapboxgl.accessToken = 'pk.eyJ1Ijoic2VyZ2VhbnQyMTciLCJhIjoiY2tsdmFyMHE0MGNubzJvbXdlYWk0MXJ2YyJ9.we4if4fwI21YHCqgBURLzQ';
 
+let addedMarkers = [];
+let addedDays = [];
+let currentSelectedDay = null;
+
+let initialPoint = null;
+let movedPoint = null;
+
 let map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/mapbox/streets-v11',
@@ -15,7 +22,6 @@ let geoLocate = new mapboxgl.GeolocateControl({
 });
 
 map.addControl(geoLocate);
-let addedMarkers = [];
 
 function getPOIDetails(id, name, marker)
 {
@@ -33,40 +39,49 @@ function getPOIDetails(id, name, marker)
 
             for(const hours of data.poiHours)
             {
-                hoursHTML += `` +
-                    `<div class="mt-3 bg-indigo-200 rounded-xl shadow">` +
-                    `<p class="text-center border-b-2 border-gray-400 font-bold text-gray-600">` +
-                    `${hours.dayName ? hours.dayName : "unavailable"}` +
-                    `</p>` +
-                    `<p class="text-center font-bold text-gray-600">` +
-                    `Opening: ${hours.openingAt ? hours.openingAt : "unavailable"}` +
-                    `</p>` +
-                    `<p class="text-center font-bold text-gray-600">` +
-                    `Closing: ${hours.closingAt ? hours.closingAt : "unavailable"}` +
-                    `</p>` +
-                    `</div>`;
+                hoursHTML += `
+                    <div class="mt-3 bg-indigo-200 rounded-xl shadow">
+                        <p class="text-center border-b-2 border-gray-400 font-bold text-gray-600">
+                            ${hours.dayName ? hours.dayName : "unavailable"}
+                        </p>
+                        <p class="text-center font-bold text-gray-600">
+                            Opening: ${hours.openingAt ? hours.openingAt : "unavailable"}
+                        </p>
+                        <p class="text-center font-bold text-gray-600">
+                            Closing: ${hours.closingAt ? hours.closingAt : "unavailable"}
+                        </p>
+                    </div>`;
             }
 
-            let html = `` +
-                `<p class="mb-2 border-b-2 font-bold text-2xl text-center text-indigo-400">` +
-                `${name}` +
-                `</p>` +
-                (data.photoPrefix ? `<img class="rounded-2xl shadow-xl" alt="POI Photo" src="${data.photoPrefix}500${data.photoSuffix}">` : "") +
-                `<div class="overflow-auto no-scrollbar max-h-36">` +
-                `<p class="mt-3 w-full text-center border-b-2 font-bold text-gray-600">` +
-                `Phone: ${data.formattedPhone ? data.formattedPhone : "unavailable"}` +
-                `</p>` +
-                `<p class="mt-3 w-full text-center border-b-2 font-bold text-gray-600">` +
-                `Rating: ${data.rating ? data.rating : "unavailable"}` +
-                `</p>` +
-                `<p class="mt-3 w-full text-center border-b-2 font-bold text-gray-600">` +
-                `Type: ${data.type ? data.type : "unavailable"}` +
-                `</p>` +
-                `<p class="mt-3 w-full text-center border-b-2 font-bold text-gray-600">` +
-                `Price Tier: ${data.priceTier ? data.priceTier : "unavailable"}` +
-                `</p>` +
-                `${hoursHTML}` +
-                `</div>`;
+            let html = `
+                    <div class="flex flex-row items-center justify-between mb-2 border-b-2">
+                        <p class="font-bold text-2xl text-indigo-400">
+                            ${name}
+                        </p>
+                        <button class="p-1 border-green-400 border-2 text-gray-600 hover:bg-green-400 hover:text-white
+                                focus:outline-none rounded-xl transition ease-out duration-600">
+                            <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    ${data.photoPrefix ? `<img class="rounded-2xl shadow-xl" alt="POI Photo" src="${data.photoPrefix}500${data.photoSuffix}">` : ""}
+                     <div class="overflow-auto no-scrollbar max-h-36">
+                        <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-600">
+                            Phone: ${data.formattedPhone ? data.formattedPhone : "unavailable"}
+                        </p>
+                        <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-600">
+                            Rating: ${data.rating ? data.rating : "unavailable"}
+                        </p>
+                        <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-600">
+                            Type: ${data.type ? data.type : "unavailable"}
+                        </p>
+                        <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-600">
+                            Price Tier: ${data.priceTier ? data.priceTier : "unavailable"}
+                        </p>
+                        ${hoursHTML}
+                    </div>`;
 
             let popUp = new mapboxgl.Popup().setHTML(html);
             marker.setPopup(popUp);
@@ -121,9 +136,6 @@ function addPOIs(lat, lng, radius)
         });
 }
 
-let initialPoint = null;
-let movedPoint = null;
-
 geoLocate.on('geolocate', function(e) {
     initialPoint = [e.coords.longitude, e.coords.latitude];
 });
@@ -154,3 +166,111 @@ map.on('moveend', function() {
         initialPoint = movedPoint;
     }
 });
+
+function addDayElement(id, dayName, date, dayStart, dayEnd, colour) {
+
+    const div = document.createElement('div');
+
+    div.className = 'relative m-2 border border-gray-300 rounded-xl';
+    div.id = 'day_' + id
+    div.innerHTML = `
+        <div class="flex flex-row">
+            <div style="background-color: ${colour};" class="h-auto rounded-l-2xl w-2"></div>
+            <button type="button" class="w-full p-6 text-left text-gray-500 font-bold leading-tight focus:outline-none"
+                @click="selected !== ${id} ? selected = ${id} : selected = null;
+                selected === ${id} ? currentSelectedDay = addedDays.find( ({id}) => id === ${id}) : currentSelectedDay = null;">
+                <div class="flex flex-col justify-between">
+                   <p>${dayName}, ${date}</p>
+                   <p>${dayStart} - ${dayEnd}</p>
+                </div>
+            </button>
+            <button x-show="selected !== ${id}"
+                onclick="removeDayElement(${id})" class="p-7 focus:outline-none hover:bg-red-400 hover:text-white rounded-xl transition ease-out duration-600">
+                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <div x-show="selected === ${id}" class="p-7 bg-green-400 text-white rounded-xl flex flex-row items-center">
+                <svg class="w-6 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+            </div>
+        </div>
+        <div class="relative overflow-hidden transition-all max-h-0 duration-700"
+             x-ref="dayContainer_${id}" x-bind:style="selected == ${id} ? 'max-height: ' + $refs.dayContainer_${id}.scrollHeight + 'px' : ''">
+            <div class="p-6" id="poiContainer_${id}">
+                No Locations have been added
+            </div>
+        </div>
+      `;
+
+    document.getElementById('daysContainer').appendChild(div);
+
+    if (document.getElementById('daysContainer').classList.contains("hidden")) {
+        document.getElementById('daysContainer').classList.remove("hidden");
+    }
+}
+
+function removeDayElement(id) {
+    document.getElementById('day_' + id).remove();
+
+    const index = addedDays.findIndex(function(day) { return day.id === id});
+    if(index > -1)
+        addedDays.splice(index, 1);
+}
+
+function addDay()
+{
+    let displayDate = document.getElementById('addDay');
+    let displayTimeStart = document.getElementById('dayStart');
+    let displayTimeEnd = document.getElementById('dayEnd');
+
+    let selectedDate = new Date(displayDate.value);
+    let selectedTimeStart = displayTimeStart.value.split(':')[0] * 60 + displayTimeStart.value.split(':')[1];
+    let selectedTimeEnd = displayTimeEnd.value.split(':')[0] * 60 + displayTimeEnd.value.split(':')[1];
+    let days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    let dateFormatted = displayDate.value.split("-");
+
+    if(displayDate.value && displayTimeStart.value && displayTimeEnd.value && selectedTimeEnd - selectedTimeStart > 0)
+    {
+        if(!addedDays.find( ({date}) => date === displayDate.value))
+        {
+            let children = document.getElementById("daysContainer").children;
+            let highestId = 0;
+
+            for (let i = 0; i < children.length; i++) {
+                let child = children[i];
+
+                if(child.id.split("_")[1] > highestId)
+                {
+                    highestId = child.id.split("_")[1]
+                }
+            }
+            highestId++;
+
+            const colour = getRandomColor();
+            addedDays.push({id: highestId,
+                date: displayDate.value,
+                dayStart: selectedTimeStart,
+                dayEnd: selectedTimeEnd,
+                dayName: days[selectedDate.getDay()],
+                dayNumber: selectedDate.getDay() === 0 ? 7 : selectedDate.getDay(),
+                colour: colour,
+                pois: []
+            });
+
+            addDayElement(highestId, days[selectedDate.getDay()], dateFormatted[1] + '/' + dateFormatted[2] + "/" + dateFormatted[0],
+                displayTimeStart.value, displayTimeEnd.value, colour);
+        }
+    }
+}
+
+function getRandomColor()
+{
+    let letters = '0123456789ABCDEF';
+    let color = '#';
+    for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+}

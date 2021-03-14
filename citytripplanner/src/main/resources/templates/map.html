@@ -31,26 +31,20 @@
             </a>
         </div>
 
-        <div class="h-full flex justify-start items-center flex-col lg:flex-row lg:justify-center">
+        <div style="height:calc(100vh - 5.5rem)!important;" class="flex justify-start items-center flex-col lg:flex-row lg:justify-center">
 
             <div class="w-full h-1/2 p-5 lg:w-2/6 lg:h-full">
 
                 <div class="h-full bg-white rounded-3xl shadow-2xl overflow-auto no-scrollbar">
-                    <div x-data="{ open: false }">
-                        <button @click="open = true" class="rounded-lg focus:outline-none p-2 m-2 font-bold cursor-pointer
+                    <div x-data="{selected:null}" class="relative w-full">
+                        <button @click="selected !== 1 ? selected = 1 : selected = null" class="rounded-lg focus:outline-none p-2 m-2 font-bold cursor-pointer
                         tracking-tight text-indigo-400 border-b-2 hover:border-indigo-500 transition ease-out duration-700">
                             Add new day
                         </button>
 
-                        <template x-if="open">
-                            <div @click.away="open = false"
-                                 x-transition:enter="transition ease-out origin-top-left duration-200"
-                                 x-transition:enter-start="opacity-0 transform scale-90"
-                                 x-transition:enter-end="opacity-100 transform scale-100"
-                                 x-transition:leave="transition origin-top-left ease-in duration-100"
-                                 x-transition:leave-start="opacity-100 transform scale-100"
-                                 x-transition:leave-end="opacity-0 transform scale-90"
-                                 class="flex flex-col p-5 border-b-2 bg-white">
+                        <div class="relative overflow-hidden transition-all max-h-0 duration-700"
+                             x-ref="addNewDayContainer" x-bind:style="selected == 1 ? 'max-height: ' + $refs.addNewDayContainer.scrollHeight + 'px' : ''">
+                            <div class="flex flex-col p-5 border-b-2 bg-white">
                                 <div class="pb-4 flex items-center justify-between">
                                     <label class="pr-5 font-bold tracking-tight text-gray-500" for="addDay">Date:</label>
                                     <input class="w-full shadow appearance-none border rounded py-2 px-2 text-grey-darker
@@ -74,7 +68,7 @@
                                     New Day
                                 </button>
                             </div>
-                        </template>
+                        </div>
                     </div>
 
                     <div class="bg-white w-full hidden" x-data="{selected:null}" id="daysContainer"></div>
@@ -92,96 +86,5 @@
         </div>
     </div>
     <script src='/js/map.js'></script>
-
-    <script>
-        let addedDays = [];
-
-        function addDayElement(id, dayName, date, dayStart, dayEnd) {
-
-            const div = document.createElement('div');
-
-            div.className = 'relative m-2 border border-gray-300 rounded-xl';
-            div.id = 'day_' + id
-            div.innerHTML = `
-                <div class="flex flex-row">
-                    <button type="button" class="w-full p-6 text-left text-gray-500 font-bold leading-tight focus:outline-none"
-                        @click="selected !== ${id} ? selected = ${id} : selected = null">
-                        <div class="flex flex-col justify-between">
-                           <p>${dayName}, ${date}</p>
-                           <p>${dayStart} - ${dayEnd}</p>
-                        </div>
-                    </button>
-                    <button onclick="removeDayElement(${id})" class="p-6 hover:bg-red-400 hover:text-white rounded-xl transition ease-out duration-600">
-                        <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-                <div class="relative overflow-hidden transition-all max-h-0 duration-700"
-                     x-ref="container1" x-bind:style="selected == ${id} ? 'max-height: ' + $refs.container1.scrollHeight + 'px' : ''">
-                    <div class="p-6">
-                        Replace body
-                    </div>
-                </div>
-              `;
-
-            document.getElementById('daysContainer').appendChild(div);
-
-            if (document.getElementById('daysContainer').classList.contains("hidden")) {
-                document.getElementById('daysContainer').classList.remove("hidden");
-            }
-        }
-
-        function removeDayElement(id) {
-            document.getElementById('day_' + id).remove();
-
-            const index = addedDays.findIndex(function(day) { return day.id === id});
-            if(index > -1)
-                addedDays.splice(index, 1);
-        }
-
-        function addDay()
-        {
-            let displayDate = document.getElementById('addDay');
-            let displayTimeStart = document.getElementById('dayStart');
-            let displayTimeEnd = document.getElementById('dayEnd');
-
-            let selectedDate = new Date(displayDate.value);
-            let selectedTimeStart = displayTimeStart.value.split(':')[0] * 60 + displayTimeStart.value.split(':')[1];
-            let selectedTimeEnd = displayTimeEnd.value.split(':')[0] * 60 + displayTimeEnd.value.split(':')[1];
-            let days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-            let dateFormatted = displayDate.value.split("-");
-
-            if(displayDate.value && displayTimeStart.value && displayTimeEnd.value && selectedTimeEnd - selectedTimeStart > 0)
-            {
-                if(!addedDays.find( ({date}) => date === displayDate.value))
-                {
-                    let children = document.getElementById("daysContainer").children;
-                    let highestId = 0;
-
-                    for (let i = 0; i < children.length; i++) {
-                        let child = children[i];
-
-                        if(child.id.split("_")[1] > highestId)
-                        {
-                            highestId = child.id.split("_")[1]
-                        }
-                    }
-                    highestId++;
-
-                    addedDays.push({id: highestId,
-                                    date: displayDate.value,
-                                    dayStart: selectedTimeStart,
-                                    dayEnd: selectedTimeEnd,
-                                    dayName: days[selectedDate.getDay()],
-                                    dayNumber: selectedDate.getDay() == 0 ? 7 : selectedDate.getDay()
-                                   });
-
-                    addDayElement(highestId, days[selectedDate.getDay()], dateFormatted[1] + '/' + dateFormatted[2] + "/" + dateFormatted[0],
-                                  displayTimeStart.value, displayTimeEnd.value);
-                }
-            }
-        }
-    </script>
 </body>
 </html>
