@@ -125,20 +125,43 @@ function addPOItoDay(id)
         }
 
         let poiContainer = document.getElementById(`poiContainer_${currentSelectedDay.id}`);
+        const indexOfPoi = currentSelectedDay.pois.findIndex(function(poi) { return poi.poi.id === id});
 
         const div = document.createElement('div');
 
-        div.className = 'relative m-2 border border-gray-300 rounded-xl';
+        div.className = 'w-full border border-gray-300 rounded-xl mt-2';
         div.id = `poi_${id}_day_${currentSelectedDay.id}`;
         div.innerHTML = `
-            ${el['details'].photoPrefix ? `<img class="w-full h-10 shadow-xl rounded-xl object-cover object-center" alt="POI Photo"
-            src="${el['details'].photoPrefix}500${el['details'].photoSuffix}">` : ""}
+            <div class="text-white text-2xl font-bold leading-tight flex flex-row justify-between items-center rounded-xl"
+                    style="background-image: url(${el['details'].photoPrefix}${500}${el['details'].photoSuffix});
+                    background-position: center; background-repeat: no-repeat; background-size: cover;">
+                <button type="button" class="w-full p-4 text-left focus:outline-none"
+                    @click="selectedIn !== '${id}_${currentSelectedDay.id}' ? selectedIn = '${id}_${currentSelectedDay.id}' : selectedIn = null">
+                    <div style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;">
+                        ${el['poi'].name}
+                    </div>
+                </button>
+                <button type="button" onclick="removePOIFromDay(\`${id}\`, currentSelectedDay)"
+                        class="p-5 focus:outline-none hover:bg-red-400 hover:text-white rounded-lg transition ease-out duration-600">
+                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="relative overflow-hidden transition-all max-h-0 duration-700" id="poiInDay_${id}_${currentSelectedDay.id}"
+                 x-ref="poiInDay_${id}_${currentSelectedDay.id}"
+                 x-bind:style="selectedIn == '${id}_${currentSelectedDay.id}' ?
+                 'max-height: ' + $refs.poiInDay_${id}_${currentSelectedDay.id}.scrollHeight + 'px' : ''">
+                <div class="p-6" id="poiInDayContainer_${id}_${currentSelectedDay.id}">
+                    Add visit duration
+                </div>
+            </div>
         `;
 
-
-        if(poiContainer.innerText === 'No Locations have been added')
+        if(poiContainer.innerText === 'No locations have been added')
         {
-            document.getElementById(`poiContainer_${currentSelectedDay.id}`).innerHTML = div.innerHTML;
+            document.getElementById(`poiContainer_${currentSelectedDay.id}`).innerHTML = "";
+            document.getElementById(`poiContainer_${currentSelectedDay.id}`).appendChild(div);
             document.getElementById(`poiContainerParent_${currentSelectedDay.id}`).style.maxHeight =
                 document.getElementById(`poiContainerParent_${currentSelectedDay.id}`).scrollHeight + 'px';
         }
@@ -148,6 +171,56 @@ function addPOItoDay(id)
             document.getElementById(`poiContainerParent_${currentSelectedDay.id}`).style.maxHeight =
                 document.getElementById(`poiContainerParent_${currentSelectedDay.id}`).scrollHeight + 'px';
         }
+
+        document.getElementById(`poiInDay_${id}_${currentSelectedDay.id}`).addEventListener('transitionstart', () => {
+            if(document.getElementById(`poiInDay_${id}_${currentSelectedDay.id}`))
+            {
+                const calc = parseInt(document.getElementById(`poiContainerParent_${currentSelectedDay.id}`)
+                        .style.maxHeight.replace('px','')) +
+                    parseInt(document.getElementById(`poiInDay_${id}_${currentSelectedDay.id}`).style.maxHeight.replace('px',''));
+
+                if(calc)
+                    document.getElementById(`poiContainerParent_${currentSelectedDay.id}`).style.maxHeight = calc + 'px';
+            }
+        });
+    }
+}
+
+function removePOIFromDay(id, day)
+{
+    const poi = day.pois.find( ({poi}) => poi.id === id);
+    const indexOfPoi = day.pois.findIndex(function(poi) { return poi.poi.id === id});
+
+    document.getElementById(`poi_${id}_day_${day.id}`).remove();
+
+    let el = addedMarkers.find( ({poi}) => poi.id === id);
+    const index = poi.colours.indexOf(day.colour);
+
+    el['colours'].splice(index, 1);
+
+    if(el['colours'][0])
+    {
+        let boxShadowString = `0 0 0 3px ${el['colours'][0]}`;
+
+        for(let i = 1; i < el['colours'].length; i++)
+        {
+            boxShadowString += `, 0 0 0 ${(i + 1) * 3}px ${el['colours'][i]}`
+        }
+
+        el['marker']._element.style.boxShadow = boxShadowString;
+    }
+    else
+    {
+        el['marker']._element.style.boxShadow = '';
+    }
+
+    day.pois.splice(indexOfPoi, 1);
+
+    let poiContainer = document.getElementById(`poiContainer_${day.id}`);
+
+    if(poiContainer.childNodes.length === 0)
+    {
+        poiContainer.innerText = 'No locations have been added';
     }
 }
 
@@ -255,9 +328,10 @@ function addDayElement(id, dayName, date, dayStart, dayEnd, colour) {
             </div>
         </div>
         <div class="relative overflow-hidden transition-all max-h-0 duration-700" id="poiContainerParent_${id}"
-             x-ref="dayContainer_${id}" x-bind:style="selected == ${id} ? 'max-height: ' + $refs.dayContainer_${id}.scrollHeight + 'px' : ''">
+             x-ref="dayContainer_${id}"
+             x-bind:style="selected == ${id} ? 'max-height: ' + $refs.dayContainer_${id}.scrollHeight + 'px' : ''">
             <div class="p-6" id="poiContainer_${id}">
-                No Locations have been added
+                No locations have been added
             </div>
         </div>
       `;
@@ -270,10 +344,18 @@ function addDayElement(id, dayName, date, dayStart, dayEnd, colour) {
     }
 }
 
-function removeDayElement(id) {
+function removeDayElement(id)
+{
+    const index = addedDays.findIndex(function(day) { return day.id === id});
+    let dayRet = addedDays[index];
+
+    for(let i = dayRet.pois.length - 1; i >= 0; i--)
+    {
+        removePOIFromDay(dayRet.pois[i].poi.id, dayRet);
+    }
+
     document.getElementById('day_' + id).remove();
 
-    const index = addedDays.findIndex(function(day) { return day.id === id});
     if(index > -1)
         addedDays.splice(index, 1);
 }
@@ -285,8 +367,8 @@ function addDay()
     let displayTimeEnd = document.getElementById('dayEnd');
 
     let selectedDate = new Date(displayDate.value);
-    let selectedTimeStart = displayTimeStart.value.split(':')[0] * 60 + displayTimeStart.value.split(':')[1];
-    let selectedTimeEnd = displayTimeEnd.value.split(':')[0] * 60 + displayTimeEnd.value.split(':')[1];
+    let selectedTimeStart = parseInt(displayTimeStart.value.split(':')[0]) * 60 + parseInt(displayTimeStart.value.split(':')[1]);
+    let selectedTimeEnd = parseInt(displayTimeEnd.value.split(':')[0]) * 60 + parseInt(displayTimeEnd.value.split(':')[1]);
     let days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     let dateFormatted = displayDate.value.split("-");
 
@@ -295,7 +377,7 @@ function addDay()
         if(!addedDays.find( ({date}) => date === displayDate.value))
         {
             let children = document.getElementById("daysContainer").children;
-            let highestId = 0;
+            let highestId = -1;
 
             for (let i = 0; i < children.length; i++) {
                 let child = children[i];
@@ -332,4 +414,12 @@ function getRandomColor()
         color += letters[Math.floor(Math.random() * 16)];
     }
     return color;
+}
+
+function data()
+{
+    return {
+        selected: null,
+        selectedIn: null
+    }
 }
