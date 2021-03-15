@@ -105,6 +105,22 @@ function addPOItoDay(id)
     {
         let el = addedMarkers.find( ({poi}) => poi.id === id);
         currentSelectedDay.pois.push(el);
+        let poiHoursInfo = el.details.poiHours.find( ({dayNumber}) => dayNumber === currentSelectedDay.dayNumber);
+        let openingAt = null;
+        let closingAt = null;
+
+        if(poiHoursInfo)
+        {
+            openingAt = poiHoursInfo.openingAt.split(':')[0] + ':' + poiHoursInfo.openingAt.split(':')[1];
+            closingAt = poiHoursInfo.closingAt.split(':')[0] + ':' + poiHoursInfo.closingAt.split(':')[1];
+        }
+
+        currentSelectedDay.visitDurations.push({
+            id: el.poi.id,
+            visitDuration: '1:00',
+            openingAt: openingAt,
+            closingAt: closingAt
+        });
 
         if('colours' in el)
         {
@@ -132,17 +148,23 @@ function addPOItoDay(id)
         div.className = 'w-full border border-gray-300 rounded-xl mt-2';
         div.id = `poi_${id}_day_${currentSelectedDay.id}`;
         div.innerHTML = `
-            <div class="text-white text-2xl font-bold leading-tight flex flex-row justify-between items-center rounded-xl"
+            <div class="flex flex-row rounded-xl text-white"
                     style="background-image: url(${el['details'].photoPrefix}${500}${el['details'].photoSuffix});
                     background-position: center; background-repeat: no-repeat; background-size: cover;">
                 <button type="button" class="w-full p-4 text-left focus:outline-none"
                     @click="selectedIn !== '${id}_${currentSelectedDay.id}' ? selectedIn = '${id}_${currentSelectedDay.id}' : selectedIn = null">
-                    <div style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;">
-                        ${el['poi'].name}
+                    <div class="flex flex-col justify-between">
+                        <p class="text-2xl font-bold leading-tight"
+                            style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;">
+                            ${el['poi'].name}
+                        </p>
+                        <p style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;">
+                            ${openingAt} - ${closingAt}
+                        </p>
                     </div>
                 </button>
                 <button type="button" onclick="removePOIFromDay(\`${id}\`, currentSelectedDay)"
-                        class="p-5 focus:outline-none hover:bg-red-400 hover:text-white rounded-lg transition ease-out duration-600">
+                        class="p-7 focus:outline-none hover:bg-red-400 hover:text-white rounded-lg transition ease-out duration-600">
                     <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -153,7 +175,13 @@ function addPOItoDay(id)
                  x-bind:style="selectedIn == '${id}_${currentSelectedDay.id}' ?
                  'max-height: ' + $refs.poiInDay_${id}_${currentSelectedDay.id}.scrollHeight + 'px' : ''">
                 <div class="p-6" id="poiInDayContainer_${id}_${currentSelectedDay.id}">
-                    Add visit duration
+                    <div class="flex items-center justify-start">
+                        <label class="pr-4 font-bold tracking-tight text-gray-500" for="poiInDayVisit_${id}_${currentSelectedDay.id}">Duration:</label>
+                        <input class="w-full shadow appearance-none border rounded py-2 px-2 text-grey-darker
+                        focus:outline-none focus:ring" type="text" id="poiInDayVisit_${id}_${currentSelectedDay.id}"
+                        name="poiInDayVisit_${id}_${currentSelectedDay.id}" pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]" value="1:00"
+                        @click.away="verifyDurationInput('poiInDayVisit_${id}_${currentSelectedDay.id}')"/>
+                    </div>
                 </div>
             </div>
         `;
@@ -183,6 +211,35 @@ function addPOItoDay(id)
                     document.getElementById(`poiContainerParent_${currentSelectedDay.id}`).style.maxHeight = calc + 'px';
             }
         });
+
+        document.getElementById(`poiInDayVisit_${id}_${currentSelectedDay.id}`).addEventListener('input', () => {
+            let input = document.getElementById(`poiInDayVisit_${id}_${currentSelectedDay.id}`);
+            if(!input.validity.valid)
+            {
+                input.classList.remove('focus:ring-green-400');
+                input.classList.add('focus:ring-red-400');
+
+                currentSelectedDay.visitDurations.find(({id}) => id === id).visitDuration = '1:00';
+            }
+            else
+            {
+                input.classList.remove('focus:ring-red-400');
+                input.classList.add('focus:ring-green-400');
+
+                currentSelectedDay.visitDurations.find(({id}) => id === id).visitDuration = input.value;
+            }
+        });
+    }
+}
+
+function verifyDurationInput(id)
+{
+    let input = document.getElementById(id);
+    if(!input.validity.valid)
+    {
+        input.value = "1:00";
+        input.classList.remove('focus:ring-red-400');
+        input.classList.add('focus:ring');
     }
 }
 
@@ -190,6 +247,7 @@ function removePOIFromDay(id, day)
 {
     const poi = day.pois.find( ({poi}) => poi.id === id);
     const indexOfPoi = day.pois.findIndex(function(poi) { return poi.poi.id === id});
+    const indexOfPoiDuration = day.visitDurations.findIndex(function(poi) { return poi.id === id});
 
     document.getElementById(`poi_${id}_day_${day.id}`).remove();
 
@@ -215,6 +273,7 @@ function removePOIFromDay(id, day)
     }
 
     day.pois.splice(indexOfPoi, 1);
+    day.visitDurations.splice(indexOfPoiDuration, 1);
 
     let poiContainer = document.getElementById(`poiContainer_${day.id}`);
 
@@ -397,6 +456,7 @@ function addDay()
                 dayName: days[selectedDate.getDay()],
                 dayNumber: selectedDate.getDay() === 0 ? 7 : selectedDate.getDay(),
                 colour: colour,
+                visitDurations: [],
                 pois: []
             });
 

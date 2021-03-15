@@ -99,6 +99,15 @@ public class FoursquareUtils {
                 }
             }
         }
+        else
+        {
+            for(String dayName : dayNames)
+            {
+                LocalTime startTime = LocalTime.parse("00:00");
+                LocalTime endTime = LocalTime.parse("23:59");
+                poiHours.add(new PoiHours(dayNames.indexOf(dayName) + 1, dayName, startTime, endTime));
+            }
+        }
 
         return poiHours;
     }
@@ -150,7 +159,7 @@ public class FoursquareUtils {
 
         }
 
-        Integer priceTier = null;
+        Integer priceTier = 1;
         if(venue.has("price"))
         {
             JsonObject price = venue.getAsJsonObject("price");
