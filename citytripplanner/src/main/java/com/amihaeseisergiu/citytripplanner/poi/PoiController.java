@@ -2,7 +2,6 @@ package com.amihaeseisergiu.citytripplanner.poi;
 
 import com.amihaeseisergiu.citytripplanner.poi.details.PoiDetails;
 import com.amihaeseisergiu.citytripplanner.poi.details.PoiDetailsService;
-import com.amihaeseisergiu.citytripplanner.utils.SolverUtils;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,7 +14,6 @@ public class PoiController {
 
     private final PoiService poiService;
     private final PoiDetailsService poiDetailsService;
-    private final SolverUtils solverUtils;
 
     @GetMapping
     List<Poi> getPoisFromCenter(@RequestParam(value = "ll") List<String> center, @RequestParam(value = "radius") Double radius)
@@ -29,10 +27,4 @@ public class PoiController {
         return poiDetailsService.getPoiDetails(id);
     }
 
-    @PostMapping
-    String solve()
-    {
-        solverUtils.solve();
-        return "test";
-    }
 }

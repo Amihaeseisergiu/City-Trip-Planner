@@ -37,10 +37,18 @@
 
                 <div class="h-full bg-white rounded-3xl shadow-2xl overflow-auto no-scrollbar">
                     <div x-data="{selected:null}" class="relative w-full">
-                        <button @click="selected !== 1 ? selected = 1 : selected = null" class="rounded-lg focus:outline-none p-2 m-2 font-bold cursor-pointer
-                        tracking-tight text-indigo-400 border-b-2 hover:border-indigo-500 transition ease-out duration-700">
-                            Add new day
-                        </button>
+                        <div class="flex flex-row justify-between">
+                            <button @click="selected !== 1 ? selected = 1 : selected = null" class="rounded-lg focus:outline-none p-2 m-2 font-bold cursor-pointer
+                                    tracking-tight text-indigo-400 border-b-2 hover:border-indigo-500 transition duration-500 ease-out transform hover:-translate-y-0.5">
+                                Add new day
+                            </button>
+
+                            <button id="createItineraryButton" class="rounded-lg focus:outline-none p-2 m-2 font-bold cursor-pointer hidden
+                                border-b-2 hover:border-indigo-500 tracking-tight text-indigo-400 transition duration-500 ease-out transform
+                                 hover:-translate-y-0.5" onclick="sendPOIByDayData()">
+                                Create itinerary
+                            </button>
+                        </div>
 
                         <div class="relative overflow-hidden transition-all max-h-0 duration-700"
                              x-ref="addNewDayContainer" x-bind:style="selected == 1 ? 'max-height: ' + $refs.addNewDayContainer.scrollHeight + 'px' : ''">

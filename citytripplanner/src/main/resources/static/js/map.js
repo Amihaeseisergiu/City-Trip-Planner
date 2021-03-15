@@ -360,6 +360,7 @@ map.on('moveend', function() {
 function addDayElement(id, dayName, date, dayStart, dayEnd, colour) {
 
     const div = document.createElement('div');
+    document.getElementById("createItineraryButton").classList.remove("hidden");
 
     div.className = 'relative m-2 border border-gray-300 rounded-xl';
     div.id = 'day_' + id
@@ -417,6 +418,11 @@ function removeDayElement(id)
 
     if(index > -1)
         addedDays.splice(index, 1);
+
+    if(addedDays.length <= 0)
+    {
+        document.getElementById("createItineraryButton").classList.add("hidden");
+    }
 }
 
 function addDay()
@@ -482,4 +488,54 @@ function data()
         selected: null,
         selectedIn: null
     }
+}
+
+function sendPOIByDayData()
+{
+    let scheduleToSend = [];
+
+    for(let i = 0; i < addedDays.length; i++)
+    {
+        let pois = [];
+
+        for(let j = 0; j < addedDays[i].pois.length; j++)
+        {
+            let visitTimesData = addedDays[i].visitDurations.find( ({id}) => id === addedDays[i].pois[j].poi.id);
+            pois.push({
+                id:  addedDays[i].pois[j].poi.id,
+                lat: addedDays[i].pois[j].poi.lat,
+                lng: addedDays[i].pois[j].poi.lng,
+                openingAt: visitTimesData.openingAt,
+                closingAt: visitTimesData.closingAt,
+                visitDuration: visitTimesData.visitDuration
+            });
+        }
+
+        scheduleToSend.push({
+            id: addedDays[i].id,
+            dayName: addedDays[i].dayName,
+            dayNumber: addedDays[i].dayNumber,
+            date: addedDays[i].date,
+            colour: addedDays[i].colour,
+            dayStart: addedDays[i].dayStart,
+            dayEnd: addedDays[i].dayEnd,
+            pois: pois
+        });
+    }
+
+    const url = `http://localhost:8080/schedule`;
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(scheduleToSend)
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(data);
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
 }
