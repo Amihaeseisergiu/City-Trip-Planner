@@ -37,3 +37,7 @@ foursquare:
 
   endpoint: https://api.foursquare.com/v2/
   version: 20210302
+
+mapbox:
+  accesstoken: pk.eyJ1Ijoic2VyZ2VhbnQyMTciLCJhIjoiY2tsdmFyMHE0MGNubzJvbXdlYWk0MXJ2YyJ9.we4if4fwI21YHCqgBURLzQ
+  endpoint: https://api.mapbox.com/directions-matrix/v1/mapbox/

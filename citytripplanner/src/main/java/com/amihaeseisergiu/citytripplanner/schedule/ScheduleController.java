@@ -1,6 +1,6 @@
 package com.amihaeseisergiu.citytripplanner.schedule;
 
-import com.amihaeseisergiu.citytripplanner.utils.SolverUtils;
+import com.amihaeseisergiu.citytripplanner.route.Route;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -14,12 +14,11 @@ import java.util.List;
 @AllArgsConstructor
 public class ScheduleController {
 
-    private final SolverUtils solverUtils;
+    private final ScheduleService scheduleService;
 
     @PostMapping
-    List<Schedule> solve(@RequestBody List<Schedule> schedules)
+    List<Route> solve(@RequestBody List<Schedule> schedules)
     {
-        //solverUtils.solve();
-        return schedules;
+        return scheduleService.getResolvedSchedule(schedules);
     }
 }

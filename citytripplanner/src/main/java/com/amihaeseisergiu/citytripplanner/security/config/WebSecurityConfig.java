@@ -33,7 +33,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                             "/register/**",
                             "/login/**",
                             "/",
-                            "/poi/**"
+                            "/schedule/**"
                             )
                     .permitAll()
                     .anyRequest()

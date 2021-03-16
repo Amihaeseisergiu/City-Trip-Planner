@@ -1,33 +1,35 @@
 package com.amihaeseisergiu.citytripplanner.utils;
 
+import com.amihaeseisergiu.citytripplanner.route.Route;
+import com.amihaeseisergiu.citytripplanner.route.RoutePoi;
+import com.amihaeseisergiu.citytripplanner.schedule.Schedule;
 import org.chocosolver.solver.Model;
+import org.chocosolver.solver.Solution;
 import org.chocosolver.solver.Solver;
 import org.chocosolver.solver.variables.IntVar;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 @Component
 public class SolverUtils {
 
-    public void solve()
+    public Route getRoute(Schedule schedule, DurationsMatrix durationsMatrix)
     {
+        Route route = new Route(schedule);
 
-        int n = 4;
-        int max = 10;
+        int n = schedule.getPois().size();
+        int max = durationsMatrix.getMax();
 
-        int dayStart = 360;
-        int dayEnd = 1080;
-        int[] openingTimes = new int[]{760, 800, 900, 760};
-        int[] closingTimes = new int[]{820, 1080, 960, 1080};
-        int[] visitDurations = new int[]{60, 60, 60, 60};
+        int dayStart = schedule.getDayStart();
+        int dayEnd = schedule.getDayEnd();
+        int[] openingTimes = schedule.getOpeningTimes();
+        int[] closingTimes = schedule.getClosingTimes();
+        int[] visitDurations = schedule.getVisitDurations();
 
-        int[][] timeCost = new int[][]{
-                {0, 5, 3, 4},
-                {5, 0, 10, 5},
-                {3, 10, 0, 6},
-                {4, 5, 6, 0},
-        };
+        int[][] timeCost = durationsMatrix.getDurationsMatrix();
 
         Model model = new Model("City Planner");
 
@@ -35,8 +37,15 @@ public class SolverUtils {
         IntVar[] visitTimesEn = new IntVar[n];
         for(int i = 0; i < n; i++)
         {
-            visitTimesSt[i] = model.intVar("visitTimesSt_" + i, Math.max(dayStart, openingTimes[i]), Math.min(dayEnd, closingTimes[i] - visitDurations[i]));
-            visitTimesEn[i] = model.intVar("visitTimesEn_" + i, Math.max(dayStart, openingTimes[i]) + visitDurations[i], Math.min(dayEnd, closingTimes[i]));
+            try
+            {
+                visitTimesSt[i] = model.intVar("visitTimesSt_" + i, Math.max(dayStart, openingTimes[i]), Math.min(dayEnd, closingTimes[i] - visitDurations[i]));
+                visitTimesEn[i] = model.intVar("visitTimesEn_" + i, Math.max(dayStart, openingTimes[i]) + visitDurations[i], Math.min(dayEnd, closingTimes[i]));
+            }
+            catch (Exception e)
+            {
+                return route;
+            }
         }
 
         IntVar[] ord = model.intVarArray("ord", n, 0, n - 1);
@@ -79,33 +88,51 @@ public class SolverUtils {
         }
 
         model.sum(succCost, "=", totalTimeCost).post();
-
         model.setObjective(Model.MINIMIZE, totalTimeCost);
 
         Solver solver = model.getSolver();
+        Solution solution = new Solution(model);
 
         solver.showShortStatistics();
         while(solver.solve()){
-            for (int i = 0; i < n; i++)
-            {
-                System.out.printf("ord[%d]=%d ", i, ord[i].getValue());
-            }
-            System.out.println();
-            for (int i = 0; i < n; i++)
-            {
-                System.out.printf("vSt[%d]=%d ", i, visitTimesSt[i].getValue());
-            }
-            System.out.println();
-            for (int i = 0; i < n; i++)
-            {
-                System.out.printf("vEn[%d]=%d ", i, visitTimesEn[i].getValue());
-            }
-            System.out.println();
-            for (int i = 0; i < n; i++)
-            {
-                System.out.printf("sCo[%d]=%d ", i, succCost[i].getValue());
-            }
-            System.out.printf("\nTotal time cost = %d\n", totalTimeCost.getValue());
+            solution.record();
         }
+
+        if(solution.exists())
+        {
+            List<RoutePoi> routePois = new ArrayList<>();
+
+            for (int i = 0; i < n; i++)
+            {
+                String id = schedule.getPois().get(i).getId();
+                int order = solution.getIntVal(ord[i]);
+
+                int visitTimesStVal = solution.getIntVal(visitTimesSt[i]);
+                String visitTimesStart = visitTimesStVal / 60 + ":" + ( (visitTimesStVal % 60) < 10 ? "0" + (visitTimesStVal % 60) : (visitTimesStVal % 60));
+
+                int visitTimesEnVal = solution.getIntVal(visitTimesEn[i]);
+                String visitTimesEnd = visitTimesEnVal / 60 + ":" + ( (visitTimesEnVal % 60) < 10 ? "0" + (visitTimesEnVal % 60) : (visitTimesEnVal % 60));
+
+                int timeToNextPoi = -1;
+                int waitingTime = -1;
+                if(order != n - 1)
+                {
+                    for(int j = 0; j < n; j++)
+                    {
+                        if(i != j && solution.getIntVal(ord[j]) == order + 1)
+                        {
+                            timeToNextPoi = timeCost[i][j];
+                            waitingTime = solution.getIntVal(succCost[i]) - visitDurations[i] - timeToNextPoi;
+                            break;
+                        }
+                    }
+                }
+
+                routePois.add(new RoutePoi(id, order, visitTimesStart, visitTimesEnd, timeToNextPoi, waitingTime));
+            }
+
+            route.setPois(routePois);
+        }
+        return route;
     }
 }
