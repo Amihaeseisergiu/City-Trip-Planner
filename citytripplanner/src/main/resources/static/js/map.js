@@ -39,6 +39,15 @@ function getTodaysDate()
 }
 
 document.getElementById('addDay').setAttribute('min', getTodaysDate());
+document.getElementById('addDay').setAttribute('value', getTodaysDate());
+document.getElementById('dayStart').setAttribute('value', new Date().toLocaleTimeString('en-US',
+    {hour12: false,
+            hour: "numeric",
+            minute: "numeric"}));
+document.getElementById('dayEnd').setAttribute('value', new Date().toLocaleTimeString('en-US',
+    {hour12: false,
+            hour: "numeric",
+            minute: "numeric"}));
 
 function getPOIDetails(id, name, marker)
 {
@@ -556,9 +565,125 @@ function sendPOIByDayData()
         {
             document.getElementById("itineraryTab").classList.remove("hidden");
             document.getElementById("tabsContainer").__x.$data.tab = 'itinerary';
+            document.getElementById("itineraryContainer").innerHTML = '';
+
+            for(let i = 0; i < data.length; i++)
+            {
+                let dayStart = data[i].pois.find( ({ord}) => ord === 0).visitTimesStart;
+                let dayEnd = data[i].pois.find( ({ord}) => ord === (data[i].pois.length - 1)).visitTimesEnd;
+
+                addItineraryElement(i, data[i].dayName, data[i].date, dayStart, dayEnd, data[i].colour, data[i].pois);
+            }
         }
     })
     .catch((error) => {
         console.error('Error:', error);
     });
+}
+
+function addItineraryElement(id, dayName, date, dayStart, dayEnd, colour, pois) {
+
+    const div = document.createElement('div');
+
+    div.className = 'relative m-2 border border-gray-300 rounded-xl';
+    div.id = 'dayItinerary_' + id
+    div.innerHTML = `
+        <div class="flex flex-row">
+            <div style="background-color: ${colour};" class="h-auto rounded-l-2xl w-2"></div>
+            <button type="button" class="w-full p-6 text-left text-gray-500 font-bold leading-tight focus:outline-none"
+                @click="selected !== ${id} ? selected = ${id} : selected = null">
+                <div class="flex flex-col justify-between">
+                   <p>${dayName}, ${date}</p>
+                   <p>${dayStart} - ${dayEnd}</p>
+                </div>
+            </button>
+        </div>
+        <div class="relative overflow-hidden transition-all max-h-0 duration-700"
+             x-ref="dayContainerItinerary_${id}"
+             x-bind:style="selected == ${id} ? 'max-height: ' + $refs.dayContainerItinerary_${id}.scrollHeight + 'px' : ''">
+            <div class="p-6" id="poiContainerItinerary_${id}">
+            </div>
+        </div>
+      `;
+
+    document.getElementById('itineraryContainer').appendChild(div);
+
+    for(let i = 0; i < pois.length; i++)
+    {
+        let poi = pois.find( ({ord}) => ord === i);
+
+        addPOIToItinerary(poi, id, pois.length);
+    }
+}
+
+function addPOIToItinerary(poiInfo, dayId, poisLength)
+{
+    let el = addedMarkers.find( ({poi}) => poi.id === poiInfo.id);
+
+    const div = document.createElement('div');
+
+    div.className = 'w-full border border-gray-300 rounded-xl mt-2';
+    div.id = `poi_${poiInfo.id}_day_${dayId}_itinerary`;
+    div.innerHTML = `
+        <div class="flex flex-row rounded-xl text-white"
+                style="background-image: url(${el['details'].photoPrefix}${500}${el['details'].photoSuffix});
+                background-position: center; background-repeat: no-repeat; background-size: cover;">
+            <div class="w-full p-4 text-left focus:outline-none">
+                <div class="flex flex-col justify-between">
+                    <p class="text-2xl font-bold leading-tight"
+                        style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;">
+                        ${el['poi'].name}
+                    </p>
+                    <p style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;">
+                        ${poiInfo.visitTimesStart} - ${poiInfo.visitTimesEnd}
+                    </p>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.getElementById(`poiContainerItinerary_${dayId}`).appendChild(div);
+
+    if(poiInfo.ord !== poisLength - 1)
+    {
+        const distanceDiv = document.createElement('div');
+
+        distanceDiv.className = 'w-full mt-5 mb-5 border-l-4 border-dotted border-gray-500 ml-5';
+        distanceDiv.id = `poi_${poiInfo.id}_day_${dayId}_itineraryDistance`;
+        distanceDiv.innerHTML = `
+            <div class="flex flex-row text-gray-500 uppercase leading-tight">
+                <div class="flex flex-row justify-end w-full mr-2">
+                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 13l-7 7-7-7m14-8l-7 7-7-7" />
+                    </svg>
+                </div>
+                <div class="flex flex-row w-full mr-3">
+                    ${poiInfo.timeToNextPoi} min
+                </div>
+            </div>
+        `;
+
+        document.getElementById(`poiContainerItinerary_${dayId}`).appendChild(distanceDiv);
+
+        if(poiInfo.waitingTime > 0)
+        {
+            const waitingDiv = document.createElement('div');
+
+            waitingDiv.className = 'w-full mt-5 mb-5';
+            waitingDiv.innerHTML = `
+                <div class="flex flex-row text-gray-500 uppercase leading-tight">
+                    <div class="flex flex-row justify-end w-full mr-2">
+                        <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div class="flex flex-row w-full mr-3">
+                        ${poiInfo.waitingTime} min
+                    </div>
+                </div>
+            `;
+
+            document.getElementById(`poi_${poiInfo.id}_day_${dayId}_itineraryDistance`).appendChild(waitingDiv);
+        }
+    }
 }
