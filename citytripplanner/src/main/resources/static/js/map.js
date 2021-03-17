@@ -23,6 +23,23 @@ let geoLocate = new mapboxgl.GeolocateControl({
 
 map.addControl(geoLocate);
 
+function getTodaysDate()
+{
+    date = new Date();
+    day = date.getDate();
+    month = date.getMonth() + 1;
+    year = date.getFullYear();
+
+    if (month < 10) month = "0" + month;
+    if (day < 10) day = "0" + day;
+
+    today = year + "-" + month + "-" + day;
+
+    return today;
+}
+
+document.getElementById('addDay').setAttribute('min', getTodaysDate());
+
 function getPOIDetails(id, name, marker)
 {
     const url = `http://localhost:8080/poi/${id}`;
@@ -534,6 +551,12 @@ function sendPOIByDayData()
     .then(response => response.json())
     .then(data => {
         console.log(data);
+
+        if(data.length > 0)
+        {
+            document.getElementById("itineraryTab").classList.remove("hidden");
+            document.getElementById("tabsContainer").__x.$data.tab = 'itinerary';
+        }
     })
     .catch((error) => {
         console.error('Error:', error);

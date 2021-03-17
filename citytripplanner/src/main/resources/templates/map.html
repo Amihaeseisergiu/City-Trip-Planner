@@ -16,7 +16,8 @@
         <div class="bg-white border-b-2 flex flex-col justify-center items-center lg:flex-row lg:justify-between">
             <div class="flex items-center justify-center lg:justify-start">
                 <svg class="w-10 inline-block lg:ml-10" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z" clip-rule="evenodd" />
+                    <path fill-rule="evenodd" d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z"
+                          clip-rule="evenodd" />
                 </svg>
                 <a href="/">
                     <h1 class="text-4xl p-5 font-body text-gray-900 leading-tight inline-block">City Trip Planner</h1>
@@ -26,7 +27,8 @@
                       cursor-pointer transition duration-500 ease-in-out transform hover:translate-x-4" href="#" th:href="@{/logout}">
                 Logout
                 <svg class="w-8 inline-block hover" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3
+                     3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
             </a>
         </div>
@@ -34,55 +36,78 @@
         <div style="height:calc(100vh - 5.5rem)!important;" class="flex justify-start items-center flex-col lg:flex-row lg:justify-center">
 
             <div class="w-full h-1/2 p-5 lg:w-2/6 lg:h-full">
+                <div x-data="{tab: 'planner'}" class="h-full bg-white rounded-3xl shadow-2xl flex flex-col" id="tabsContainer">
 
-                <div class="h-full bg-white rounded-3xl shadow-2xl overflow-auto no-scrollbar">
-                    <div x-data="{selected:null}" class="relative w-full">
-                        <div class="flex flex-row justify-between">
-                            <button @click="selected !== 1 ? selected = 1 : selected = null" class="rounded-lg focus:outline-none p-2 m-2 font-bold cursor-pointer
-                                    tracking-tight text-indigo-400 border-b-2 hover:border-indigo-500 transition duration-500 ease-out transform hover:-translate-y-0.5">
-                                Add new day
-                            </button>
-
-                            <button id="createItineraryButton" class="rounded-lg focus:outline-none p-2 m-2 font-bold cursor-pointer hidden
-                                border-b-2 hover:border-indigo-500 tracking-tight text-indigo-400 transition duration-500 ease-out transform
-                                 hover:-translate-y-0.5" onclick="sendPOIByDayData()">
-                                Create itinerary
-                            </button>
-                        </div>
-
-                        <div class="relative overflow-hidden transition-all max-h-0 duration-700"
-                             x-ref="addNewDayContainer" x-bind:style="selected == 1 ? 'max-height: ' + $refs.addNewDayContainer.scrollHeight + 'px' : ''">
-                            <div class="flex flex-col p-5 border-b-2 bg-white">
-                                <div class="pb-4 flex items-center justify-between">
-                                    <label class="pr-5 font-bold tracking-tight text-gray-500" for="addDay">Date:</label>
-                                    <input class="w-full shadow appearance-none border rounded py-2 px-2 text-grey-darker
-                                    focus:outline-none focus:ring" type="date" id="addDay" name="add-day">
-                                </div>
-
-                                <div class="pb-4 flex items-center">
-                                    <label class="pr-4 font-bold tracking-tight text-gray-500" for="dayStart">From:</label>
-                                    <input class="w-full shadow appearance-none border rounded py-2 px-2 text-grey-darker
-                                    focus:outline-none focus:ring" type="time" id="dayStart" name="start-day">
-                                </div>
-
-                                <div class="pb-4 flex items-center">
-                                    <label class="pr-9 font-bold tracking-tight text-gray-500" for="dayEnd">To:</label>
-                                    <input class="w-full shadow appearance-none border rounded py-2 px-2 text-grey-darker
-                                    focus:outline-none focus:ring" type="time" id="dayEnd" name="end-day">
-                                </div>
-
-                                <button @click="open = false" onclick="addDay()" class="rounded-xl focus:outline-none py-2 px-2 font-bold cursor-pointer
-                                 tracking-tight text-indigo-400 border-indigo-400 border-2 hover:bg-indigo-500 hover:text-white transition ease-out duration-700">
-                                    New Day
-                                </button>
-                            </div>
-                        </div>
+                    <div class="flex w-full overflow-auto no-scrollbar">
+                        <button :class="{ 'active border-indigo-500 text-gray-600': tab === 'planner' }"
+                                class="p-3 focus:outline-none focus:border-indigo-500 focus:text-gray-600 border-b-2 border-white text-gray-400
+                                hover:border-indigo-500 font-bold uppercase tracking-tight transition ease-in duration-200"
+                                @click="tab = 'planner'">
+                            Planner
+                        </button>
+                        <button :class="{ 'active border-indigo-500 text-gray-600': tab === 'itinerary' }"
+                                class="p-3 focus:outline-none focus:border-indigo-500 focus:text-gray-600 border-b-2 border-white text-gray-400
+                                hover:border-indigo-500 font-bold uppercase tracking-tight transition ease-in duration-200 hidden"
+                                @click="tab = 'itinerary'" id="itineraryTab">
+                            Itinerary
+                        </button>
                     </div>
 
-                    <div class="bg-white w-full hidden" x-data="data()" id="daysContainer"></div>
+                    <div x-show="tab === 'planner'" class="overflow-auto no-scrollbar h-full rounded-b-3xl shadow-inner">
+                        <div x-data="{selected:null}" class="relative w-full">
+                            <div class="flex flex-row justify-between mt-2">
+                                <button @click="selected !== 1 ? selected = 1 : selected = null"
+                                        class="rounded-lg focus:outline-none p-2 m-2 font-bold cursor-pointer
+                                               tracking-tight text-indigo-400 border-2 hover:border-indigo-500 transition
+                                               duration-500 ease-out transform hover:-translate-y-0.5">
+                                    Add new day
+                                </button>
 
+                                <button id="createItineraryButton" class="rounded-lg focus:outline-none p-2 m-2 font-bold cursor-pointer hidden
+                                            border-2 hover:border-indigo-500 tracking-tight text-indigo-400 transition duration-500 ease-out transform
+                                            hover:-translate-y-0.5" onclick="sendPOIByDayData()">
+                                    Create itinerary
+                                </button>
+                            </div>
+
+                            <div class="relative overflow-hidden transition-all max-h-0 duration-700"
+                                 x-ref="addNewDayContainer" x-bind:style="selected == 1 ? 'max-height: ' + $refs.addNewDayContainer.scrollHeight + 'px' : ''">
+
+                                <div class="flex flex-col p-5 border-b-2 bg-white items-center">
+                                    <div class="pb-4 flex items-center w-full">
+                                        <label class="pr-5 font-bold tracking-tight text-gray-500" for="addDay">Date:</label>
+                                        <input class="w-full shadow appearance-none border rounded py-2 px-2 text-grey-darker
+                                                      focus:outline-none focus:ring" type="date" id="addDay" name="add-day">
+                                    </div>
+
+                                    <div class="pb-4 flex items-center w-full">
+                                        <label class="pr-4 font-bold tracking-tight text-gray-500" for="dayStart">From:</label>
+                                        <input class="w-full shadow appearance-none border rounded py-2 px-2 text-grey-darker
+                                                      focus:outline-none focus:ring" type="time" id="dayStart" name="start-day">
+                                    </div>
+
+                                    <div class="pb-4 flex items-center w-full">
+                                        <label class="pr-9 font-bold tracking-tight text-gray-500" for="dayEnd">To:</label>
+                                        <input class="w-full shadow appearance-none border rounded py-2 px-2 text-grey-darker
+                                                      focus:outline-none focus:ring" type="time" id="dayEnd" name="end-day">
+                                    </div>
+
+                                    <button @click="open = false" onclick="addDay()" class="rounded-xl focus:outline-none py-2 px-2 font-bold cursor-pointer
+                                            tracking-tight text-indigo-400 border-indigo-400 border-2 hover:bg-indigo-500 hover:text-white transition ease-out
+                                            duration-700 w-1/2">
+                                        New Day
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white w-full hidden" x-data="data()" id="daysContainer"></div>
+                    </div>
+
+                    <div x-show="tab === 'itinerary'" class="overflow-auto no-scrollbar h-full rounded-b-3xl shadow-inner">
+
+                    </div>
                 </div>
-
             </div>
 
             <div class="w-full h-1/2 p-5 lg:w-4/6 lg:h-full">

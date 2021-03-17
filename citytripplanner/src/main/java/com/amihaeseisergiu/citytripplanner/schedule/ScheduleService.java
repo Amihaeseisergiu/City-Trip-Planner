@@ -23,7 +23,7 @@ public class ScheduleService {
 
         for(Schedule schedule : scheduleList)
         {
-            if(schedule.getPois().size() >= 2)
+            if(schedule.getPois().size() >= 2 && schedule.getPois().size() <= 25)
             {
                 DurationsMatrix durationsMatrix = mapboxUtils.fetchDurationsMatrix(schedule.getPois());
                 routes.add(solverUtils.getRoute(schedule, durationsMatrix));
