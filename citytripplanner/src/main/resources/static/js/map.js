@@ -3,6 +3,7 @@ mapboxgl.accessToken = 'pk.eyJ1Ijoic2VyZ2VhbnQyMTciLCJhIjoiY2tsdmFyMHE0MGNubzJvb
 let addedMarkers = [];
 let addedDays = [];
 let currentSelectedDay = null;
+let currentShownRoute = [];
 
 let initialPoint = null;
 let movedPoint = null;
@@ -110,7 +111,16 @@ function getPOIDetails(id, name, marker)
                         ${hoursHTML}
                     </div>`;
 
-            let popUp = new mapboxgl.Popup({className: `mapbox-gl-popup-${id}`}).setHTML(html);
+            let popUp = new mapboxgl.Popup({className: `mapbox-gl-popup-${id}`}).setHTML(html).on('open', e => {
+                if(document.getElementById("tabsContainer").__x.$data.tab === 'itinerary')
+                {
+                    document.getElementById(`poi_add_${id}`).classList.add('hidden');
+                }
+                else
+                {
+                    document.getElementById(`poi_add_${id}`).classList.remove('hidden');
+                }
+            });
             marker.setPopup(popUp);
             marker.togglePopup();
 
@@ -326,6 +336,7 @@ function addPOIs(lat, lng, radius)
                 {
                     let el = document.createElement('div');
                     el.className = "block bg-indigo-400 rounded-full p-0 border-none cursor-pointer";
+                    el.id = `poi_marker_${poi.id}`;
                     el.style.backgroundImage = `url(${poi.iconPrefix}` + 32 + `${poi.iconSuffix}`;
                     el.style.width = 32 + 'px';
                     el.style.height = 32 + 'px';
@@ -559,13 +570,19 @@ function sendPOIByDayData()
     })
     .then(response => response.json())
     .then(data => {
-        console.log(data);
 
         if(data.length > 0)
         {
             document.getElementById("itineraryTab").classList.remove("hidden");
             document.getElementById("tabsContainer").__x.$data.tab = 'itinerary';
             document.getElementById("itineraryContainer").innerHTML = '';
+
+            let popUpsAddButtons = document.querySelectorAll('*[id^="poi_add_"]');
+
+            for(let i = 0; i < popUpsAddButtons.length; i++)
+            {
+                popUpsAddButtons[i].classList.add("hidden");
+            }
 
             for(let i = 0; i < data.length; i++)
             {
@@ -597,6 +614,13 @@ function addItineraryElement(id, dayName, date, dayStart, dayEnd, colour, pois) 
                    <p>${dayStart} - ${dayEnd}</p>
                 </div>
             </button>
+            <button id="viewItineraryOnMapButton_${id}"
+                    class="p-7 focus:outline-none hover:bg-indigo-400 hover:text-white rounded-xl transition ease-out duration-600">
+                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013
+                   16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                </svg>
+            </button>
         </div>
         <div class="relative overflow-hidden transition-all max-h-0 duration-700"
              x-ref="dayContainerItinerary_${id}"
@@ -607,6 +631,10 @@ function addItineraryElement(id, dayName, date, dayStart, dayEnd, colour, pois) 
       `;
 
     document.getElementById('itineraryContainer').appendChild(div);
+
+    document.getElementById(`viewItineraryOnMapButton_${id}`).addEventListener("click", function() {
+       viewItineraryOnMap(pois, colour);
+    });
 
     for(let i = 0; i < pois.length; i++)
     {
@@ -684,6 +712,152 @@ function addPOIToItinerary(poiInfo, dayId, poisLength)
             `;
 
             document.getElementById(`poi_${poiInfo.id}_day_${dayId}_itineraryDistance`).appendChild(waitingDiv);
+        }
+    }
+}
+
+function decodePolyLine(str, precision)
+{
+    var index = 0,
+        lat = 0,
+        lng = 0,
+        coordinates = [],
+        shift = 0,
+        result = 0,
+        byte = null,
+        latitude_change,
+        longitude_change,
+        factor = Math.pow(10, Number.isInteger(precision) ? precision : 5);
+
+    while (index < str.length)
+    {
+
+        byte = null;
+        shift = 0;
+        result = 0;
+
+        do {
+            byte = str.charCodeAt(index++) - 63;
+            result |= (byte & 0x1f) << shift;
+            shift += 5;
+        } while (byte >= 0x20);
+
+        latitude_change = ((result & 1) ? ~(result >> 1) : (result >> 1));
+
+        shift = result = 0;
+
+        do {
+            byte = str.charCodeAt(index++) - 63;
+            result |= (byte & 0x1f) << shift;
+            shift += 5;
+        } while (byte >= 0x20);
+
+        longitude_change = ((result & 1) ? ~(result >> 1) : (result >> 1));
+
+        lat += latitude_change;
+        lng += longitude_change;
+
+        coordinates.push([lat / factor, lng / factor]);
+    }
+
+    return coordinates;
+};
+
+function flipped(coords)
+{
+    var flipped = [];
+    for (var i = 0; i < coords.length; i++) {
+        var coord = coords[i].slice();
+        flipped.push([coord[1], coord[0]]);
+    }
+    return flipped;
+}
+
+function viewItineraryOnMap(pois, colour)
+{
+    cleanShownRoutes();
+
+    let geoJson = {
+        'type': 'geojson',
+        'data': {
+            'type': 'FeatureCollection',
+            'features': []
+        }
+    };
+
+    currentShownRoute = [];
+
+    for(let i = 0; i < pois.length; i++)
+    {
+        let el = document.getElementById(`poi_marker_${pois[i].id}`);
+        let styleBackgroundImage = el.style.backgroundImage;
+        let styleBoxShadow = el.style.boxShadow;
+
+        currentShownRoute.push({
+            marker: el,
+            backgroundImage: styleBackgroundImage,
+            boxShadow: styleBoxShadow
+        });
+
+        el.style.backgroundImage = '';
+        el.style.boxShadow = '';
+        el.innerHTML = `
+            <div class="flex flex-row justify-center font-bold text-white text-2xl rounded-full"
+                 style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased; background-color: ${colour}">
+                ${pois[i].ord + 1}
+            </div>
+        `;
+
+        if(pois[i].polyLine !== null)
+        {
+            geoJson.data.features.push({
+                'type': 'Feature',
+                'properties': {},
+                'geometry': {
+                    'type': 'LineString',
+                    'coordinates': flipped(decodePolyLine(pois[i].polyLine, 6))
+                }
+            });
+        }
+    }
+
+    map.addSource('route', geoJson);
+
+    map.addLayer({
+        'id': 'route',
+        'type': 'line',
+        'source': 'route',
+        'layout': {
+            'line-join': 'round',
+            'line-cap': 'round'
+        },
+        'paint': {
+            'line-color': `${colour}`,
+            'line-width': 8
+        }
+    });
+}
+
+function cleanShownRoutes()
+{
+    if(currentShownRoute.length !== 0)
+    {
+        if(map.getLayer('route'))
+        {
+            map.removeLayer('route');
+        }
+
+        if(map.getSource('route'))
+        {
+            map.removeSource('route');
+        }
+
+        for(let i = 0; i < currentShownRoute.length; i++)
+        {
+            el = currentShownRoute[i].marker;
+            el.innerHTML = '';
+            el.style.backgroundImage = currentShownRoute[i].backgroundImage;
+            el.style.boxShadow = currentShownRoute[i].boxShadow;
         }
     }
 }

@@ -20,4 +20,6 @@ public class RoutePoi {
 
     private Integer timeToNextPoi;
     private Integer waitingTime;
+
+    private String polyLine;
 }

@@ -3,6 +3,7 @@ package com.amihaeseisergiu.citytripplanner.utils;
 import com.amihaeseisergiu.citytripplanner.route.Route;
 import com.amihaeseisergiu.citytripplanner.route.RoutePoi;
 import com.amihaeseisergiu.citytripplanner.schedule.Schedule;
+import lombok.AllArgsConstructor;
 import org.chocosolver.solver.Model;
 import org.chocosolver.solver.Solution;
 import org.chocosolver.solver.Solver;
@@ -14,7 +15,10 @@ import java.util.Arrays;
 import java.util.List;
 
 @Component
+@AllArgsConstructor
 public class SolverUtils {
+
+    private final MapboxUtils mapboxUtils;
 
     public Route getRoute(Schedule schedule, DurationsMatrix durationsMatrix)
     {
@@ -115,6 +119,7 @@ public class SolverUtils {
 
                 int timeToNextPoi = -1;
                 int waitingTime = -1;
+                String polyLine = null;
                 if(order != n - 1)
                 {
                     for(int j = 0; j < n; j++)
@@ -123,12 +128,13 @@ public class SolverUtils {
                         {
                             timeToNextPoi = timeCost[i][j];
                             waitingTime = solution.getIntVal(succCost[i]) - visitDurations[i] - timeToNextPoi;
+                            polyLine = mapboxUtils.fetchPolyLine(schedule.getPois().get(i), schedule.getPois().get(j));
                             break;
                         }
                     }
                 }
 
-                routePois.add(new RoutePoi(id, order, visitTimesStart, visitTimesEnd, timeToNextPoi, waitingTime));
+                routePois.add(new RoutePoi(id, order, visitTimesStart, visitTimesEnd, timeToNextPoi, waitingTime, polyLine));
             }
 
             route.setPois(routePois);

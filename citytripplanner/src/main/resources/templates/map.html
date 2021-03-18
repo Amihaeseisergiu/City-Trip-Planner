@@ -42,7 +42,8 @@
                         <button :class="{ 'active border-indigo-500 text-gray-600': tab === 'planner' }"
                                 class="p-3 focus:outline-none focus:border-indigo-500 focus:text-gray-600 border-b-2 border-white text-gray-400
                                 hover:border-indigo-500 font-bold uppercase tracking-tight transition ease-in duration-200"
-                                @click="tab = 'planner'">
+                                @click="tab = 'planner'"
+                                onclick="cleanShownRoutes()">
                             Planner
                         </button>
                         <button :class="{ 'active border-indigo-500 text-gray-600': tab === 'itinerary' }"
