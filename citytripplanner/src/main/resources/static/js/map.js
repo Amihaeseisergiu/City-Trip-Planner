@@ -7,6 +7,7 @@ let currentShownRoute = [];
 
 let initialPoint = null;
 let movedPoint = null;
+let currentBounds = null;
 
 let map = new mapboxgl.Map({
     container: 'map',
@@ -586,10 +587,13 @@ function sendPOIByDayData()
 
             for(let i = 0; i < data.length; i++)
             {
-                let dayStart = data[i].pois.find( ({ord}) => ord === 0).visitTimesStart;
-                let dayEnd = data[i].pois.find( ({ord}) => ord === (data[i].pois.length - 1)).visitTimesEnd;
+                if(data[i].pois.length > 0)
+                {
+                    let dayStart = data[i].pois.find( ({ord}) => ord === 0).visitTimesStart;
+                    let dayEnd = data[i].pois.find( ({ord}) => ord === (data[i].pois.length - 1)).visitTimesEnd;
 
-                addItineraryElement(i, data[i].dayName, data[i].date, dayStart, dayEnd, data[i].colour, data[i].pois);
+                    addItineraryElement(i, data[i].dayName, data[i].date, dayStart, dayEnd, data[i].colour, data[i].pois);
+                }
             }
         }
     })
@@ -608,19 +612,19 @@ function addItineraryElement(id, dayName, date, dayStart, dayEnd, colour, pois) 
         <div class="flex flex-row">
             <div style="background-color: ${colour};" class="h-auto rounded-l-2xl w-2"></div>
             <button type="button" class="w-full p-6 text-left text-gray-500 font-bold leading-tight focus:outline-none"
-                @click="selected !== ${id} ? selected = ${id} : selected = null">
+                @click="selected !== ${id} ? selected = ${id} : selected = null;
+                        if(selected !== ${id}) cleanShownRoutes();" id="viewItineraryOnMapButton_${id}">
                 <div class="flex flex-col justify-between">
                    <p>${dayName}, ${date}</p>
                    <p>${dayStart} - ${dayEnd}</p>
                 </div>
             </button>
-            <button id="viewItineraryOnMapButton_${id}"
-                    class="p-7 focus:outline-none hover:bg-indigo-400 hover:text-white rounded-xl transition ease-out duration-600">
+            <div x-show="selected === ${id}" class="p-7 bg-green-400 text-white rounded-xl flex flex-row items-center">
                 <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013
                    16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                 </svg>
-            </button>
+            </div>
         </div>
         <div class="relative overflow-hidden transition-all max-h-0 duration-700"
              x-ref="dayContainerItinerary_${id}"
@@ -633,6 +637,14 @@ function addItineraryElement(id, dayName, date, dayStart, dayEnd, colour, pois) 
     document.getElementById('itineraryContainer').appendChild(div);
 
     document.getElementById(`viewItineraryOnMapButton_${id}`).addEventListener("click", function() {
+        if(currentBounds === null)
+        {
+            currentBounds = {
+                coords: [[map.getBounds()._ne.lng, map.getBounds()._ne.lat],
+                    [map.getBounds()._sw.lng, map.getBounds()._sw.lat]],
+                zoom: map.getZoom()
+            };
+        }
        viewItineraryOnMap(pois, colour);
     });
 
@@ -786,17 +798,17 @@ function viewItineraryOnMap(pois, colour)
     };
 
     currentShownRoute = [];
+    let allCoordinates = [];
 
     for(let i = 0; i < pois.length; i++)
     {
         let el = document.getElementById(`poi_marker_${pois[i].id}`);
         let styleBackgroundImage = el.style.backgroundImage;
-        let styleBoxShadow = el.style.boxShadow;
 
         currentShownRoute.push({
             marker: el,
-            backgroundImage: styleBackgroundImage,
-            boxShadow: styleBoxShadow
+            id: pois[i].id,
+            backgroundImage: styleBackgroundImage
         });
 
         el.style.backgroundImage = '';
@@ -810,12 +822,15 @@ function viewItineraryOnMap(pois, colour)
 
         if(pois[i].polyLine !== null)
         {
+            let coordinates = flipped(decodePolyLine(pois[i].polyLine, 6));
+            allCoordinates.push(...coordinates);
+
             geoJson.data.features.push({
                 'type': 'Feature',
                 'properties': {},
                 'geometry': {
                     'type': 'LineString',
-                    'coordinates': flipped(decodePolyLine(pois[i].polyLine, 6))
+                    'coordinates': coordinates
                 }
             });
         }
@@ -835,6 +850,14 @@ function viewItineraryOnMap(pois, colour)
             'line-color': `${colour}`,
             'line-width': 8
         }
+    });
+
+    let bounds = allCoordinates.reduce(function (bounds, coord) {
+        return bounds.extend(coord);
+    }, new mapboxgl.LngLatBounds(allCoordinates[0], allCoordinates[0]));
+
+    map.fitBounds(bounds, {
+        padding: 20
     });
 }
 
@@ -858,6 +881,26 @@ function cleanShownRoutes()
             el.innerHTML = '';
             el.style.backgroundImage = currentShownRoute[i].backgroundImage;
             el.style.boxShadow = currentShownRoute[i].boxShadow;
+
+            let poi = addedMarkers.find( ({poi}) => poi.id === currentShownRoute[i].id);
+
+            if(poi['colours'][0])
+            {
+                let boxShadowString = `0 0 0 3px ${poi['colours'][0]}`;
+
+                for(let j = 1; j < poi['colours'].length; j++)
+                {
+                    boxShadowString += `, 0 0 0 ${(j + 1) * 3}px ${poi['colours'][j]}`
+                }
+
+                poi['marker']._element.style.boxShadow = boxShadowString;
+            }
+            else
+            {
+                poi['marker']._element.style.boxShadow = '';
+            }
         }
+
+        map.fitBounds(currentBounds.coords);
     }
 }
