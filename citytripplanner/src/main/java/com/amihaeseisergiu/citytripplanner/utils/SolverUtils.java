@@ -20,12 +20,11 @@ public class SolverUtils {
 
     private final MapboxUtils mapboxUtils;
 
-    public Route getRoute(Schedule schedule, DurationsMatrix durationsMatrix)
+    public Route getRoute(Schedule schedule, int[][] timeCost)
     {
         Route route = new Route(schedule);
 
         int n = schedule.getPois().size();
-        int max = durationsMatrix.getMax();
 
         int dayStart = schedule.getDayStart();
         int dayEnd = schedule.getDayEnd();
@@ -33,28 +32,20 @@ public class SolverUtils {
         int[] closingTimes = schedule.getClosingTimes();
         int[] visitDurations = schedule.getVisitDurations();
 
-        int[][] timeCost = durationsMatrix.getDurationsMatrix();
-
         Model model = new Model("City Planner");
 
         IntVar[] visitTimesSt = new IntVar[n];
         IntVar[] visitTimesEn = new IntVar[n];
         for(int i = 0; i < n; i++)
         {
-            try
-            {
-                visitTimesSt[i] = model.intVar("visitTimesSt_" + i, Math.max(dayStart, openingTimes[i]), Math.min(dayEnd, closingTimes[i] - visitDurations[i]));
-                visitTimesEn[i] = model.intVar("visitTimesEn_" + i, Math.max(dayStart, openingTimes[i]) + visitDurations[i], Math.min(dayEnd, closingTimes[i]));
-            }
-            catch (Exception e)
-            {
-                return route;
-            }
+            visitTimesSt[i] = model.intVar("visitTimesSt_" + i, Math.max(dayStart, openingTimes[i]), Math.min(dayEnd, closingTimes[i] - visitDurations[i]));
+            visitTimesEn[i] = model.intVar("visitTimesEn_" + i, Math.max(dayStart, openingTimes[i]) + visitDurations[i], Math.min(dayEnd, closingTimes[i]));
+
         }
 
         IntVar[] ord = model.intVarArray("ord", n, 0, n - 1);
-        IntVar[] succCost = model.intVarArray("succCost", n, 0, Arrays.stream(visitDurations).sum() + max * n);
-        IntVar totalTimeCost = model.intVar("Total time cost", 0, Arrays.stream(visitDurations).sum() + max * n);
+        IntVar[] succCost = model.intVarArray("succCost", n, 0, 1440);
+        IntVar totalTimeCost = model.intVar("Total time cost", 0, 1440);
 
         for (int i = 0; i < n; i++)
         {
@@ -63,31 +54,33 @@ public class SolverUtils {
                 if(i != j)
                 {
                     model.ifThen(
-                            model.and(model.arithm(ord[i].add(1).intVar(), "=", ord[j]), model.arithm(ord[i], "!=", n - 1)),
-                            model.arithm(succCost[i], "=", model.intVar(openingTimes[j]).sub(visitTimesEn[i].add(timeCost[i][j])).max(0)
-                                    .add(timeCost[i][j]).add(visitDurations[i]).intVar())
-                    );
-
-                    model.ifThen(
-                            model.arithm(ord[i].intVar(), "=", n - 1),
-                            model.arithm(succCost[i], "=", visitDurations[i])
+                            ord[i].add(1).eq(ord[j]).and(ord[i].ne(n - 1)).decompose().reify(),
+                            succCost[i].ge(timeCost[i][j] + visitDurations[i]).decompose()
                     );
                 }
             }
+
+            model.ifThen(
+                    ord[i].eq(n - 1).decompose().reify(),
+                    succCost[i].eq(visitDurations[i]).decompose()
+            );
         }
 
         model.allDifferent(ord).post();
 
         for(int i = 0; i < n; i++)
         {
-            model.arithm(visitTimesEn[i], "=", visitTimesSt[i], "+", visitDurations[i]).post();
+            visitTimesEn[i].eq(visitTimesSt[i].add(visitDurations[i])).post();
+
             for(int j = 0; j < n; j++)
             {
                 if(i != j)
+                {
                     model.ifThen(
-                            model.and(model.arithm(ord[i].sub(1).intVar(), ">=", 0), model.arithm(ord[i].sub(1).intVar(), "=", ord[j])),
-                            model.arithm(visitTimesSt[i], "=", visitTimesSt[j], "+", succCost[j])
+                            ord[i].sub(1).eq(ord[j]).decompose().reify(),
+                            visitTimesSt[i].eq(visitTimesSt[j].add(succCost[j])).decompose()
                     );
+                }
             }
         }
 

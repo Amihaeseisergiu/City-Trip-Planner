@@ -5,8 +5,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -28,15 +26,15 @@ public class MapboxUtils {
         this.endPoint = endPoint;
     }
 
-    public DurationsMatrix fetchDurationsMatrix(List<SchedulePoi> schedulePois)
+    public int[][] fetchDurationsMatrix(List<SchedulePoi> schedulePois)
     {
         SchedulePoi firstPoi = schedulePois.get(0);
-        String coordinatesList = firstPoi.getLng() + "," + firstPoi.getLat();
+        StringBuilder coordinatesList = new StringBuilder(firstPoi.getLng() + "," + firstPoi.getLat());
 
         for(int i = 1; i < schedulePois.size(); i++)
         {
             SchedulePoi poi = schedulePois.get(i);
-            coordinatesList += ";" + poi.getLng() + "," + poi.getLat();
+            coordinatesList.append(";").append(poi.getLng()).append(",").append(poi.getLat());
         }
 
         String url = endPoint + "directions-matrix/v1/mapbox/walking/" + coordinatesList + "?access_token={access_token}";
@@ -60,7 +58,7 @@ public class MapboxUtils {
             }
         }
 
-        return new DurationsMatrix(durationsMatrix);
+        return durationsMatrix;
     }
 
     public String fetchPolyLine(SchedulePoi p1, SchedulePoi p2)

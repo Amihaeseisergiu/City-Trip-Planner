@@ -11,7 +11,7 @@ let currentBounds = null;
 
 let map = new mapboxgl.Map({
     container: 'map',
-    style: 'mapbox://styles/mapbox/streets-v11',
+    style: 'mapbox://styles/mapbox/light-v10',
     center: [27.60, 47.16],
     zoom: 12
 });
@@ -110,7 +110,7 @@ function getPOIDetails(id, name, marker)
                             Price Tier: ${data.priceTier ? data.priceTier : "unavailable"}
                         </p>
                         ${hoursHTML}
-                    </div>`;
+                     </div>`;
 
             let popUp = new mapboxgl.Popup({className: `mapbox-gl-popup-${id}`}).setHTML(html).on('open', e => {
                 if(document.getElementById("tabsContainer").__x.$data.tab === 'itinerary')
@@ -587,7 +587,7 @@ function sendPOIByDayData()
 
             for(let i = 0; i < data.length; i++)
             {
-                if(data[i].pois.length > 0)
+                if(data[i].pois !== null)
                 {
                     let dayStart = data[i].pois.find( ({ord}) => ord === 0).visitTimesStart;
                     let dayEnd = data[i].pois.find( ({ord}) => ord === (data[i].pois.length - 1)).visitTimesEnd;
@@ -904,3 +904,7 @@ function cleanShownRoutes()
         map.fitBounds(currentBounds.coords);
     }
 }
+
+document.getElementById("plannerTabButton").addEventListener("click", function() {
+    document.getElementById("itineraryContainer").__x.$data.selected = null;
+});

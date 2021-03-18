@@ -178,9 +178,7 @@ public class FoursquareUtils {
             }
         }
 
-        PoiDetails poiDetails = new PoiDetails(poiId, formattedPhone, rating, type, photoPrefix, photoSuffix, priceTier, LocalDateTime.now().plusDays(1));
-
-        return poiDetails;
+        return new PoiDetails(poiId, formattedPhone, rating, type, photoPrefix, photoSuffix, priceTier, LocalDateTime.now().plusDays(1));
     }
 
     public List<Poi> fetchNewPois(String center, Integer limit)

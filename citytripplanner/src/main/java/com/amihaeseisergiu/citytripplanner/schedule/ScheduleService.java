@@ -1,7 +1,6 @@
 package com.amihaeseisergiu.citytripplanner.schedule;
 
 import com.amihaeseisergiu.citytripplanner.route.Route;
-import com.amihaeseisergiu.citytripplanner.utils.DurationsMatrix;
 import com.amihaeseisergiu.citytripplanner.utils.MapboxUtils;
 import com.amihaeseisergiu.citytripplanner.utils.SolverUtils;
 import lombok.AllArgsConstructor;
@@ -25,7 +24,7 @@ public class ScheduleService {
         {
             if(schedule.getPois().size() >= 2 && schedule.getPois().size() <= 25)
             {
-                DurationsMatrix durationsMatrix = mapboxUtils.fetchDurationsMatrix(schedule.getPois());
+                int[][] durationsMatrix = mapboxUtils.fetchDurationsMatrix(schedule.getPois());
                 routes.add(solverUtils.getRoute(schedule, durationsMatrix));
             }
         }
