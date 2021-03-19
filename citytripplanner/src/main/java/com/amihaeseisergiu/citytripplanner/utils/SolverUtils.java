@@ -11,7 +11,6 @@ import org.chocosolver.solver.variables.IntVar;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @Component
@@ -38,9 +37,15 @@ public class SolverUtils {
         IntVar[] visitTimesEn = new IntVar[n];
         for(int i = 0; i < n; i++)
         {
-            visitTimesSt[i] = model.intVar("visitTimesSt_" + i, Math.max(dayStart, openingTimes[i]), Math.min(dayEnd, closingTimes[i] - visitDurations[i]));
-            visitTimesEn[i] = model.intVar("visitTimesEn_" + i, Math.max(dayStart, openingTimes[i]) + visitDurations[i], Math.min(dayEnd, closingTimes[i]));
-
+            try
+            {
+                visitTimesSt[i] = model.intVar("visitTimesSt_" + i, Math.max(dayStart, openingTimes[i]), Math.min(dayEnd, closingTimes[i] - visitDurations[i]));
+                visitTimesEn[i] = model.intVar("visitTimesEn_" + i, Math.max(dayStart, openingTimes[i]) + visitDurations[i], Math.min(dayEnd, closingTimes[i]));
+            }
+            catch(Exception e)
+            {
+                return route;
+            }
         }
 
         IntVar[] ord = model.intVarArray("ord", n, 0, n - 1);

@@ -63,7 +63,9 @@ function getPOIDetails(id, name, marker)
         .then(response => response.json())
         .then(data => {
             let hoursHTML = ``;
-            data.poiHours.sort((a, b) => a.dayNumber < b.dayNumber);
+            data.poiHours.sort(function(a, b) {
+                return a.dayNumber - b.dayNumber;
+            });
 
             for(const hours of data.poiHours)
             {
