@@ -184,10 +184,10 @@ function addPOItoDay(id)
 
         const div = document.createElement('div');
 
-        div.className = 'w-full border border-gray-300 rounded-xl mt-2';
+        div.className = 'relative border border-gray-300 rounded-xl mt-2';
         div.id = `poi_${id}_day_${currentSelectedDay.id}`;
         div.innerHTML = `
-            <div class="flex flex-row rounded-xl text-white"
+            <div class="flex flex-row rounded-xl text-white break-all overflow-hidden"
                     style="background-image: url(${el['details'].photoPrefix}${500}${el['details'].photoSuffix});
                     background-position: center; background-repeat: no-repeat; background-size: cover;">
                 <button type="button" class="w-full p-4 text-left focus:outline-none"
@@ -201,6 +201,15 @@ function addPOItoDay(id)
                             ${openingAt} - ${closingAt}
                         </p>
                     </div>
+                </button>
+                <button type="button" x-show="'${el.details.type}' === 'Hotel'" id="poiInDayAccommodation_${id}_${currentSelectedDay.id}"
+                        :class="{'active bg-green-400' : accommodation === '${id}'}"
+                        class="p-7 focus:outline-none hover:bg-green-400 hover:text-white rounded-lg transition ease-out duration-600"
+                        @click="if(accommodation === '${id}') {accommodation = null;} else {accommodation = '${id}';}">
+                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1
+                       1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
                 </button>
                 <button type="button" onclick="removePOIFromDay(\`${id}\`, currentSelectedDay)"
                         class="p-7 focus:outline-none hover:bg-red-400 hover:text-white rounded-lg transition ease-out duration-600">
@@ -251,24 +260,54 @@ function addPOItoDay(id)
             }
         });
 
-        document.getElementById(`poiInDayVisit_${id}_${currentSelectedDay.id}`).addEventListener('input', () => {
-            let input = document.getElementById(`poiInDayVisit_${id}_${currentSelectedDay.id}`);
-            if(!input.validity.valid)
-            {
-                input.classList.remove('focus:ring-green-400');
-                input.classList.add('focus:ring-red-400');
+        document.getElementById(`poiInDayAccommodation_${id}_${currentSelectedDay.id}`).addEventListener('click', () => {
+            let input = document.getElementById(`poiInDay_${id}_${currentSelectedDay.id}`);
 
-                currentSelectedDay.visitDurations.find(({id}) => id === id).visitDuration = '1:00';
+            if(input.innerHTML == '')
+            {
+                input.innerHTML = `
+                    <div class="p-6" id="poiInDayContainer_${id}_${currentSelectedDay.id}">
+                        <div class="flex items-center justify-start">
+                            <label class="pr-4 font-bold tracking-tight text-gray-500" for="poiInDayVisit_${id}_${currentSelectedDay.id}">Duration:</label>
+                            <input class="w-full shadow appearance-none border rounded py-2 px-2 text-grey-darker
+                            focus:outline-none focus:ring" type="text" id="poiInDayVisit_${id}_${currentSelectedDay.id}"
+                            name="poiInDayVisit_${id}_${currentSelectedDay.id}" pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]" value="1:00"
+                            @click.away="verifyDurationInput('poiInDayVisit_${id}_${currentSelectedDay.id}')"/>
+                        </div>
+                    </div>
+                `;
+
+                addInputDurationRegex(id);
             }
             else
             {
-                input.classList.remove('focus:ring-red-400');
-                input.classList.add('focus:ring-green-400');
-
-                currentSelectedDay.visitDurations.find(({id}) => id === id).visitDuration = input.value;
+                input.innerHTML = '';
             }
         });
+
+        addInputDurationRegex(id);
     }
+}
+
+function addInputDurationRegex(id)
+{
+    document.getElementById(`poiInDayVisit_${id}_${currentSelectedDay.id}`).addEventListener('input', () => {
+        let input = document.getElementById(`poiInDayVisit_${id}_${currentSelectedDay.id}`);
+        if(!input.validity.valid)
+        {
+            input.classList.remove('focus:ring-green-400');
+            input.classList.add('focus:ring-red-400');
+
+            currentSelectedDay.visitDurations.find(({id}) => id === id).visitDuration = '1:00';
+        }
+        else
+        {
+            input.classList.remove('focus:ring-red-400');
+            input.classList.add('focus:ring-green-400');
+
+            currentSelectedDay.visitDurations.find(({id}) => id === id).visitDuration = input.value;
+        }
+    });
 }
 
 function verifyDurationInput(id)
@@ -320,6 +359,9 @@ function removePOIFromDay(id, day)
     {
         poiContainer.innerText = 'No locations have been added';
     }
+
+    document.getElementById(`poiContainerParent_${day.id}`).style.maxHeight =
+        document.getElementById(`poiContainerParent_${day.id}`).scrollHeight  + 'px';
 }
 
 function addPOIs(lat, lng, radius)
@@ -391,7 +433,6 @@ map.on('moveend', function() {
 
     if(map.getZoom() >= 12 && distance >= radius / 4)
     {
-        console.log("Loading")
         addPOIs(lat, lng, radius / 2);
         initialPoint = movedPoint;
     }
@@ -430,7 +471,7 @@ function addDayElement(id, dayName, date, dayStart, dayEnd, colour) {
         <div class="relative overflow-hidden transition-all max-h-0 duration-700" id="poiContainerParent_${id}"
              x-ref="dayContainer_${id}"
              x-bind:style="selected == ${id} ? 'max-height: ' + $refs.dayContainer_${id}.scrollHeight + 'px' : ''">
-            <div class="p-6" id="poiContainer_${id}">
+            <div class="p-6" id="poiContainer_${id}" x-data="{accommodation: null, selectedIn: null}">
                 No locations have been added
             </div>
         </div>
@@ -522,14 +563,6 @@ function getRandomColor()
     return color;
 }
 
-function data()
-{
-    return {
-        selected: null,
-        selectedIn: null
-    }
-}
-
 function sendPOIByDayData()
 {
     let scheduleToSend = [];
@@ -551,6 +584,8 @@ function sendPOIByDayData()
             });
         }
 
+        let accommodation = document.getElementById(`poiContainer_${addedDays[i].id}`).__x.$data.accommodation;
+
         scheduleToSend.push({
             id: addedDays[i].id,
             dayName: addedDays[i].dayName,
@@ -559,7 +594,8 @@ function sendPOIByDayData()
             colour: addedDays[i].colour,
             dayStart: addedDays[i].dayStart,
             dayEnd: addedDays[i].dayEnd,
-            pois: pois
+            pois: pois,
+            accommodation: accommodation
         });
     }
 
@@ -594,7 +630,13 @@ function sendPOIByDayData()
                     let dayStart = data[i].pois.find( ({ord}) => ord === 0).visitTimesStart;
                     let dayEnd = data[i].pois.find( ({ord}) => ord === (data[i].pois.length - 1)).visitTimesEnd;
 
-                    addItineraryElement(i, data[i].dayName, data[i].date, dayStart, dayEnd, data[i].colour, data[i].pois);
+                    if(data[i].accommodation !== null)
+                    {
+                        dayStart = data[i].pois.find( ({ord}) => ord === 0).visitTimesStart;
+                        dayEnd = data[i].pois.find( ({ord}) => ord === 0).visitTimesEnd;
+                    }
+
+                    addItineraryElement(i, data[i].dayName, data[i].date, dayStart, dayEnd, data[i].colour, data[i].pois, data[i].accommodation);
                 }
             }
         }
@@ -604,7 +646,7 @@ function sendPOIByDayData()
     });
 }
 
-function addItineraryElement(id, dayName, date, dayStart, dayEnd, colour, pois) {
+function addItineraryElement(id, dayName, date, dayStart, dayEnd, colour, pois, accommodation) {
 
     const div = document.createElement('div');
 
@@ -647,18 +689,38 @@ function addItineraryElement(id, dayName, date, dayStart, dayEnd, colour, pois) 
                 zoom: map.getZoom()
             };
         }
-       viewItineraryOnMap(pois, colour);
+       viewItineraryOnMap(pois, colour, accommodation);
     });
 
-    for(let i = 0; i < pois.length; i++)
+    let start = accommodation !== null ? 1 : 0;
+    let end = accommodation !== null ? pois.length : pois.length - 1;
+
+    if(accommodation !== null)
+    {
+        let poi = pois.find( ({ord}) => ord === 0);
+        addPOIToItinerary(poi, id, true, 'Leaving at ' + poi.visitTimesStart);
+    }
+
+    for(let i = start; i < end; i++)
     {
         let poi = pois.find( ({ord}) => ord === i);
 
-        addPOIToItinerary(poi, id, pois.length);
+        addPOIToItinerary(poi, id, true, null);
+    }
+
+    if(accommodation !== null)
+    {
+        let poi = pois.find( ({ord}) => ord === 0);
+        addPOIToItinerary(poi, id, false, 'Arriving at ' + poi.visitTimesEnd);
+    }
+    else
+    {
+        let poi = pois.find( ({ord}) => ord === pois.length - 1);
+        addPOIToItinerary(poi, id, false, null);
     }
 }
 
-function addPOIToItinerary(poiInfo, dayId, poisLength)
+function addPOIToItinerary(poiInfo, dayId, addInfoToNext, accommodationTimeInfo)
 {
     let el = addedMarkers.find( ({poi}) => poi.id === poiInfo.id);
 
@@ -677,16 +739,22 @@ function addPOIToItinerary(poiInfo, dayId, poisLength)
                         ${el['poi'].name}
                     </p>
                     <p style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;">
-                        ${poiInfo.visitTimesStart} - ${poiInfo.visitTimesEnd}
+                        ${accommodationTimeInfo !== null ? accommodationTimeInfo : poiInfo.visitTimesStart + ' - ' + poiInfo.visitTimesEnd}
                     </p>
                 </div>
+            </div>
+            <div class="p-7 text-white rounded-lg ${accommodationTimeInfo !== null ? '' : 'hidden'} flex flex-col justify-center">
+                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1
+                   1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
             </div>
         </div>
     `;
 
     document.getElementById(`poiContainerItinerary_${dayId}`).appendChild(div);
 
-    if(poiInfo.ord !== poisLength - 1)
+    if(addInfoToNext)
     {
         const distanceDiv = document.createElement('div');
 
@@ -732,7 +800,7 @@ function addPOIToItinerary(poiInfo, dayId, poisLength)
 
 function decodePolyLine(str, precision)
 {
-    var index = 0,
+    let index = 0,
         lat = 0,
         lng = 0,
         coordinates = [],
@@ -779,15 +847,17 @@ function decodePolyLine(str, precision)
 
 function flipped(coords)
 {
-    var flipped = [];
-    for (var i = 0; i < coords.length; i++) {
-        var coord = coords[i].slice();
+    let flipped = [];
+
+    for (let i = 0; i < coords.length; i++)
+    {
+        let coord = coords[i].slice();
         flipped.push([coord[1], coord[0]]);
     }
     return flipped;
 }
 
-function viewItineraryOnMap(pois, colour)
+function viewItineraryOnMap(pois, colour, accommodation)
 {
     cleanShownRoutes();
 
@@ -818,11 +888,16 @@ function viewItineraryOnMap(pois, colour)
         el.innerHTML = `
             <div class="flex flex-row justify-center font-bold text-white text-2xl rounded-full"
                  style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased; background-color: ${colour}">
-                ${pois[i].ord + 1}
+                ${accommodation === null ? pois[i].ord + 1 : accommodation === pois[i].id ?
+                  '<svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">\n' +
+                    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1' +
+                    ' 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />\n' +
+                  '</svg>' : pois[i].ord + 1
+                }
             </div>
         `;
 
-        if(pois[i].polyLine !== null)
+        if(pois[i].polyLine !== null && (pois.length === 2 ? pois[i].ord === 0 : true))
         {
             let coordinates = flipped(decodePolyLine(pois[i].polyLine, 6));
             allCoordinates.push(...coordinates);

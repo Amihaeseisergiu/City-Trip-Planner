@@ -30,6 +30,7 @@ public class SolverUtils {
         int[] openingTimes = schedule.getOpeningTimes();
         int[] closingTimes = schedule.getClosingTimes();
         int[] visitDurations = schedule.getVisitDurations();
+        int accommodation = schedule.getIndexOfAccommodation();
 
         Model model = new Model("City Planner");
 
@@ -37,20 +38,33 @@ public class SolverUtils {
         IntVar[] visitTimesEn = new IntVar[n];
         for(int i = 0; i < n; i++)
         {
-            try
+            if(i == accommodation)
             {
-                visitTimesSt[i] = model.intVar("visitTimesSt_" + i, Math.max(dayStart, openingTimes[i]), Math.min(dayEnd, closingTimes[i] - visitDurations[i]));
-                visitTimesEn[i] = model.intVar("visitTimesEn_" + i, Math.max(dayStart, openingTimes[i]) + visitDurations[i], Math.min(dayEnd, closingTimes[i]));
+                visitTimesSt[i] = model.intVar("visitTimesSt_" + i, dayStart);
+                visitTimesEn[i] = model.intVar("visitTimesEn_" + i, dayStart, dayEnd);
             }
-            catch(Exception e)
+            else
             {
-                return route;
+                try
+                {
+                    visitTimesSt[i] = model.intVar("visitTimesSt_" + i, Math.max(dayStart, openingTimes[i]), Math.min(dayEnd, closingTimes[i] - visitDurations[i]));
+                    visitTimesEn[i] = model.intVar("visitTimesEn_" + i, Math.max(dayStart, openingTimes[i]) + visitDurations[i], Math.min(dayEnd, closingTimes[i]));
+                }
+                catch(Exception e)
+                {
+                    return route;
+                }
             }
         }
 
         IntVar[] ord = model.intVarArray("ord", n, 0, n - 1);
         IntVar[] succCost = model.intVarArray("succCost", n, 0, 1440);
         IntVar totalTimeCost = model.intVar("Total time cost", 0, 1440);
+
+        if(accommodation != -1)
+        {
+            ord[accommodation].eq(0).post();
+        }
 
         for (int i = 0; i < n; i++)
         {
@@ -62,32 +76,37 @@ public class SolverUtils {
                             ord[i].add(1).eq(ord[j]).and(ord[i].ne(n - 1)).decompose().reify(),
                             succCost[i].ge(timeCost[i][j] + visitDurations[i]).decompose()
                     );
-                }
-            }
 
-            model.ifThen(
-                    ord[i].eq(n - 1).decompose().reify(),
-                    succCost[i].eq(visitDurations[i]).decompose()
-            );
-        }
-
-        model.allDifferent(ord).post();
-
-        for(int i = 0; i < n; i++)
-        {
-            visitTimesEn[i].eq(visitTimesSt[i].add(visitDurations[i])).post();
-
-            for(int j = 0; j < n; j++)
-            {
-                if(i != j)
-                {
                     model.ifThen(
                             ord[i].sub(1).eq(ord[j]).decompose().reify(),
                             visitTimesSt[i].eq(visitTimesSt[j].add(succCost[j])).decompose()
                     );
                 }
             }
+
+            if(i != accommodation)
+            {
+                visitTimesEn[i].eq(visitTimesSt[i].add(visitDurations[i])).post();
+            }
+
+            if(accommodation != -1)
+            {
+                model.ifThen(
+                        ord[i].eq(n - 1).decompose().reify(),
+                        succCost[i].ge(timeCost[i][accommodation] + visitDurations[i])
+                                .and(visitTimesSt[i].add(succCost[i]).eq(visitTimesEn[accommodation])).decompose()
+                );
+            }
+            else
+            {
+                model.ifThen(
+                        ord[i].eq(n - 1).decompose().reify(),
+                        succCost[i].eq(visitDurations[i]).decompose()
+                );
+            }
         }
+
+        model.allDifferent(ord).post();
 
         model.sum(succCost, "=", totalTimeCost).post();
         model.setObjective(Model.MINIMIZE, totalTimeCost);
@@ -131,11 +150,22 @@ public class SolverUtils {
                         }
                     }
                 }
+                else if(accommodation != -1)
+                {
+                    timeToNextPoi = timeCost[i][accommodation];
+                    waitingTime = solution.getIntVal(succCost[i]) - visitDurations[i] - timeToNextPoi;
+                    polyLine = mapboxUtils.fetchPolyLine(schedule.getPois().get(i), schedule.getPois().get(accommodation));
+                }
 
                 routePois.add(new RoutePoi(id, order, visitTimesStart, visitTimesEnd, timeToNextPoi, waitingTime, polyLine));
             }
 
             route.setPois(routePois);
+
+            if(accommodation != -1)
+            {
+                route.setAccommodation(schedule.getAccommodation());
+            }
         }
         return route;
     }

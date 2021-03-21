@@ -27,6 +27,8 @@ public class Route {
 
     private List<RoutePoi> pois;
 
+    private String accommodation;
+
     public Route(Schedule schedule)
     {
         this.id = schedule.getId();

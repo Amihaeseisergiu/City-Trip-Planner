@@ -102,12 +102,12 @@
                             </div>
                         </div>
 
-                        <div class="bg-white w-full hidden" x-data="data()" id="daysContainer"></div>
+                        <div class="bg-white w-full hidden" x-data="{selected: null}" id="daysContainer"></div>
                     </div>
 
                     <div x-show="tab === 'itinerary'" class="overflow-auto no-scrollbar h-full rounded-b-3xl shadow-inner">
 
-                        <div class="bg-white w-full mt-6" x-data="data()" id="itineraryContainer"></div>
+                        <div class="bg-white w-full mt-6" x-data="{selected: null}" id="itineraryContainer"></div>
                     </div>
                 </div>
             </div>

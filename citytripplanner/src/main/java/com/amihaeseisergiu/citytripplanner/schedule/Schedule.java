@@ -23,6 +23,8 @@ public class Schedule {
     private Integer dayStart;
     private Integer dayEnd;
 
+    private String accommodation;
+
     private List<SchedulePoi> pois;
 
     public int[] getOpeningTimes()
@@ -81,5 +83,21 @@ public class Schedule {
         }
 
         return visitDurations;
+    }
+
+    public int getIndexOfAccommodation()
+    {
+        if(accommodation != null)
+        {
+            for(SchedulePoi poi : pois)
+            {
+                if(poi.getId().equals(accommodation))
+                {
+                    return pois.indexOf(poi);
+                }
+            }
+        }
+
+        return -1;
     }
 }
