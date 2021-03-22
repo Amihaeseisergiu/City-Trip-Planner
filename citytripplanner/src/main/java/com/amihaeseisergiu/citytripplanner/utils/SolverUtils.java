@@ -2,7 +2,7 @@ package com.amihaeseisergiu.citytripplanner.utils;
 
 import com.amihaeseisergiu.citytripplanner.route.Route;
 import com.amihaeseisergiu.citytripplanner.route.RoutePoi;
-import com.amihaeseisergiu.citytripplanner.schedule.Schedule;
+import com.amihaeseisergiu.citytripplanner.schedule.ScheduleDay;
 import lombok.AllArgsConstructor;
 import org.chocosolver.solver.Model;
 import org.chocosolver.solver.Solution;
@@ -19,18 +19,18 @@ public class SolverUtils {
 
     private final MapboxUtils mapboxUtils;
 
-    public Route getRoute(Schedule schedule, int[][] timeCost)
+    public Route getRoute(ScheduleDay scheduleDay, int[][] timeCost)
     {
-        Route route = new Route(schedule);
+        Route route = new Route(scheduleDay);
 
-        int n = schedule.getPois().size();
+        int n = scheduleDay.getPois().size();
 
-        int dayStart = schedule.getDayStart();
-        int dayEnd = schedule.getDayEnd();
-        int[] openingTimes = schedule.getOpeningTimes();
-        int[] closingTimes = schedule.getClosingTimes();
-        int[] visitDurations = schedule.getVisitDurations();
-        int accommodation = schedule.getIndexOfAccommodation();
+        int dayStart = scheduleDay.getDayStart();
+        int dayEnd = scheduleDay.getDayEnd();
+        int[] openingTimes = scheduleDay.getOpeningTimes();
+        int[] closingTimes = scheduleDay.getClosingTimes();
+        int[] visitDurations = scheduleDay.getVisitDurations();
+        int accommodation = scheduleDay.getIndexOfAccommodation();
 
         Model model = new Model("City Planner");
 
@@ -125,7 +125,7 @@ public class SolverUtils {
 
             for (int i = 0; i < n; i++)
             {
-                String id = schedule.getPois().get(i).getId();
+                String id = scheduleDay.getPois().get(i).getPoiId();
                 int order = solution.getIntVal(ord[i]);
 
                 int visitTimesStVal = solution.getIntVal(visitTimesSt[i]);
@@ -145,7 +145,7 @@ public class SolverUtils {
                         {
                             timeToNextPoi = timeCost[i][j];
                             waitingTime = solution.getIntVal(succCost[i]) - visitDurations[i] - timeToNextPoi;
-                            polyLine = mapboxUtils.fetchPolyLine(schedule.getPois().get(i), schedule.getPois().get(j));
+                            polyLine = mapboxUtils.fetchPolyLine(scheduleDay.getPois().get(i), scheduleDay.getPois().get(j));
                             break;
                         }
                     }
@@ -154,7 +154,7 @@ public class SolverUtils {
                 {
                     timeToNextPoi = timeCost[i][accommodation];
                     waitingTime = solution.getIntVal(succCost[i]) - visitDurations[i] - timeToNextPoi;
-                    polyLine = mapboxUtils.fetchPolyLine(schedule.getPois().get(i), schedule.getPois().get(accommodation));
+                    polyLine = mapboxUtils.fetchPolyLine(scheduleDay.getPois().get(i), scheduleDay.getPois().get(accommodation));
                 }
 
                 routePois.add(new RoutePoi(id, order, visitTimesStart, visitTimesEnd, timeToNextPoi, waitingTime, polyLine));
@@ -164,7 +164,7 @@ public class SolverUtils {
 
             if(accommodation != -1)
             {
-                route.setAccommodation(schedule.getAccommodation());
+                route.setAccommodation(scheduleDay.getAccommodation());
             }
         }
         return route;

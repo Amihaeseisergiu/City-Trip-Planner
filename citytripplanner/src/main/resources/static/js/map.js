@@ -142,6 +142,8 @@ function addPOItoDay(id)
 {
     if(currentSelectedDay && !currentSelectedDay.pois.find( ({poi}) => poi.id === id))
     {
+        addLoadingNotSaved();
+
         let el = addedMarkers.find( ({poi}) => poi.id === id);
         currentSelectedDay.pois.push(el);
         let poiHoursInfo = el.details.poiHours.find( ({dayNumber}) => dayNumber === currentSelectedDay.dayNumber);
@@ -261,6 +263,8 @@ function addPOItoDay(id)
         });
 
         document.getElementById(`poiInDayAccommodation_${id}_${currentSelectedDay.id}`).addEventListener('click', () => {
+            addLoadingNotSaved();
+
             let input = document.getElementById(`poiInDay_${id}_${currentSelectedDay.id}`);
 
             if(input.innerHTML == '')
@@ -292,6 +296,8 @@ function addPOItoDay(id)
 function addInputDurationRegex(id)
 {
     document.getElementById(`poiInDayVisit_${id}_${currentSelectedDay.id}`).addEventListener('input', () => {
+        addLoadingNotSaved();
+
         let input = document.getElementById(`poiInDayVisit_${id}_${currentSelectedDay.id}`);
         if(!input.validity.valid)
         {
@@ -315,6 +321,8 @@ function verifyDurationInput(id)
     let input = document.getElementById(id);
     if(!input.validity.valid)
     {
+        addLoadingNotSaved();
+
         input.value = "1:00";
         input.classList.remove('focus:ring-red-400');
         input.classList.add('focus:ring');
@@ -323,6 +331,8 @@ function verifyDurationInput(id)
 
 function removePOIFromDay(id, day)
 {
+    addLoadingNotSaved();
+
     const poi = day.pois.find( ({poi}) => poi.id === id);
     const indexOfPoi = day.pois.findIndex(function(poi) { return poi.poi.id === id});
     const indexOfPoiDuration = day.visitDurations.findIndex(function(poi) { return poi.id === id});
@@ -438,7 +448,9 @@ map.on('moveend', function() {
     }
 });
 
-function addDayElement(id, dayName, date, dayStart, dayEnd, colour) {
+function addDayElement(id, dayName, date, dayStart, dayEnd, colour)
+{
+    addLoadingNotSaved();
 
     const div = document.createElement('div');
     document.getElementById("createItineraryButton").classList.remove("hidden");
@@ -447,7 +459,7 @@ function addDayElement(id, dayName, date, dayStart, dayEnd, colour) {
     div.id = 'day_' + id
     div.innerHTML = `
         <div class="flex flex-row">
-            <div style="background-color: ${colour};" class="h-auto rounded-l-2xl w-2"></div>
+            <div style="background-color: ${colour};" class="h-auto rounded-l-3xl w-2"></div>
             <button type="button" class="w-full p-6 text-left text-gray-500 font-bold leading-tight focus:outline-none"
                 @click="selected !== ${id} ? selected = ${id} : selected = null;
                 selected === ${id} ? currentSelectedDay = addedDays.find( ({id}) => id === ${id}) : currentSelectedDay = null;">
@@ -487,6 +499,8 @@ function addDayElement(id, dayName, date, dayStart, dayEnd, colour) {
 
 function removeDayElement(id)
 {
+    addLoadingNotSaved();
+
     const index = addedDays.findIndex(function(day) { return day.id === id});
     let dayRet = addedDays[index];
 
@@ -508,6 +522,8 @@ function removeDayElement(id)
 
 function addDay()
 {
+    addLoadingNotSaved();
+
     let displayDate = document.getElementById('addDay');
     let displayTimeStart = document.getElementById('dayStart');
     let displayTimeEnd = document.getElementById('dayEnd');
@@ -565,39 +581,9 @@ function getRandomColor()
 
 function sendPOIByDayData()
 {
-    let scheduleToSend = [];
+    addLoading();
 
-    for(let i = 0; i < addedDays.length; i++)
-    {
-        let pois = [];
-
-        for(let j = 0; j < addedDays[i].pois.length; j++)
-        {
-            let visitTimesData = addedDays[i].visitDurations.find( ({id}) => id === addedDays[i].pois[j].poi.id);
-            pois.push({
-                id:  addedDays[i].pois[j].poi.id,
-                lat: addedDays[i].pois[j].poi.lat,
-                lng: addedDays[i].pois[j].poi.lng,
-                openingAt: visitTimesData.openingAt,
-                closingAt: visitTimesData.closingAt,
-                visitDuration: visitTimesData.visitDuration
-            });
-        }
-
-        let accommodation = document.getElementById(`poiContainer_${addedDays[i].id}`).__x.$data.accommodation;
-
-        scheduleToSend.push({
-            id: addedDays[i].id,
-            dayName: addedDays[i].dayName,
-            dayNumber: addedDays[i].dayNumber,
-            date: addedDays[i].date,
-            colour: addedDays[i].colour,
-            dayStart: addedDays[i].dayStart,
-            dayEnd: addedDays[i].dayEnd,
-            pois: pois,
-            accommodation: accommodation
-        });
-    }
+    let scheduleToSend = getScheduleToSend();
 
     const url = `http://localhost:8080/schedule`;
     fetch(url, {
@@ -609,6 +595,8 @@ function sendPOIByDayData()
     })
     .then(response => response.json())
     .then(data => {
+
+        addLoadingSaved();
 
         if(data.length > 0)
         {
@@ -985,3 +973,120 @@ function cleanShownRoutes()
 document.getElementById("plannerTabButton").addEventListener("click", function() {
     document.getElementById("itineraryContainer").__x.$data.selected = null;
 });
+
+window.addEventListener('keydown', function(event) {
+    if(event.ctrlKey || event.metaKey)
+    {
+        if(String.fromCharCode(event.which).toLowerCase() === 's')
+        {
+            event.preventDefault();
+
+            savePlanner();
+        }
+    }
+});
+
+function savePlanner()
+{
+    addLoading();
+
+    let scheduleToSend = getScheduleToSend();
+
+    const url = `http://localhost:8080/schedule/save`;
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(scheduleToSend)
+    }).then(response => {
+        addLoadingSaved();
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+}
+
+function getScheduleToSend()
+{
+    let scheduleToSend = [];
+
+    for(let i = 0; i < addedDays.length; i++)
+    {
+        let pois = [];
+
+        for(let j = 0; j < addedDays[i].pois.length; j++)
+        {
+            let visitTimesData = addedDays[i].visitDurations.find( ({id}) => id === addedDays[i].pois[j].poi.id);
+            pois.push({
+                poiId:  addedDays[i].pois[j].poi.id,
+                lat: addedDays[i].pois[j].poi.lat,
+                lng: addedDays[i].pois[j].poi.lng,
+                colours: addedDays[i].pois[j].colours,
+                openingAt: visitTimesData.openingAt,
+                closingAt: visitTimesData.closingAt,
+                visitDuration: visitTimesData.visitDuration
+            });
+        }
+
+        let accommodation = document.getElementById(`poiContainer_${addedDays[i].id}`).__x.$data.accommodation;
+
+        scheduleToSend.push({
+            dayId: addedDays[i].id,
+            dayName: addedDays[i].dayName,
+            dayNumber: addedDays[i].dayNumber,
+            date: addedDays[i].date,
+            colour: addedDays[i].colour,
+            dayStart: addedDays[i].dayStart,
+            dayEnd: addedDays[i].dayEnd,
+            pois: pois,
+            accommodation: accommodation
+        });
+    }
+
+    return scheduleToSend;
+}
+
+function addLoadingNotSaved()
+{
+    let loadingDiv = document.getElementById("loadingContainer");
+
+    loadingDiv.innerHTML = `
+        <button class="group hover:bg-indigo-500 rounded-full p-3 transition ease-out duration-300 focus:outline-none"
+                onclick="savePlanner()">
+            <svg class="w-5 h-5 text-indigo-500 group-hover:text-white"
+                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003
+                 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+        </button>
+    `;
+}
+
+function addLoading()
+{
+    let loadingDiv = document.getElementById("loadingContainer");
+
+    loadingDiv.innerHTML = `
+        <div class="p-3">
+            <div class="h-4 w-4 relative">
+                <div class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400"></div>
+                <div class="rounded-full h-full h-full bg-indigo-500"></div>
+            </div>
+        </div>
+    `;
+}
+
+function addLoadingSaved()
+{
+    let loadingDiv = document.getElementById("loadingContainer");
+
+    loadingDiv.innerHTML = `
+        <div class="p-3">
+            <svg class="w-5 h-5 text-indigo-500 group-hover:text-white"
+                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+        </div>
+    `;
+}

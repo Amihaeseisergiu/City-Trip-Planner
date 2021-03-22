@@ -38,20 +38,31 @@
             <div class="w-full h-1/2 p-5 lg:w-2/6 lg:h-full">
                 <div x-data="{tab: 'planner'}" class="h-full bg-white rounded-3xl shadow-2xl flex flex-col" id="tabsContainer">
 
-                    <div class="flex w-full overflow-auto no-scrollbar">
-                        <button :class="{ 'active border-indigo-500 text-gray-600': tab === 'planner' }"
-                                class="p-3 focus:outline-none focus:border-indigo-500 focus:text-gray-600 border-b-2 border-white text-gray-400
+                    <div class="flex flex-row justify-between">
+                        <div class="flex w-full overflow-auto no-scrollbar break-all">
+                            <button :class="{ 'active border-indigo-500 text-gray-600': tab === 'planner' }"
+                                    class="p-3 focus:outline-none focus:border-indigo-500 focus:text-gray-600 border-b-2 border-white text-gray-400
                                 hover:border-indigo-500 font-bold uppercase tracking-tight transition ease-in duration-200"
-                                @click="tab = 'planner'" id="plannerTabButton"
-                                onclick="cleanShownRoutes()">
-                            Planner
-                        </button>
-                        <button :class="{ 'active border-indigo-500 text-gray-600': tab === 'itinerary' }"
-                                class="p-3 focus:outline-none focus:border-indigo-500 focus:text-gray-600 border-b-2 border-white text-gray-400
+                                    @click="tab = 'planner'" id="plannerTabButton"
+                                    onclick="cleanShownRoutes()">
+                                Planner
+                            </button>
+                            <button :class="{ 'active border-indigo-500 text-gray-600': tab === 'itinerary' }"
+                                    class="p-3 focus:outline-none focus:border-indigo-500 focus:text-gray-600 border-b-2 border-white text-gray-400
                                 hover:border-indigo-500 font-bold uppercase tracking-tight transition ease-in duration-200 hidden"
-                                @click="tab = 'itinerary'" id="itineraryTab">
-                            Itinerary
-                        </button>
+                                    @click="tab = 'itinerary'" id="itineraryTab">
+                                Itinerary
+                            </button>
+                        </div>
+
+                        <div class="flex flex-row items-center rounded-tr-3xl" id="loadingContainer">
+                            <div class="p-3">
+                                <svg class="w-5 h-5 text-indigo-500 group-hover:text-white"
+                                     xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                        </div>
                     </div>
 
                     <div x-show="tab === 'planner'" class="overflow-auto no-scrollbar h-full rounded-b-3xl shadow-inner">

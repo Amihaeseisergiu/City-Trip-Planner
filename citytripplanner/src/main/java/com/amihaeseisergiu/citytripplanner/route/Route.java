@@ -1,10 +1,9 @@
 package com.amihaeseisergiu.citytripplanner.route;
 
-import com.amihaeseisergiu.citytripplanner.schedule.Schedule;
+import com.amihaeseisergiu.citytripplanner.schedule.ScheduleDay;
 import lombok.*;
 import org.springframework.stereotype.Component;
 
-import java.util.Date;
 import java.util.List;
 
 @Getter
@@ -29,14 +28,14 @@ public class Route {
 
     private String accommodation;
 
-    public Route(Schedule schedule)
+    public Route(ScheduleDay scheduleDay)
     {
-        this.id = schedule.getId();
-        this.dayName = schedule.getDayName();
-        this.dayNumber = schedule.getDayNumber();
-        this.date = schedule.getDate();
-        this.colour = schedule.getColour();
-        this.dayStart = schedule.getDayStart();
-        this.dayEnd = schedule.getDayEnd();
+        this.id = scheduleDay.getId();
+        this.dayName = scheduleDay.getDayName();
+        this.dayNumber = scheduleDay.getDayNumber();
+        this.date = scheduleDay.getDate();
+        this.colour = scheduleDay.getColour();
+        this.dayStart = scheduleDay.getDayStart();
+        this.dayEnd = scheduleDay.getDayEnd();
     }
 }

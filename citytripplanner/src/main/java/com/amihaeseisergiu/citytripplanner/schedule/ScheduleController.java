@@ -14,9 +14,16 @@ public class ScheduleController {
     private final ScheduleService scheduleService;
 
     @PostMapping
-    List<Route> solve(@RequestBody List<Schedule> schedules)
+    public List<Route> solve(@RequestBody List<ScheduleDay> scheduleDays)
     {
-        return scheduleService.getResolvedSchedule(schedules);
+        scheduleService.save(scheduleDays);
+        return scheduleService.getResolvedSchedule(scheduleDays);
+    }
+
+    @PostMapping("/save")
+    public void save(@RequestBody List<ScheduleDay> scheduleDays)
+    {
+        scheduleService.save(scheduleDays);
     }
 
 }
