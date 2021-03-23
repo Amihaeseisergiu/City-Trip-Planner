@@ -1,6 +1,7 @@
 package com.amihaeseisergiu.citytripplanner.schedule;
 
 import com.amihaeseisergiu.citytripplanner.appuser.AppUser;
+import com.amihaeseisergiu.citytripplanner.schedule.day.ScheduleDay;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
@@ -29,9 +30,11 @@ public class Schedule {
     private Long id;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "schedule_id")
     private List<ScheduleDay> scheduleDays;
 
     @ManyToOne
+    @JsonIgnore
     private AppUser user;
 
     Schedule(List<ScheduleDay> scheduleDays, AppUser appUser)

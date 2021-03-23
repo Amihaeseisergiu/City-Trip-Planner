@@ -51,7 +51,7 @@ document.getElementById('dayEnd').setAttribute('value', new Date().toLocaleTimeS
             hour: "numeric",
             minute: "numeric"}));
 
-function getPOIDetails(id, name, marker)
+function getPOIDetails(id, marker)
 {
     const url = `http://localhost:8080/poi/${id}`;
     fetch(url, {
@@ -62,91 +62,104 @@ function getPOIDetails(id, name, marker)
     })
         .then(response => response.json())
         .then(data => {
-            let hoursHTML = ``;
-            data.poiHours.sort(function(a, b) {
-                return a.dayNumber - b.dayNumber;
-            });
 
-            for(const hours of data.poiHours)
-            {
-                hoursHTML += `
-                    <div class="mt-3 bg-indigo-200 rounded-xl shadow">
-                        <p class="text-center border-b-2 border-gray-400 font-bold text-gray-600">
-                            ${hours.dayName ? hours.dayName : "unavailable"}
-                        </p>
-                        <p class="text-center font-bold text-gray-600">
-                            Opening: ${hours.openingAt ? hours.openingAt : "unavailable"}
-                        </p>
-                        <p class="text-center font-bold text-gray-600">
-                            Closing: ${hours.closingAt ? hours.closingAt : "unavailable"}
-                        </p>
-                    </div>`;
-            }
-
-            let html = `
-                    <div class="flex flex-row items-center justify-between mb-2">
-                        <p class="font-bold text-2xl text-indigo-400">
-                            ${name}
-                        </p>
-                        <button id="poi_add_${id}"
-                                class="p-1 border-green-400 border-2 text-gray-600 hover:bg-green-400 hover:text-white
-                                focus:outline-none rounded-xl transition ease-out duration-600">
-                            <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                            </svg>
-                        </button>
-                    </div>
-                    
-                    ${data.photoPrefix ? `<img class="rounded-2xl shadow-xl" alt="POI Photo" src="${data.photoPrefix}500${data.photoSuffix}">` : ""}
-                     <div class="overflow-auto no-scrollbar max-h-36">
-                        <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-600">
-                            Phone: ${data.formattedPhone ? data.formattedPhone : "unavailable"}
-                        </p>
-                        <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-600">
-                            Rating: ${data.rating ? data.rating : "unavailable"}
-                        </p>
-                        <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-600">
-                            Type: ${data.type ? data.type : "unavailable"}
-                        </p>
-                        <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-600">
-                            Price Tier: ${data.priceTier ? data.priceTier : "unavailable"}
-                        </p>
-                        ${hoursHTML}
-                     </div>`;
-
-            let popUp = new mapboxgl.Popup({className: `mapbox-gl-popup-${id}`}).setHTML(html).on('open', e => {
-                if(document.getElementById("tabsContainer").__x.$data.tab === 'itinerary')
-                {
-                    document.getElementById(`poi_add_${id}`).classList.add('hidden');
-                }
-                else
-                {
-                    document.getElementById(`poi_add_${id}`).classList.remove('hidden');
-                }
-            });
-            marker.setPopup(popUp);
-            marker.togglePopup();
-
-            addedMarkers.find( ({poi}) => poi.id === id)['details'] = data;
-
-            document.getElementById(`poi_add_${id}`).addEventListener('click', function() {
-                addPOItoDay(id);
-            });
+            addPoiDetails(data, marker);
         })
         .catch((error) => {
             console.error('Error:', error);
         });
 }
 
-function addPOItoDay(id)
+function addPoiDetails(data, marker)
 {
-    if(currentSelectedDay && !currentSelectedDay.pois.find( ({poi}) => poi.id === id))
-    {
-        addLoadingNotSaved();
+    let hoursHTML = ``;
+    data.poiHours.sort(function(a, b) {
+        return a.dayNumber - b.dayNumber;
+    });
 
+    for(const hours of data.poiHours)
+    {
+        hoursHTML += `
+            <div class="mt-3 bg-indigo-200 rounded-xl shadow">
+                <p class="text-center border-b-2 border-gray-400 font-bold text-gray-600">
+                    ${hours.dayName ? hours.dayName : "unavailable"}
+                </p>
+                <p class="text-center font-bold text-gray-600">
+                    Opening: ${hours.openingAt ? hours.openingAt : "unavailable"}
+                </p>
+                <p class="text-center font-bold text-gray-600">
+                    Closing: ${hours.closingAt ? hours.closingAt : "unavailable"}
+                </p>
+            </div>`;
+    }
+
+    let html = `
+        <div class="flex flex-row items-center justify-between mb-2">
+            <p class="font-bold text-2xl text-indigo-400">
+                ${data.name}
+            </p>
+            <button id="poi_add_${data.id}"
+                    class="p-1 border-green-400 border-2 text-gray-600 hover:bg-green-400 hover:text-white
+                    focus:outline-none rounded-xl transition ease-out duration-600">
+                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+            </button>
+        </div>
+        
+        ${data.photoPrefix ? `<img class="rounded-2xl shadow-xl" alt="POI Photo" src="${data.photoPrefix}500${data.photoSuffix}">` : ""}
+         <div class="overflow-auto no-scrollbar max-h-36">
+            <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-600">
+                Phone: ${data.formattedPhone ? data.formattedPhone : "unavailable"}
+            </p>
+            <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-600">
+                Rating: ${data.rating ? data.rating : "unavailable"}
+            </p>
+            <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-600">
+                Type: ${data.type ? data.type : "unavailable"}
+            </p>
+            <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-600">
+                Price Tier: ${data.priceTier ? data.priceTier : "unavailable"}
+            </p>
+            ${hoursHTML}
+         </div>`;
+
+    let popUp = new mapboxgl.Popup({className: `mapbox-gl-popup-${data.id}`}).setHTML(html).on('open', e => {
+        if(document.getElementById("tabsContainer").__x.$data.tab === 'itinerary')
+        {
+            document.getElementById(`poi_add_${data.id}`).classList.add('hidden');
+        }
+        else
+        {
+            document.getElementById(`poi_add_${data.id}`).classList.remove('hidden');
+        }
+    });
+
+    marker.setPopup(popUp);
+    marker.togglePopup();
+
+    addedMarkers.find( ({poi}) => poi.id === data.id)['details'] = data;
+
+    document.getElementById(`poi_add_${data.id}`).addEventListener('click', function() {
+        addPOItoDay(data.id, null, null, '1:00');
+    });
+}
+
+function addPOItoDay(id, dayId, accommodation, visitDuration)
+{
+    let day = currentSelectedDay;
+    if(dayId !== null)
+    {
+       day = addedDays.find( ({id}) => id === dayId);
+       addLoadingNotSaved();
+    }
+
+    if(day && !day.pois.find( ({poi}) => poi.id === id))
+    {
         let el = addedMarkers.find( ({poi}) => poi.id === id);
-        currentSelectedDay.pois.push(el);
-        let poiHoursInfo = el.details.poiHours.find( ({dayNumber}) => dayNumber === currentSelectedDay.dayNumber);
+
+        day.pois.push(el);
+        let poiHoursInfo = el.details.poiHours.find( ({dayNumber}) => dayNumber === day.dayNumber);
         let openingAt = null;
         let closingAt = null;
 
@@ -156,16 +169,16 @@ function addPOItoDay(id)
             closingAt = poiHoursInfo.closingAt.split(':')[0] + ':' + poiHoursInfo.closingAt.split(':')[1];
         }
 
-        currentSelectedDay.visitDurations.push({
+        day.visitDurations.push({
             id: el.poi.id,
-            visitDuration: '1:00',
+            visitDuration: visitDuration,
             openingAt: openingAt,
             closingAt: closingAt
         });
 
         if('colours' in el)
         {
-            el['colours'].push(currentSelectedDay.colour);
+            el['colours'].push(day.colour);
             let boxShadowString = `0 0 0 3px ${el['colours'][0]}`;
 
             for(let i = 1; i < el['colours'].length; i++)
@@ -177,23 +190,23 @@ function addPOItoDay(id)
         }
         else
         {
-            el['colours'] = [currentSelectedDay.colour];
+            el['colours'] = [day.colour];
             el['marker']._element.style.boxShadow = `0 0 0 3px ${el['colours'][0]}`;
         }
 
-        let poiContainer = document.getElementById(`poiContainer_${currentSelectedDay.id}`);
-        const indexOfPoi = currentSelectedDay.pois.findIndex(function(poi) { return poi.poi.id === id});
+        let poiContainer = document.getElementById(`poiContainer_${day.id}`);
+        const indexOfPoi = day.pois.findIndex(function(poi) { return poi.poi.id === id});
 
         const div = document.createElement('div');
 
         div.className = 'relative border border-gray-300 rounded-xl mt-2';
-        div.id = `poi_${id}_day_${currentSelectedDay.id}`;
+        div.id = `poi_${id}_day_${day.id}`;
         div.innerHTML = `
             <div class="flex flex-row rounded-xl text-white break-all overflow-hidden"
                     style="background-image: url(${el['details'].photoPrefix}${500}${el['details'].photoSuffix});
                     background-position: center; background-repeat: no-repeat; background-size: cover;">
                 <button type="button" class="w-full p-4 text-left focus:outline-none"
-                    @click="selectedIn !== '${id}_${currentSelectedDay.id}' ? selectedIn = '${id}_${currentSelectedDay.id}' : selectedIn = null">
+                    @click="selectedIn !== '${id}_${day.id}' ? selectedIn = '${id}_${day.id}' : selectedIn = null">
                     <div class="flex flex-col justify-between">
                         <p class="text-2xl font-bold leading-tight"
                             style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;">
@@ -204,33 +217,34 @@ function addPOItoDay(id)
                         </p>
                     </div>
                 </button>
-                <button type="button" x-show="'${el.details.type}' === 'Hotel'" id="poiInDayAccommodation_${id}_${currentSelectedDay.id}"
+                <button type="button" x-show="'${el.details.type}' === 'Hotel'" id="poiInDayAccommodation_${id}_${day.id}"
                         :class="{'active bg-green-400' : accommodation === '${id}'}"
                         class="p-7 focus:outline-none hover:bg-green-400 hover:text-white rounded-lg transition ease-out duration-600"
-                        @click="if(accommodation === '${id}') {accommodation = null;} else {accommodation = '${id}';}">
+                        @click="if(accommodation === '${id}') {accommodation = null;} else {accommodation = '${id}';}
+                                verifyAccommodation('${id}', ${day.id}, accommodation);">
                     <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1
                        1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                     </svg>
                 </button>
-                <button type="button" onclick="removePOIFromDay(\`${id}\`, currentSelectedDay)"
+                <button type="button" onclick="removePOIFromDay(\`${id}\`, ${day.id})"
                         class="p-7 focus:outline-none hover:bg-red-400 hover:text-white rounded-lg transition ease-out duration-600">
                     <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
-            <div class="relative overflow-hidden transition-all max-h-0 duration-700" id="poiInDay_${id}_${currentSelectedDay.id}"
-                 x-ref="poiInDay_${id}_${currentSelectedDay.id}"
-                 x-bind:style="selectedIn == '${id}_${currentSelectedDay.id}' ?
-                 'max-height: ' + $refs.poiInDay_${id}_${currentSelectedDay.id}.scrollHeight + 'px' : ''">
-                <div class="p-6" id="poiInDayContainer_${id}_${currentSelectedDay.id}">
+            <div class="relative overflow-hidden transition-all max-h-0 duration-700" id="poiInDay_${id}_${day.id}"
+                 x-ref="poiInDay_${id}_${day.id}"
+                 x-bind:style="selectedIn == '${id}_${day.id}' ?
+                 'max-height: ' + $refs.poiInDay_${id}_${day.id}.scrollHeight + 'px' : ''">
+                <div class="p-6" id="poiInDayContainer_${id}_${day.id}">
                     <div class="flex items-center justify-start">
-                        <label class="pr-4 font-bold tracking-tight text-gray-500" for="poiInDayVisit_${id}_${currentSelectedDay.id}">Duration:</label>
+                        <label class="pr-4 font-bold tracking-tight text-gray-500" for="poiInDayVisit_${id}_${day.id}">Duration:</label>
                         <input class="w-full shadow appearance-none border rounded py-2 px-2 text-grey-darker
-                        focus:outline-none focus:ring" type="text" id="poiInDayVisit_${id}_${currentSelectedDay.id}"
-                        name="poiInDayVisit_${id}_${currentSelectedDay.id}" pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]" value="1:00"
-                        @click.away="verifyDurationInput('poiInDayVisit_${id}_${currentSelectedDay.id}')"/>
+                        focus:outline-none focus:ring" type="text" id="poiInDayVisit_${id}_${day.id}"
+                        name="poiInDayVisit_${id}_${day.id}" pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]" value="${visitDuration}"
+                        @click.away="verifyDurationInput('poiInDayVisit_${id}_${day.id}')"/>
                     </div>
                 </div>
             </div>
@@ -238,80 +252,91 @@ function addPOItoDay(id)
 
         if(poiContainer.innerText === 'No locations have been added')
         {
-            document.getElementById(`poiContainer_${currentSelectedDay.id}`).innerHTML = "";
-            document.getElementById(`poiContainer_${currentSelectedDay.id}`).appendChild(div);
-            document.getElementById(`poiContainerParent_${currentSelectedDay.id}`).style.maxHeight =
-                document.getElementById(`poiContainerParent_${currentSelectedDay.id}`).scrollHeight + 'px';
+            document.getElementById(`poiContainer_${day.id}`).innerHTML = "";
+            document.getElementById(`poiContainer_${day.id}`).appendChild(div);
+            document.getElementById(`poiContainerParent_${day.id}`).style.maxHeight =
+                document.getElementById(`poiContainerParent_${day.id}`).scrollHeight + 'px';
         }
         else
         {
-            document.getElementById(`poiContainer_${currentSelectedDay.id}`).appendChild(div);
-            document.getElementById(`poiContainerParent_${currentSelectedDay.id}`).style.maxHeight =
-                document.getElementById(`poiContainerParent_${currentSelectedDay.id}`).scrollHeight + 'px';
+            document.getElementById(`poiContainer_${day.id}`).appendChild(div);
+            document.getElementById(`poiContainerParent_${day.id}`).style.maxHeight =
+                document.getElementById(`poiContainerParent_${day.id}`).scrollHeight + 'px';
         }
 
-        document.getElementById(`poiInDay_${id}_${currentSelectedDay.id}`).addEventListener('transitionstart', () => {
-            if(document.getElementById(`poiInDay_${id}_${currentSelectedDay.id}`))
+        document.getElementById(`poiInDay_${id}_${day.id}`).addEventListener('transitionstart', () => {
+            if(document.getElementById(`poiInDay_${id}_${day.id}`))
             {
-                const calc = parseInt(document.getElementById(`poiContainerParent_${currentSelectedDay.id}`)
+                const calc = parseInt(document.getElementById(`poiContainerParent_${day.id}`)
                         .style.maxHeight.replace('px','')) +
-                    parseInt(document.getElementById(`poiInDay_${id}_${currentSelectedDay.id}`).style.maxHeight.replace('px',''));
+                    parseInt(document.getElementById(`poiInDay_${id}_${day.id}`).style.maxHeight.replace('px',''));
 
                 if(calc)
-                    document.getElementById(`poiContainerParent_${currentSelectedDay.id}`).style.maxHeight = calc + 'px';
+                    document.getElementById(`poiContainerParent_${day.id}`).style.maxHeight = calc + 'px';
             }
         });
 
-        document.getElementById(`poiInDayAccommodation_${id}_${currentSelectedDay.id}`).addEventListener('click', () => {
-            addLoadingNotSaved();
+        addInputDurationRegex(id, day);
 
-            let input = document.getElementById(`poiInDay_${id}_${currentSelectedDay.id}`);
-
-            if(input.innerHTML == '')
-            {
-                input.innerHTML = `
-                    <div class="p-6" id="poiInDayContainer_${id}_${currentSelectedDay.id}">
-                        <div class="flex items-center justify-start">
-                            <label class="pr-4 font-bold tracking-tight text-gray-500" for="poiInDayVisit_${id}_${currentSelectedDay.id}">Duration:</label>
-                            <input class="w-full shadow appearance-none border rounded py-2 px-2 text-grey-darker
-                            focus:outline-none focus:ring" type="text" id="poiInDayVisit_${id}_${currentSelectedDay.id}"
-                            name="poiInDayVisit_${id}_${currentSelectedDay.id}" pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]" value="1:00"
-                            @click.away="verifyDurationInput('poiInDayVisit_${id}_${currentSelectedDay.id}')"/>
-                        </div>
-                    </div>
-                `;
-
-                addInputDurationRegex(id);
-            }
-            else
-            {
-                input.innerHTML = '';
-            }
-        });
-
-        addInputDurationRegex(id);
+        if(accommodation !== null && accommodation === id)
+        {
+            let input = document.getElementById(`poiInDay_${id}_${dayId}`);
+            input.innerHTML = '';
+        }
     }
 }
 
-function addInputDurationRegex(id)
+function verifyAccommodation(id, dayId, accommodation)
 {
-    document.getElementById(`poiInDayVisit_${id}_${currentSelectedDay.id}`).addEventListener('input', () => {
+    addLoadingNotSaved();
+
+    let input = document.getElementById(`poiInDay_${id}_${dayId}`);
+
+    if(accommodation === null)
+    {
+        input.innerHTML = `
+            <div class="p-6" id="poiInDayContainer_${id}_${dayId}">
+                <div class="flex items-center justify-start">
+                    <label class="pr-4 font-bold tracking-tight text-gray-500" for="poiInDayVisit_${id}_${dayId}">Duration:</label>
+                    <input class="w-full shadow appearance-none border rounded py-2 px-2 text-grey-darker
+                    focus:outline-none focus:ring" type="text" id="poiInDayVisit_${id}_${dayId}"
+                    name="poiInDayVisit_${id}_${dayId}" pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]" value="1:00"
+                    @click.away="verifyDurationInput('poiInDayVisit_${id}_${dayId}')"/>
+                </div>
+            </div>
+        `;
+
+        let day = addedDays.find( ({id}) => id === dayId);
+
+        addInputDurationRegex(id, day);
+    }
+    else
+    {
+        input.innerHTML = '';
+    }
+}
+
+function addInputDurationRegex(id, day)
+{
+    document.getElementById(`poiInDayVisit_${id}_${day.id}`).addEventListener('input', () => {
         addLoadingNotSaved();
 
-        let input = document.getElementById(`poiInDayVisit_${id}_${currentSelectedDay.id}`);
+        let input = document.getElementById(`poiInDayVisit_${id}_${day.id}`);
+        let poiId = id;
+
         if(!input.validity.valid)
         {
             input.classList.remove('focus:ring-green-400');
             input.classList.add('focus:ring-red-400');
 
-            currentSelectedDay.visitDurations.find(({id}) => id === id).visitDuration = '1:00';
+            day.visitDurations.find(({id}) => id === poiId).visitDuration = '1:00';
         }
         else
         {
             input.classList.remove('focus:ring-red-400');
             input.classList.add('focus:ring-green-400');
 
-            currentSelectedDay.visitDurations.find(({id}) => id === id).visitDuration = input.value;
+            day.visitDurations.find(({id}) => id === poiId).visitDuration = input.value;
         }
     });
 }
@@ -329,9 +354,11 @@ function verifyDurationInput(id)
     }
 }
 
-function removePOIFromDay(id, day)
+function removePOIFromDay(id, dayId)
 {
     addLoadingNotSaved();
+
+    let day = addedDays.find( ({id}) => id === dayId);
 
     const poi = day.pois.find( ({poi}) => poi.id === id);
     const indexOfPoi = day.pois.findIndex(function(poi) { return poi.poi.id === id});
@@ -344,21 +371,7 @@ function removePOIFromDay(id, day)
 
     el['colours'].splice(index, 1);
 
-    if(el['colours'][0])
-    {
-        let boxShadowString = `0 0 0 3px ${el['colours'][0]}`;
-
-        for(let i = 1; i < el['colours'].length; i++)
-        {
-            boxShadowString += `, 0 0 0 ${(i + 1) * 3}px ${el['colours'][i]}`
-        }
-
-        el['marker']._element.style.boxShadow = boxShadowString;
-    }
-    else
-    {
-        el['marker']._element.style.boxShadow = '';
-    }
+    recalculateColours(el);
 
     day.pois.splice(indexOfPoi, 1);
     day.visitDurations.splice(indexOfPoiDuration, 1);
@@ -374,6 +387,25 @@ function removePOIFromDay(id, day)
         document.getElementById(`poiContainerParent_${day.id}`).scrollHeight  + 'px';
 }
 
+function recalculateColours(el)
+{
+    if(el['colours'][0])
+    {
+        let boxShadowString = `0 0 0 3px ${el['colours'][0]}`;
+
+        for(let i = 1; i < el['colours'].length; i++)
+        {
+            boxShadowString += `, 0 0 0 ${(i + 1) * 3}px ${el['colours'][i]}`
+        }
+
+        el['marker']._element.style.boxShadow = boxShadowString;
+    }
+    else
+    {
+        el['marker']._element.style.boxShadow = '';
+    }
+}
+
 function addPOIs(lat, lng, radius)
 {
     const url = `http://localhost:8080/poi?ll=${lat},${lng}&radius=${radius}`;
@@ -387,35 +419,57 @@ function addPOIs(lat, lng, radius)
         .then(data => {
             for(const poi of data)
             {
-                if(!addedMarkers.some(e => e.poi.id === poi.id))
-                {
-                    let el = document.createElement('div');
-                    el.className = "block bg-indigo-400 rounded-full p-0 border-none cursor-pointer";
-                    el.id = `poi_marker_${poi.id}`;
-                    el.style.backgroundImage = `url(${poi.iconPrefix}` + 32 + `${poi.iconSuffix}`;
-                    el.style.width = 32 + 'px';
-                    el.style.height = 32 + 'px';
-
-                    let marker = new mapboxgl.Marker(el)
-                        .setLngLat([poi.lng, poi.lat])
-                        .addTo(map);
-                    addedMarkers.push({
-                        poi,
-                        marker
-                    });
-
-                    marker.getElement().addEventListener('click', function() {
-                        if(marker.getPopup() == null)
-                        {
-                            getPOIDetails(poi.id, poi.name, marker);
-                        }
-                    });
-                }
+                addPoiMarker(poi);
             }
         })
         .catch((error) => {
             console.error('Error:', error);
         });
+}
+
+function addPoiMarker(poi)
+{
+    if(!addedMarkers.some(e => e.poi.id === poi.id))
+    {
+        let el = document.createElement('div');
+        el.className = "block bg-indigo-400 rounded-full p-0 border-none cursor-pointer";
+        el.id = `poi_marker_${poi.id}`;
+        el.style.backgroundImage = `url(${poi.iconPrefix}` + 32 + `${poi.iconSuffix}`;
+        el.style.width = 32 + 'px';
+        el.style.height = 32 + 'px';
+
+        let marker = new mapboxgl.Marker(el)
+            .setLngLat([poi.lng, poi.lat])
+            .addTo(map);
+
+        let toAdd = {
+            poi: poi,
+            marker: marker
+        }
+
+        if('type' in poi)
+        {
+            toAdd['details'] = poi;
+        }
+
+        addedMarkers.push(toAdd);
+
+        marker.getElement().addEventListener('click', function() {
+            if(marker.getPopup() == null)
+            {
+                getPOIDetails(poi.id, marker);
+            }
+        });
+    }
+    else
+    {
+        let el = addedMarkers.find( ({poi}) => poi.id === poi.id);
+
+        if( ('type' in poi) && !('details' in el))
+        {
+            el['details'] = poi;
+        }
+    }
 }
 
 geoLocate.on('geolocate', function(e) {
@@ -448,10 +502,8 @@ map.on('moveend', function() {
     }
 });
 
-function addDayElement(id, dayName, date, dayStart, dayEnd, colour)
+function addDayElement(id, dayName, date, dayStart, dayEnd, colour, accommodation)
 {
-    addLoadingNotSaved();
-
     const div = document.createElement('div');
     document.getElementById("createItineraryButton").classList.remove("hidden");
 
@@ -483,7 +535,7 @@ function addDayElement(id, dayName, date, dayStart, dayEnd, colour)
         <div class="relative overflow-hidden transition-all max-h-0 duration-700" id="poiContainerParent_${id}"
              x-ref="dayContainer_${id}"
              x-bind:style="selected == ${id} ? 'max-height: ' + $refs.dayContainer_${id}.scrollHeight + 'px' : ''">
-            <div class="p-6" id="poiContainer_${id}" x-data="{accommodation: null, selectedIn: null}">
+            <div class="p-6" id="poiContainer_${id}" x-data="{accommodation: ${accommodation === null ? null : "'" + accommodation + "'"}, selectedIn: null}">
                 No locations have been added
             </div>
         </div>
@@ -506,7 +558,7 @@ function removeDayElement(id)
 
     for(let i = dayRet.pois.length - 1; i >= 0; i--)
     {
-        removePOIFromDay(dayRet.pois[i].poi.id, dayRet);
+        removePOIFromDay(dayRet.pois[i].poi.id, dayRet.id);
     }
 
     document.getElementById('day_' + id).remove();
@@ -522,8 +574,6 @@ function removeDayElement(id)
 
 function addDay()
 {
-    addLoadingNotSaved();
-
     let displayDate = document.getElementById('addDay');
     let displayTimeStart = document.getElementById('dayStart');
     let displayTimeEnd = document.getElementById('dayEnd');
@@ -564,7 +614,8 @@ function addDay()
             });
 
             addDayElement(highestId, days[selectedDate.getDay()], dateFormatted[1] + '/' + dateFormatted[2] + "/" + dateFormatted[0],
-                displayTimeStart.value, displayTimeEnd.value, colour);
+                displayTimeStart.value, displayTimeEnd.value, colour, null);
+            addLoadingNotSaved();
         }
     }
 }
@@ -949,21 +1000,7 @@ function cleanShownRoutes()
 
             let poi = addedMarkers.find( ({poi}) => poi.id === currentShownRoute[i].id);
 
-            if(poi['colours'][0])
-            {
-                let boxShadowString = `0 0 0 3px ${poi['colours'][0]}`;
-
-                for(let j = 1; j < poi['colours'].length; j++)
-                {
-                    boxShadowString += `, 0 0 0 ${(j + 1) * 3}px ${poi['colours'][j]}`
-                }
-
-                poi['marker']._element.style.boxShadow = boxShadowString;
-            }
-            else
-            {
-                poi['marker']._element.style.boxShadow = '';
-            }
+            recalculateColours(poi);
         }
 
         map.fitBounds(currentBounds.coords);
@@ -977,11 +1014,16 @@ document.getElementById("plannerTabButton").addEventListener("click", function()
 window.addEventListener('keydown', function(event) {
     if(event.ctrlKey || event.metaKey)
     {
+        let state = document.getElementById("loadingContainer").__x.$data.state;
+
         if(String.fromCharCode(event.which).toLowerCase() === 's')
         {
             event.preventDefault();
 
-            savePlanner();
+            if(state === 'unsaved')
+            {
+                savePlanner();
+            }
         }
     }
 });
@@ -1018,6 +1060,7 @@ function getScheduleToSend()
         for(let j = 0; j < addedDays[i].pois.length; j++)
         {
             let visitTimesData = addedDays[i].visitDurations.find( ({id}) => id === addedDays[i].pois[j].poi.id);
+
             pois.push({
                 poiId:  addedDays[i].pois[j].poi.id,
                 lat: addedDays[i].pois[j].poi.lat,
@@ -1050,6 +1093,7 @@ function getScheduleToSend()
 function addLoadingNotSaved()
 {
     let loadingDiv = document.getElementById("loadingContainer");
+    loadingDiv.__x.$data.state = 'unsaved';
 
     loadingDiv.innerHTML = `
         <button class="group hover:bg-indigo-500 rounded-full p-3 transition ease-out duration-300 focus:outline-none"
@@ -1066,6 +1110,7 @@ function addLoadingNotSaved()
 function addLoading()
 {
     let loadingDiv = document.getElementById("loadingContainer");
+    loadingDiv.__x.$data.state = 'loading';
 
     loadingDiv.innerHTML = `
         <div class="p-3">
@@ -1080,6 +1125,7 @@ function addLoading()
 function addLoadingSaved()
 {
     let loadingDiv = document.getElementById("loadingContainer");
+    loadingDiv.__x.$data.state = 'saved';
 
     loadingDiv.innerHTML = `
         <div class="p-3">
@@ -1090,3 +1136,100 @@ function addLoadingSaved()
         </div>
     `;
 }
+
+document.addEventListener('DOMContentLoaded', function()
+{
+    addLoading();
+
+    const url = `http://localhost:8080/schedule`;
+    fetch(url, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    }).then(response => response.json())
+    .then(data => {
+
+        if(data.scheduleDays !== null)
+        {
+            let newDayButton = document.getElementById("addNewDayButton");
+            let createItineraryButton = document.getElementById("createItineraryButton");
+            newDayButton.disabled = true;
+            createItineraryButton.disabled = true;
+
+            let poisIds = [];
+            for(let i = 0; i < data.scheduleDays.length; i++)
+            {
+                for(let j = 0; j < data.scheduleDays[i].pois.length; j++)
+                {
+                    poisIds.push(data.scheduleDays[i].pois[j].poiId);
+                }
+            }
+
+            fetch(`http://localhost:8080/poi/multiple`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(poisIds)
+            }).then(response => response.json())
+            .then(poiData => {
+
+                for(let i = 0; i < poiData.length; i++)
+                {
+                    addPoiMarker(poiData[i]);
+                }
+
+                for(let i = 0; i < data.scheduleDays.length; i++)
+                {
+                    addedDays.push({id: data.scheduleDays[i].dayId,
+                        date: data.scheduleDays[i].date,
+                        dayStart: data.scheduleDays[i].dayStart,
+                        dayEnd: data.scheduleDays[i].dayEnd,
+                        dayName: data.scheduleDays[i].dayName,
+                        dayNumber: data.scheduleDays[i].dayNumber,
+                        colour: data.scheduleDays[i].colour,
+                        visitDurations: [],
+                        pois: []
+                    });
+
+                    let dateFormatted = data.scheduleDays[i].date.split("-");
+                    let dayStart = (Math.floor(data.scheduleDays[i].dayStart / 60) < 10 ? '0'
+                        + Math.floor(data.scheduleDays[i].dayStart / 60) : Math.floor(data.scheduleDays[i].dayStart / 60))
+                        + ':' + (data.scheduleDays[i].dayStart % 60 < 10 ? '0' + data.scheduleDays[i].dayStart % 60 : data.scheduleDays[i].dayStart % 60);
+                    let dayEnd = (Math.floor(data.scheduleDays[i].dayEnd / 60) < 10 ? '0'
+                        + Math.floor(data.scheduleDays[i].dayEnd / 60) : Math.floor(data.scheduleDays[i].dayEnd / 60))
+                        + ':' + (data.scheduleDays[i].dayEnd % 60 < 10 ? '0' + data.scheduleDays[i].dayEnd % 60 : data.scheduleDays[i].dayEnd % 60);
+
+                    addDayElement(data.scheduleDays[i].dayId, data.scheduleDays[i].dayName,
+                        dateFormatted[1] + '/' + dateFormatted[2] + "/" + dateFormatted[0],
+                        dayStart, dayEnd, data.scheduleDays[i].colour, data.scheduleDays[i].accommodation);
+                }
+
+                for(let i = 0; i < data.scheduleDays.length; i++)
+                {
+                    for(let j = 0; j < data.scheduleDays[i].pois.length; j++)
+                    {
+                        addPOItoDay(data.scheduleDays[i].pois[j].poiId, data.scheduleDays[i].dayId,
+                            data.scheduleDays[i].accommodation, data.scheduleDays[i].pois[j].visitDuration);
+                    }
+                }
+
+                newDayButton.disabled = false;
+                createItineraryButton.disabled = false;
+                addLoadingSaved();
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        }
+        else
+        {
+            addLoadingSaved();
+        }
+
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+}, false);

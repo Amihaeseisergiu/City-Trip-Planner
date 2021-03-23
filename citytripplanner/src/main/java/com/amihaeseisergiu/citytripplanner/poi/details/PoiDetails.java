@@ -22,6 +22,14 @@ public class PoiDetails {
     @Id
     private String id;
 
+    private String name;
+
+    private Double lat;
+    private Double lng;
+
+    private String iconPrefix;
+    private String iconSuffix;
+
     private String formattedPhone;
     private Double rating;
 
@@ -39,6 +47,11 @@ public class PoiDetails {
     private LocalDateTime expiresAt;
 
     public PoiDetails(String id,
+                      String name,
+                      Double lat,
+                      Double lng,
+                      String iconPrefix,
+                      String iconSuffix,
                       String formattedPhone,
                       Double rating,
                       String type,
@@ -48,6 +61,11 @@ public class PoiDetails {
                       LocalDateTime expiresAt)
     {
         this.id = id;
+        this.name = name;
+        this.lat = lat;
+        this.lng = lng;
+        this.iconPrefix = iconPrefix;
+        this.iconSuffix = iconSuffix;
         this.formattedPhone = formattedPhone;
         this.rating = rating;
         this.type = type;

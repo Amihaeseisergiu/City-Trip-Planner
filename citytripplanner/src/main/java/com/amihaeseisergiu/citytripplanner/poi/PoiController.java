@@ -5,6 +5,7 @@ import com.amihaeseisergiu.citytripplanner.poi.details.PoiDetailsService;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -27,4 +28,16 @@ public class PoiController {
         return poiDetailsService.getPoiDetails(id);
     }
 
+    @PostMapping("/multiple")
+    List<PoiDetails> getPoisDetails(@RequestBody List<String> ids)
+    {
+        List<PoiDetails> poiDetails = new ArrayList<>();
+
+        for(String id : ids)
+        {
+            poiDetails.add(poiDetailsService.getPoiDetails(id));
+        }
+
+        return poiDetails;
+    }
 }

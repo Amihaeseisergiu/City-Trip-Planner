@@ -1,6 +1,7 @@
 package com.amihaeseisergiu.citytripplanner.schedule;
 
 import com.amihaeseisergiu.citytripplanner.route.Route;
+import com.amihaeseisergiu.citytripplanner.schedule.day.ScheduleDay;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,4 +27,9 @@ public class ScheduleController {
         scheduleService.save(scheduleDays);
     }
 
+    @GetMapping
+    public Schedule getSchedule()
+    {
+        return scheduleService.getUserSchedule();
+    }
 }

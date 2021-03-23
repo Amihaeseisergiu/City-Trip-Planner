@@ -1,5 +1,7 @@
-package com.amihaeseisergiu.citytripplanner.schedule;
+package com.amihaeseisergiu.citytripplanner.schedule.day;
 
+import com.amihaeseisergiu.citytripplanner.schedule.Schedule;
+import com.amihaeseisergiu.citytripplanner.schedule.poi.SchedulePoi;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
@@ -40,8 +42,14 @@ public class ScheduleDay {
     private String accommodation;
 
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "schedule_day_id")
     private List<SchedulePoi> pois;
 
+    @ManyToOne
+    @JsonIgnore
+    private Schedule schedule;
+
+    @JsonIgnore
     public int[] getOpeningTimes()
     {
         int[] openingTimes = new int[pois.size()];
@@ -59,6 +67,7 @@ public class ScheduleDay {
         return openingTimes;
     }
 
+    @JsonIgnore
     public int[] getClosingTimes()
     {
         int[] closingTimes = new int[pois.size()];
@@ -83,6 +92,7 @@ public class ScheduleDay {
         return closingTimes;
     }
 
+    @JsonIgnore
     public int[] getVisitDurations()
     {
         int[] visitDurations = new int[pois.size()];
@@ -100,6 +110,7 @@ public class ScheduleDay {
         return visitDurations;
     }
 
+    @JsonIgnore
     public int getIndexOfAccommodation()
     {
         if(accommodation != null)

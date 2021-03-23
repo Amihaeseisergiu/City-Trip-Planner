@@ -130,6 +130,42 @@ public class FoursquareUtils {
         JsonObject response = all.getAsJsonObject("response");
         JsonObject venue = response.getAsJsonObject("venue");
 
+        String name = null;
+        if(venue.has("name"))
+        {
+            name = gson.fromJson(venue.get("name"), String.class);
+        }
+
+        Double lat = null, lng = null;
+        if(venue.has("location"))
+        {
+            JsonObject location = venue.getAsJsonObject("location");
+
+            if(location.has("lat") && location.has("lng"))
+            {
+                lat = gson.fromJson(location.get("lat"), Double.class);
+                lng = gson.fromJson(location.get("lng"), Double.class);
+            }
+        }
+
+        String iconPrefix = null, iconSuffix = null;
+        if(venue.has("categories"))
+        {
+            JsonArray categories = venue.getAsJsonArray("categories");
+            JsonObject firstCategory = categories.get(0).getAsJsonObject();
+
+            if(firstCategory.has("icon"))
+            {
+                JsonObject icon = firstCategory.getAsJsonObject("icon");
+
+                if(icon.has("prefix") && icon.has("suffix"))
+                {
+                    iconPrefix = gson.fromJson(icon.get("prefix"), String.class);
+                    iconSuffix = gson.fromJson(icon.get("suffix"), String.class);
+                }
+            }
+        }
+
         String formattedPhone = null;
         if(venue.has("contact"))
         {
@@ -178,7 +214,8 @@ public class FoursquareUtils {
             }
         }
 
-        return new PoiDetails(poiId, formattedPhone, rating, type, photoPrefix, photoSuffix, priceTier, LocalDateTime.now().plusDays(1));
+        return new PoiDetails(poiId, name, lat, lng, iconPrefix, iconSuffix, formattedPhone,
+                rating, type, photoPrefix, photoSuffix, priceTier, LocalDateTime.now().plusDays(1));
     }
 
     public List<Poi> fetchNewPois(String center, Integer limit)

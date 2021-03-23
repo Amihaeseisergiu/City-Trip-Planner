@@ -1,5 +1,6 @@
-package com.amihaeseisergiu.citytripplanner.schedule;
+package com.amihaeseisergiu.citytripplanner.schedule.poi;
 
+import com.amihaeseisergiu.citytripplanner.schedule.day.ScheduleDay;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
@@ -32,10 +33,14 @@ public class SchedulePoi {
     private Double lat;
     private Double lng;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     private List<String> colours;
 
     private String openingAt;
     private String closingAt;
     private String visitDuration;
+
+    @ManyToOne
+    @JsonIgnore
+    private ScheduleDay scheduleDay;
 }

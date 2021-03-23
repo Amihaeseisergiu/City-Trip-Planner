@@ -1,6 +1,6 @@
 package com.amihaeseisergiu.citytripplanner.route;
 
-import com.amihaeseisergiu.citytripplanner.schedule.ScheduleDay;
+import com.amihaeseisergiu.citytripplanner.schedule.day.ScheduleDay;
 import lombok.*;
 import org.springframework.stereotype.Component;
 
