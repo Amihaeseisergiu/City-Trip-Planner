@@ -2,11 +2,13 @@ package com.amihaeseisergiu.citytripplanner.schedule;
 
 import com.amihaeseisergiu.citytripplanner.appuser.AppUser;
 import com.amihaeseisergiu.citytripplanner.appuser.AppUserService;
-import com.amihaeseisergiu.citytripplanner.route.Route;
+import com.amihaeseisergiu.citytripplanner.itinerary.Itinerary;
+import com.amihaeseisergiu.citytripplanner.itinerary.ItineraryService;
+import com.amihaeseisergiu.citytripplanner.itinerary.route.Route;
 import com.amihaeseisergiu.citytripplanner.schedule.day.ScheduleDay;
 import com.amihaeseisergiu.citytripplanner.schedule.day.ScheduleDayService;
-import com.amihaeseisergiu.citytripplanner.schedule.poi.SchedulePoi;
-import com.amihaeseisergiu.citytripplanner.schedule.poi.SchedulePoiService;
+import com.amihaeseisergiu.citytripplanner.schedule.day.poi.SchedulePoi;
+import com.amihaeseisergiu.citytripplanner.schedule.day.poi.SchedulePoiService;
 import com.amihaeseisergiu.citytripplanner.utils.MapboxUtils;
 import com.amihaeseisergiu.citytripplanner.utils.SolverUtils;
 import lombok.AllArgsConstructor;
@@ -25,9 +27,10 @@ public class ScheduleService {
     private final ScheduleRepository scheduleRepository;
     private final ScheduleDayService scheduleDayService;
     private final SchedulePoiService schedulePoiService;
+    private final ItineraryService itineraryService;
     private final AppUserService appUserService;
 
-    public List<Route> getResolvedSchedule(List<ScheduleDay> scheduleDayList)
+    public Itinerary getItinerary(List<ScheduleDay> scheduleDayList)
     {
         List<Route> routes = new ArrayList<>();
 
@@ -40,10 +43,10 @@ public class ScheduleService {
             }
         }
 
-        return routes;
+        return new Itinerary(routes);
     }
 
-    public void save(List<ScheduleDay> scheduleDaysList)
+    public void save(List<ScheduleDay> scheduleDaysList, Itinerary itinerary)
     {
         AppUser user = appUserService.getLoggedInUser();
         Optional<Schedule> schedule = scheduleRepository.findFirstByUser(user);
@@ -54,7 +57,8 @@ public class ScheduleService {
 
             for(ScheduleDay day : scheduleDaysList)
             {
-                Optional<ScheduleDay> scheduleDay = scheduleDayService.getByScheduleAndDayId(resultingSchedule, day.getDayId());
+                Optional<ScheduleDay> scheduleDay =
+                        scheduleDayService.getByScheduleAndDayId(resultingSchedule, day.getDayId());
 
                 if(scheduleDay.isPresent())
                 {
@@ -64,7 +68,8 @@ public class ScheduleService {
 
                     for(SchedulePoi poi : day.getPois())
                     {
-                        Optional<SchedulePoi> schedulePoi = schedulePoiService.getByScheduleDayAndPoiId(resultingScheduleDay, poi.getPoiId());
+                        Optional<SchedulePoi> schedulePoi =
+                                schedulePoiService.getByScheduleDayAndPoiId(resultingScheduleDay, poi.getPoiId());
 
                         if(schedulePoi.isPresent())
                         {
@@ -77,12 +82,28 @@ public class ScheduleService {
             }
 
             resultingSchedule.setScheduleDays(scheduleDaysList);
+
+            if(itinerary != null)
+            {
+                itinerary.setSchedule(resultingSchedule);
+                itineraryService.assignDuplicates(itinerary);
+
+                resultingSchedule.setItinerary(itinerary);
+            }
+
             scheduleRepository.save(resultingSchedule);
         }
         else
         {
-            Schedule savedSchedule = new Schedule(scheduleDaysList, user);
-            scheduleRepository.save(savedSchedule);
+            Schedule scheduleToSave = new Schedule(scheduleDaysList, user);
+
+            if(itinerary != null)
+            {
+                scheduleToSave.setItinerary(itinerary);
+                itinerary.setSchedule(scheduleToSave);
+            }
+
+            scheduleRepository.save(scheduleToSave);
         }
     }
 

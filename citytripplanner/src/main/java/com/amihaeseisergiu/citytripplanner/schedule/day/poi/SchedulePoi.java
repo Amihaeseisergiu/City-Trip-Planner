@@ -1,11 +1,11 @@
-package com.amihaeseisergiu.citytripplanner.schedule.poi;
+package com.amihaeseisergiu.citytripplanner.schedule.day.poi;
 
 import com.amihaeseisergiu.citytripplanner.schedule.day.ScheduleDay;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 import javax.persistence.*;
-import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -34,7 +34,7 @@ public class SchedulePoi {
     private Double lng;
 
     @ElementCollection(fetch = FetchType.EAGER)
-    private List<String> colours;
+    private Set<String> colours;
 
     private String openingAt;
     private String closingAt;

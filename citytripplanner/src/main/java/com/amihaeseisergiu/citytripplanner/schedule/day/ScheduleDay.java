@@ -1,9 +1,11 @@
 package com.amihaeseisergiu.citytripplanner.schedule.day;
 
 import com.amihaeseisergiu.citytripplanner.schedule.Schedule;
-import com.amihaeseisergiu.citytripplanner.schedule.poi.SchedulePoi;
+import com.amihaeseisergiu.citytripplanner.schedule.day.poi.SchedulePoi;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 import javax.persistence.*;
 import java.util.List;
@@ -41,6 +43,7 @@ public class ScheduleDay {
 
     private String accommodation;
 
+    @Fetch(FetchMode.SELECT)
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "schedule_day_id")
     private List<SchedulePoi> pois;

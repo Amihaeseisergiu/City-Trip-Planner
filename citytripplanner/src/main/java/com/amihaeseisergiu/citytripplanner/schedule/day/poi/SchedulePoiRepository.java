@@ -1,4 +1,4 @@
-package com.amihaeseisergiu.citytripplanner.schedule.poi;
+package com.amihaeseisergiu.citytripplanner.schedule.day.poi;
 
 import com.amihaeseisergiu.citytripplanner.schedule.day.ScheduleDay;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -151,11 +151,15 @@ function addPOItoDay(id, dayId, accommodation, visitDuration)
     if(dayId !== null)
     {
        day = addedDays.find( ({id}) => id === dayId);
-       addLoadingNotSaved();
     }
 
     if(day && !day.pois.find( ({poi}) => poi.id === id))
     {
+        if(dayId === null)
+        {
+            addLoadingNotSaved();
+        }
+
         let el = addedMarkers.find( ({poi}) => poi.id === id);
 
         day.pois.push(el);
@@ -227,7 +231,7 @@ function addPOItoDay(id, dayId, accommodation, visitDuration)
                        1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                     </svg>
                 </button>
-                <button type="button" onclick="removePOIFromDay(\`${id}\`, ${day.id})"
+                <button type="button" onclick="removePOIFromDay(\`${id}\`, ${day.id})" @click="if(accommodation === '${id}') {accommodation = null;}"
                         class="p-7 focus:outline-none hover:bg-red-400 hover:text-white rounded-lg transition ease-out duration-600">
                     <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -316,13 +320,12 @@ function verifyAccommodation(id, dayId, accommodation)
     }
 }
 
-function addInputDurationRegex(id, day)
+function addInputDurationRegex(poiId, day)
 {
-    document.getElementById(`poiInDayVisit_${id}_${day.id}`).addEventListener('input', () => {
+    document.getElementById(`poiInDayVisit_${poiId}_${day.id}`).addEventListener('input', () => {
         addLoadingNotSaved();
 
-        let input = document.getElementById(`poiInDayVisit_${id}_${day.id}`);
-        let poiId = id;
+        let input = document.getElementById(`poiInDayVisit_${poiId}_${day.id}`);
 
         if(!input.validity.valid)
         {
@@ -389,7 +392,7 @@ function removePOIFromDay(id, dayId)
 
 function recalculateColours(el)
 {
-    if(el['colours'][0])
+    if(('colours' in el) && el['colours'][0])
     {
         let boxShadowString = `0 0 0 3px ${el['colours'][0]}`;
 
@@ -649,40 +652,50 @@ function sendPOIByDayData()
 
         addLoadingSaved();
 
-        if(data.length > 0)
+        if(data.routes.length > 0)
         {
-            document.getElementById("itineraryTab").classList.remove("hidden");
-            document.getElementById("tabsContainer").__x.$data.tab = 'itinerary';
-            document.getElementById("itineraryContainer").innerHTML = '';
-
-            let popUpsAddButtons = document.querySelectorAll('*[id^="poi_add_"]');
-
-            for(let i = 0; i < popUpsAddButtons.length; i++)
-            {
-                popUpsAddButtons[i].classList.add("hidden");
-            }
-
-            for(let i = 0; i < data.length; i++)
-            {
-                if(data[i].pois !== null)
-                {
-                    let dayStart = data[i].pois.find( ({ord}) => ord === 0).visitTimesStart;
-                    let dayEnd = data[i].pois.find( ({ord}) => ord === (data[i].pois.length - 1)).visitTimesEnd;
-
-                    if(data[i].accommodation !== null)
-                    {
-                        dayStart = data[i].pois.find( ({ord}) => ord === 0).visitTimesStart;
-                        dayEnd = data[i].pois.find( ({ord}) => ord === 0).visitTimesEnd;
-                    }
-
-                    addItineraryElement(i, data[i].dayName, data[i].date, dayStart, dayEnd, data[i].colour, data[i].pois, data[i].accommodation);
-                }
-            }
+            constructItinerary(data, true);
         }
     })
     .catch((error) => {
         console.error('Error:', error);
     });
+}
+
+function constructItinerary(data, switchTab)
+{
+    document.getElementById("itineraryTab").classList.remove("hidden");
+
+    if(switchTab)
+    {
+        document.getElementById("tabsContainer").__x.$data.tab = 'itinerary';
+        document.getElementById("itineraryContainer").innerHTML = '';
+    }
+
+    let popUpsAddButtons = document.querySelectorAll('*[id^="poi_add_"]');
+
+    for(let i = 0; i < popUpsAddButtons.length; i++)
+    {
+        popUpsAddButtons[i].classList.add("hidden");
+    }
+
+    for(let i = 0; i < data.routes.length; i++)
+    {
+        if(data.routes[i].pois !== null)
+        {
+            let dayStart = data.routes[i].pois.find( ({ord}) => ord === 0).visitTimesStart;
+            let dayEnd = data.routes[i].pois.find( ({ord}) => ord === (data.routes[i].pois.length - 1)).visitTimesEnd;
+
+            if(data.routes[i].accommodation !== null)
+            {
+                dayStart = data.routes[i].pois.find( ({ord}) => ord === 0).visitTimesStart;
+                dayEnd = data.routes[i].pois.find( ({ord}) => ord === 0).visitTimesEnd;
+            }
+
+            addItineraryElement(i, data.routes[i].dayName, data.routes[i].date, dayStart, dayEnd,
+                data.routes[i].colour, data.routes[i].pois, data.routes[i].accommodation);
+        }
+    }
 }
 
 function addItineraryElement(id, dayName, date, dayStart, dayEnd, colour, pois, accommodation) {
@@ -761,12 +774,12 @@ function addItineraryElement(id, dayName, date, dayStart, dayEnd, colour, pois, 
 
 function addPOIToItinerary(poiInfo, dayId, addInfoToNext, accommodationTimeInfo)
 {
-    let el = addedMarkers.find( ({poi}) => poi.id === poiInfo.id);
+    let el = addedMarkers.find( ({poi}) => poi.id === poiInfo.poiId);
 
     const div = document.createElement('div');
 
     div.className = 'w-full border border-gray-300 rounded-xl mt-2';
-    div.id = `poi_${poiInfo.id}_day_${dayId}_itinerary`;
+    div.id = `poi_${poiInfo.poiId}_day_${dayId}_itinerary`;
     div.innerHTML = `
         <div class="flex flex-row rounded-xl text-white"
                 style="background-image: url(${el['details'].photoPrefix}${500}${el['details'].photoSuffix});
@@ -798,7 +811,7 @@ function addPOIToItinerary(poiInfo, dayId, addInfoToNext, accommodationTimeInfo)
         const distanceDiv = document.createElement('div');
 
         distanceDiv.className = 'w-full mt-5 mb-5 border-l-4 border-dotted border-gray-500 ml-5';
-        distanceDiv.id = `poi_${poiInfo.id}_day_${dayId}_itineraryDistance`;
+        distanceDiv.id = `poi_${poiInfo.poiId}_day_${dayId}_itineraryDistance`;
         distanceDiv.innerHTML = `
             <div class="flex flex-row text-gray-500 uppercase leading-tight">
                 <div class="flex flex-row justify-end w-full mr-2">
@@ -832,7 +845,7 @@ function addPOIToItinerary(poiInfo, dayId, addInfoToNext, accommodationTimeInfo)
                 </div>
             `;
 
-            document.getElementById(`poi_${poiInfo.id}_day_${dayId}_itineraryDistance`).appendChild(waitingDiv);
+            document.getElementById(`poi_${poiInfo.poiId}_day_${dayId}_itineraryDistance`).appendChild(waitingDiv);
         }
     }
 }
@@ -913,12 +926,12 @@ function viewItineraryOnMap(pois, colour, accommodation)
 
     for(let i = 0; i < pois.length; i++)
     {
-        let el = document.getElementById(`poi_marker_${pois[i].id}`);
+        let el = document.getElementById(`poi_marker_${pois[i].poiId}`);
         let styleBackgroundImage = el.style.backgroundImage;
 
         currentShownRoute.push({
             marker: el,
-            id: pois[i].id,
+            id: pois[i].poiId,
             backgroundImage: styleBackgroundImage
         });
 
@@ -927,7 +940,7 @@ function viewItineraryOnMap(pois, colour, accommodation)
         el.innerHTML = `
             <div class="flex flex-row justify-center font-bold text-white text-2xl rounded-full"
                  style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased; background-color: ${colour}">
-                ${accommodation === null ? pois[i].ord + 1 : accommodation === pois[i].id ?
+                ${accommodation === null ? pois[i].ord + 1 : accommodation === pois[i].poiId ?
                   '<svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">\n' +
                     '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1' +
                     ' 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />\n' +
@@ -1166,6 +1179,17 @@ document.addEventListener('DOMContentLoaded', function()
                 }
             }
 
+            if(data.itinerary !== null)
+            {
+                for(let i = 0; i < data.itinerary.routes.length; i++)
+                {
+                    for(let j = 0; j < data.itinerary.routes[i].pois.length; j++)
+                    {
+                        poisIds.push(data.itinerary.routes[i].pois[j].poiId);
+                    }
+                }
+            }
+
             fetch(`http://localhost:8080/poi/multiple`, {
                 method: 'POST',
                 headers: {
@@ -1215,11 +1239,17 @@ document.addEventListener('DOMContentLoaded', function()
                     }
                 }
 
+                if(data.itinerary !== null)
+                {
+                    constructItinerary(data.itinerary, false);
+                }
+
                 newDayButton.disabled = false;
                 createItineraryButton.disabled = false;
                 addLoadingSaved();
             })
             .catch((error) => {
+                addLoadingNotSaved();
                 console.error('Error:', error);
             });
         }

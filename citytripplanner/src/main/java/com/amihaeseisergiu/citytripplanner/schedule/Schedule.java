@@ -1,9 +1,12 @@
 package com.amihaeseisergiu.citytripplanner.schedule;
 
 import com.amihaeseisergiu.citytripplanner.appuser.AppUser;
+import com.amihaeseisergiu.citytripplanner.itinerary.Itinerary;
 import com.amihaeseisergiu.citytripplanner.schedule.day.ScheduleDay;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 import javax.persistence.*;
 import java.util.List;
@@ -29,9 +32,14 @@ public class Schedule {
     @JsonIgnore
     private Long id;
 
+    @Fetch(FetchMode.SELECT)
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "schedule_id")
     private List<ScheduleDay> scheduleDays;
+
+    @Fetch(FetchMode.SELECT)
+    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    private Itinerary itinerary;
 
     @ManyToOne
     @JsonIgnore

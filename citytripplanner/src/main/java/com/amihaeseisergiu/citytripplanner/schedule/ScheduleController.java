@@ -1,6 +1,6 @@
 package com.amihaeseisergiu.citytripplanner.schedule;
 
-import com.amihaeseisergiu.citytripplanner.route.Route;
+import com.amihaeseisergiu.citytripplanner.itinerary.Itinerary;
 import com.amihaeseisergiu.citytripplanner.schedule.day.ScheduleDay;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -15,16 +15,18 @@ public class ScheduleController {
     private final ScheduleService scheduleService;
 
     @PostMapping
-    public List<Route> solve(@RequestBody List<ScheduleDay> scheduleDays)
+    public Itinerary solve(@RequestBody List<ScheduleDay> scheduleDays)
     {
-        scheduleService.save(scheduleDays);
-        return scheduleService.getResolvedSchedule(scheduleDays);
+        Itinerary itinerary = scheduleService.getItinerary(scheduleDays);
+        scheduleService.save(scheduleDays, itinerary);
+
+        return itinerary;
     }
 
     @PostMapping("/save")
     public void save(@RequestBody List<ScheduleDay> scheduleDays)
     {
-        scheduleService.save(scheduleDays);
+        scheduleService.save(scheduleDays, null);
     }
 
     @GetMapping

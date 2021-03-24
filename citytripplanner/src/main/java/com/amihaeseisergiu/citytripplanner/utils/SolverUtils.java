@@ -1,7 +1,7 @@
 package com.amihaeseisergiu.citytripplanner.utils;
 
-import com.amihaeseisergiu.citytripplanner.route.Route;
-import com.amihaeseisergiu.citytripplanner.route.RoutePoi;
+import com.amihaeseisergiu.citytripplanner.itinerary.route.Route;
+import com.amihaeseisergiu.citytripplanner.itinerary.route.poi.RoutePoi;
 import com.amihaeseisergiu.citytripplanner.schedule.day.ScheduleDay;
 import lombok.AllArgsConstructor;
 import org.chocosolver.solver.Model;
