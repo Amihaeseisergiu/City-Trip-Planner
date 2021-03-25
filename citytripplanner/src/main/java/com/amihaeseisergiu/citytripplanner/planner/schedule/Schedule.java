@@ -1,7 +1,7 @@
-package com.amihaeseisergiu.citytripplanner.itinerary;
+package com.amihaeseisergiu.citytripplanner.planner.schedule;
 
-import com.amihaeseisergiu.citytripplanner.itinerary.route.Route;
 import com.amihaeseisergiu.citytripplanner.planner.Planner;
+import com.amihaeseisergiu.citytripplanner.planner.schedule.day.ScheduleDay;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.hibernate.annotations.Fetch;
@@ -18,7 +18,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-public class Itinerary {
+public class Schedule {
 
     @Id
     @GeneratedValue(generator = "UUID")
@@ -31,15 +31,10 @@ public class Itinerary {
 
     @Fetch(FetchMode.SELECT)
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "itinerary_id")
-    private List<Route> routes;
+    @JoinColumn(name = "schedule_id")
+    private List<ScheduleDay> scheduleDays;
 
     @OneToOne
     @JsonIgnore
     private Planner planner;
-
-    public Itinerary(List<Route> routes)
-    {
-        this.routes = routes;
-    }
 }

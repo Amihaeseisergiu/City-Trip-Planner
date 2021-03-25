@@ -1,6 +1,6 @@
 package com.amihaeseisergiu.citytripplanner.utils;
 
-import com.amihaeseisergiu.citytripplanner.schedule.day.poi.SchedulePoi;
+import com.amihaeseisergiu.citytripplanner.planner.schedule.day.poi.SchedulePoi;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;

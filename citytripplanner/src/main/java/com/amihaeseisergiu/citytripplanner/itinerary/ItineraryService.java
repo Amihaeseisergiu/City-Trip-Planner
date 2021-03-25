@@ -19,7 +19,7 @@ public class ItineraryService {
 
     public void assignDuplicates(Itinerary itinerary)
     {
-        Optional<Itinerary> foundItinerary = itineraryRepository.findItineraryBySchedule(itinerary.getSchedule());
+        Optional<Itinerary> foundItinerary = itineraryRepository.findItineraryByPlanner(itinerary.getPlanner());
 
         if(foundItinerary.isPresent())
         {

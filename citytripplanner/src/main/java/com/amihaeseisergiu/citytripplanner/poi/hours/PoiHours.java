@@ -1,10 +1,12 @@
 package com.amihaeseisergiu.citytripplanner.poi.hours;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
+import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
 import java.time.LocalTime;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -15,17 +17,14 @@ import java.time.LocalTime;
 public class PoiHours {
 
     @Id
-    @SequenceGenerator(
-            name = "hours_sequence",
-            sequenceName = "hours_sequence",
-            allocationSize = 1
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(
+            name = "UUID",
+            strategy = "org.hibernate.id.UUIDGenerator"
     )
-    @GeneratedValue(
-            strategy = GenerationType.SEQUENCE,
-            generator = "hours_sequence"
-    )
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    private Long id;
+    @Column(name = "id", updatable = false, nullable = false)
+    @JsonIgnore
+    private UUID id;
 
     private Integer dayNumber;
     private String dayName;

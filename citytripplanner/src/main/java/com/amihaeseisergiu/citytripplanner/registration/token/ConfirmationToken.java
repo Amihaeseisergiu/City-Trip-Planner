@@ -4,9 +4,11 @@ import com.amihaeseisergiu.citytripplanner.appuser.AppUser;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -15,16 +17,13 @@ import java.time.LocalDateTime;
 public class ConfirmationToken {
 
     @Id
-    @SequenceGenerator(
-            name = "confirmation_token_sequence",
-            sequenceName = "confirmation_token_sequence",
-            allocationSize = 1
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(
+            name = "UUID",
+            strategy = "org.hibernate.id.UUIDGenerator"
     )
-    @GeneratedValue(
-            strategy = GenerationType.SEQUENCE,
-            generator = "confirmation_token_sequence"
-    )
-    private Long id;
+    @Column(name = "id", updatable = false, nullable = false)
+    private UUID id;
 
     @Column(nullable = false)
     private String token;

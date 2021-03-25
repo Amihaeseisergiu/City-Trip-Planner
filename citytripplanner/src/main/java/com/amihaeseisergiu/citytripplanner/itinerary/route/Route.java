@@ -2,14 +2,16 @@ package com.amihaeseisergiu.citytripplanner.itinerary.route;
 
 import com.amihaeseisergiu.citytripplanner.itinerary.Itinerary;
 import com.amihaeseisergiu.citytripplanner.itinerary.route.poi.RoutePoi;
-import com.amihaeseisergiu.citytripplanner.schedule.day.ScheduleDay;
+import com.amihaeseisergiu.citytripplanner.planner.schedule.day.ScheduleDay;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
+import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -20,17 +22,14 @@ import java.util.List;
 public class Route {
 
     @Id
-    @SequenceGenerator(
-            name = "route_sequence",
-            sequenceName = "route_sequence",
-            allocationSize = 1
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(
+            name = "UUID",
+            strategy = "org.hibernate.id.UUIDGenerator"
     )
-    @GeneratedValue(
-            strategy = GenerationType.SEQUENCE,
-            generator = "route_sequence"
-    )
+    @Column(name = "id", updatable = false, nullable = false)
     @JsonIgnore
-    private Long id;
+    private UUID id;
 
     private Long dayId;
     private String dayName;

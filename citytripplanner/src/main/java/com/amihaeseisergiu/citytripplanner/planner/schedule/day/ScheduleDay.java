@@ -1,14 +1,16 @@
-package com.amihaeseisergiu.citytripplanner.schedule.day;
+package com.amihaeseisergiu.citytripplanner.planner.schedule.day;
 
-import com.amihaeseisergiu.citytripplanner.schedule.Schedule;
-import com.amihaeseisergiu.citytripplanner.schedule.day.poi.SchedulePoi;
+import com.amihaeseisergiu.citytripplanner.planner.schedule.Schedule;
+import com.amihaeseisergiu.citytripplanner.planner.schedule.day.poi.SchedulePoi;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
+import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -19,17 +21,14 @@ import java.util.List;
 public class ScheduleDay {
 
     @Id
-    @SequenceGenerator(
-            name = "schedule_day_sequence",
-            sequenceName = "schedule_day_sequence",
-            allocationSize = 1
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(
+            name = "UUID",
+            strategy = "org.hibernate.id.UUIDGenerator"
     )
-    @GeneratedValue(
-            strategy = GenerationType.SEQUENCE,
-            generator = "schedule_day_sequence"
-    )
+    @Column(name = "id", updatable = false, nullable = false)
     @JsonIgnore
-    private Long id;
+    private UUID id;
 
     private Long dayId;
 

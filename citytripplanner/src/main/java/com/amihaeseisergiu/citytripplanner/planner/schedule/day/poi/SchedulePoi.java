@@ -1,11 +1,15 @@
-package com.amihaeseisergiu.citytripplanner.schedule.day.poi;
+package com.amihaeseisergiu.citytripplanner.planner.schedule.day.poi;
 
-import com.amihaeseisergiu.citytripplanner.schedule.day.ScheduleDay;
+import com.amihaeseisergiu.citytripplanner.planner.schedule.day.ScheduleDay;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
+import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
 import java.util.Set;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -16,23 +20,21 @@ import java.util.Set;
 public class SchedulePoi {
 
     @Id
-    @SequenceGenerator(
-            name = "schedule_poi_sequence",
-            sequenceName = "schedule_poi_sequence",
-            allocationSize = 1
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(
+            name = "UUID",
+            strategy = "org.hibernate.id.UUIDGenerator"
     )
-    @GeneratedValue(
-            strategy = GenerationType.SEQUENCE,
-            generator = "schedule_poi_sequence"
-    )
+    @Column(name = "id", updatable = false, nullable = false)
     @JsonIgnore
-    private Long id;
+    private UUID id;
 
     private String poiId;
 
     private Double lat;
     private Double lng;
 
+    @Fetch(FetchMode.SELECT)
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<String> colours;
 

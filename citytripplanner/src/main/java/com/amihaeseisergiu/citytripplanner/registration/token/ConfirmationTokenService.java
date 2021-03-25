@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @AllArgsConstructor
@@ -25,7 +26,7 @@ public class ConfirmationTokenService {
         return confirmationTokenRepository.getUserToken(user).getToken();
     }
 
-    public void deleteConfirmationToken(Long id) {
+    public void deleteConfirmationToken(UUID id) {
         confirmationTokenRepository.deleteById(id);
     }
 }

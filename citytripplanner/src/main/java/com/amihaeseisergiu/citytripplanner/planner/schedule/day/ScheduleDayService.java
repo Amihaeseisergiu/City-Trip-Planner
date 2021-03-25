@@ -1,6 +1,6 @@
-package com.amihaeseisergiu.citytripplanner.schedule.day;
+package com.amihaeseisergiu.citytripplanner.planner.schedule.day;
 
-import com.amihaeseisergiu.citytripplanner.schedule.Schedule;
+import com.amihaeseisergiu.citytripplanner.planner.schedule.Schedule;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 

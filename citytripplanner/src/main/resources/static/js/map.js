@@ -639,7 +639,7 @@ function sendPOIByDayData()
 
     let scheduleToSend = getScheduleToSend();
 
-    const url = `http://localhost:8080/schedule`;
+    const url = `http://localhost:8080/planner/solve/restricted`;
     fetch(url, {
         method: 'POST',
         headers: {
@@ -681,7 +681,7 @@ function constructItinerary(data, switchTab)
 
     for(let i = 0; i < data.routes.length; i++)
     {
-        if(data.routes[i].pois !== null)
+        if(data.routes[i].pois !== null && data.routes[i].pois.length > 0)
         {
             let dayStart = data.routes[i].pois.find( ({ord}) => ord === 0).visitTimesStart;
             let dayEnd = data.routes[i].pois.find( ({ord}) => ord === (data.routes[i].pois.length - 1)).visitTimesEnd;
@@ -1047,7 +1047,7 @@ function savePlanner()
 
     let scheduleToSend = getScheduleToSend();
 
-    const url = `http://localhost:8080/schedule/save`;
+    const url = `http://localhost:8080/planner/save/restricted`;
     fetch(url, {
         method: 'POST',
         headers: {
@@ -1064,7 +1064,7 @@ function savePlanner()
 
 function getScheduleToSend()
 {
-    let scheduleToSend = [];
+    let scheduleDays = [];
 
     for(let i = 0; i < addedDays.length; i++)
     {
@@ -1087,7 +1087,7 @@ function getScheduleToSend()
 
         let accommodation = document.getElementById(`poiContainer_${addedDays[i].id}`).__x.$data.accommodation;
 
-        scheduleToSend.push({
+        scheduleDays.push({
             dayId: addedDays[i].id,
             dayName: addedDays[i].dayName,
             dayNumber: addedDays[i].dayNumber,
@@ -1100,7 +1100,9 @@ function getScheduleToSend()
         });
     }
 
-    return scheduleToSend;
+    return {
+        scheduleDays: scheduleDays
+    };
 }
 
 function addLoadingNotSaved()
@@ -1154,7 +1156,7 @@ document.addEventListener('DOMContentLoaded', function()
 {
     addLoading();
 
-    const url = `http://localhost:8080/schedule`;
+    const url = `http://localhost:8080/planner/restricted`;
     fetch(url, {
         method: 'GET',
         headers: {
@@ -1163,7 +1165,9 @@ document.addEventListener('DOMContentLoaded', function()
     }).then(response => response.json())
     .then(data => {
 
-        if(data.scheduleDays !== null)
+        console.log(data);
+
+        if(data.schedule !== null)
         {
             let newDayButton = document.getElementById("addNewDayButton");
             let createItineraryButton = document.getElementById("createItineraryButton");
@@ -1171,11 +1175,11 @@ document.addEventListener('DOMContentLoaded', function()
             createItineraryButton.disabled = true;
 
             let poisIds = [];
-            for(let i = 0; i < data.scheduleDays.length; i++)
+            for(let i = 0; i < data.schedule.scheduleDays.length; i++)
             {
-                for(let j = 0; j < data.scheduleDays[i].pois.length; j++)
+                for(let j = 0; j < data.schedule.scheduleDays[i].pois.length; j++)
                 {
-                    poisIds.push(data.scheduleDays[i].pois[j].poiId);
+                    poisIds.push(data.schedule.scheduleDays[i].pois[j].poiId);
                 }
             }
 
@@ -1204,38 +1208,40 @@ document.addEventListener('DOMContentLoaded', function()
                     addPoiMarker(poiData[i]);
                 }
 
-                for(let i = 0; i < data.scheduleDays.length; i++)
+                for(let i = 0; i < data.schedule.scheduleDays.length; i++)
                 {
-                    addedDays.push({id: data.scheduleDays[i].dayId,
-                        date: data.scheduleDays[i].date,
-                        dayStart: data.scheduleDays[i].dayStart,
-                        dayEnd: data.scheduleDays[i].dayEnd,
-                        dayName: data.scheduleDays[i].dayName,
-                        dayNumber: data.scheduleDays[i].dayNumber,
-                        colour: data.scheduleDays[i].colour,
+                    addedDays.push({id: data.schedule.scheduleDays[i].dayId,
+                        date: data.schedule.scheduleDays[i].date,
+                        dayStart: data.schedule.scheduleDays[i].dayStart,
+                        dayEnd: data.schedule.scheduleDays[i].dayEnd,
+                        dayName: data.schedule.scheduleDays[i].dayName,
+                        dayNumber: data.schedule.scheduleDays[i].dayNumber,
+                        colour: data.schedule.scheduleDays[i].colour,
                         visitDurations: [],
                         pois: []
                     });
 
-                    let dateFormatted = data.scheduleDays[i].date.split("-");
-                    let dayStart = (Math.floor(data.scheduleDays[i].dayStart / 60) < 10 ? '0'
-                        + Math.floor(data.scheduleDays[i].dayStart / 60) : Math.floor(data.scheduleDays[i].dayStart / 60))
-                        + ':' + (data.scheduleDays[i].dayStart % 60 < 10 ? '0' + data.scheduleDays[i].dayStart % 60 : data.scheduleDays[i].dayStart % 60);
-                    let dayEnd = (Math.floor(data.scheduleDays[i].dayEnd / 60) < 10 ? '0'
-                        + Math.floor(data.scheduleDays[i].dayEnd / 60) : Math.floor(data.scheduleDays[i].dayEnd / 60))
-                        + ':' + (data.scheduleDays[i].dayEnd % 60 < 10 ? '0' + data.scheduleDays[i].dayEnd % 60 : data.scheduleDays[i].dayEnd % 60);
+                    let dateFormatted = data.schedule.scheduleDays[i].date.split("-");
+                    let dayStart = (Math.floor(data.schedule.scheduleDays[i].dayStart / 60) < 10 ? '0'
+                        + Math.floor(data.schedule.scheduleDays[i].dayStart / 60) : Math.floor(data.schedule.scheduleDays[i].dayStart / 60))
+                        + ':' + (data.schedule.scheduleDays[i].dayStart % 60 < 10 ? '0' +
+                            data.schedule.scheduleDays[i].dayStart % 60 : data.schedule.scheduleDays[i].dayStart % 60);
+                    let dayEnd = (Math.floor(data.schedule.scheduleDays[i].dayEnd / 60) < 10 ? '0'
+                        + Math.floor(data.schedule.scheduleDays[i].dayEnd / 60) : Math.floor(data.schedule.scheduleDays[i].dayEnd / 60))
+                        + ':' + (data.schedule.scheduleDays[i].dayEnd % 60 < 10 ? '0' +
+                            data.schedule.scheduleDays[i].dayEnd % 60 : data.schedule.scheduleDays[i].dayEnd % 60);
 
-                    addDayElement(data.scheduleDays[i].dayId, data.scheduleDays[i].dayName,
+                    addDayElement(data.schedule.scheduleDays[i].dayId, data.schedule.scheduleDays[i].dayName,
                         dateFormatted[1] + '/' + dateFormatted[2] + "/" + dateFormatted[0],
-                        dayStart, dayEnd, data.scheduleDays[i].colour, data.scheduleDays[i].accommodation);
+                        dayStart, dayEnd, data.schedule.scheduleDays[i].colour, data.schedule.scheduleDays[i].accommodation);
                 }
 
-                for(let i = 0; i < data.scheduleDays.length; i++)
+                for(let i = 0; i < data.schedule.scheduleDays.length; i++)
                 {
-                    for(let j = 0; j < data.scheduleDays[i].pois.length; j++)
+                    for(let j = 0; j < data.schedule.scheduleDays[i].pois.length; j++)
                     {
-                        addPOItoDay(data.scheduleDays[i].pois[j].poiId, data.scheduleDays[i].dayId,
-                            data.scheduleDays[i].accommodation, data.scheduleDays[i].pois[j].visitDuration);
+                        addPOItoDay(data.schedule.scheduleDays[i].pois[j].poiId, data.schedule.scheduleDays[i].dayId,
+                            data.schedule.scheduleDays[i].accommodation, data.schedule.scheduleDays[i].pois[j].visitDuration);
                     }
                 }
 
@@ -1260,6 +1266,7 @@ document.addEventListener('DOMContentLoaded', function()
 
     })
     .catch((error) => {
+        addLoadingNotSaved();
         console.error('Error:', error);
     });
 }, false);

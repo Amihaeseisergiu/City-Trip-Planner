@@ -6,10 +6,11 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
 @Transactional
-public interface RoutePoiRepository extends JpaRepository<RoutePoi, Long> {
+public interface RoutePoiRepository extends JpaRepository<RoutePoi, UUID> {
 
     Optional<RoutePoi> findByRouteAndPoiId(Route route, String poiId);
 }

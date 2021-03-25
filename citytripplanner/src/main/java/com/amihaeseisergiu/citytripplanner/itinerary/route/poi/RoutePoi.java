@@ -3,8 +3,10 @@ package com.amihaeseisergiu.citytripplanner.itinerary.route.poi;
 import com.amihaeseisergiu.citytripplanner.itinerary.route.Route;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
+import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -15,17 +17,14 @@ import javax.persistence.*;
 public class RoutePoi {
 
     @Id
-    @SequenceGenerator(
-            name = "route_poi_sequence",
-            sequenceName = "route_poi_sequence",
-            allocationSize = 1
+    @GeneratedValue(generator = "UUID")
+    @GenericGenerator(
+            name = "UUID",
+            strategy = "org.hibernate.id.UUIDGenerator"
     )
-    @GeneratedValue(
-            strategy = GenerationType.SEQUENCE,
-            generator = "route_poi_sequence"
-    )
+    @Column(name = "id", updatable = false, nullable = false)
     @JsonIgnore
-    private Long id;
+    private UUID id;
 
     private String poiId;
 

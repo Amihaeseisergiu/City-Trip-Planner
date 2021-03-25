@@ -1,4 +1,4 @@
-package com.amihaeseisergiu.citytripplanner.itinerary;
+package com.amihaeseisergiu.citytripplanner.planner.schedule;
 
 import com.amihaeseisergiu.citytripplanner.planner.Planner;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,7 +10,7 @@ import java.util.UUID;
 
 @Repository
 @Transactional
-public interface ItineraryRepository extends JpaRepository<Itinerary, UUID> {
+public interface ScheduleRepository extends JpaRepository<Schedule, UUID> {
 
-    Optional<Itinerary> findItineraryByPlanner(Planner planner);
+    Optional<Schedule> findScheduleByPlanner(Planner planner);
 }
