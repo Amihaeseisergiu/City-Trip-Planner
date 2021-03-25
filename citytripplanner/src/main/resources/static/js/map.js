@@ -670,19 +670,22 @@ function constructItinerary(data, switchTab)
     {
         document.getElementById("tabsContainer").__x.$data.tab = 'itinerary';
         document.getElementById("itineraryContainer").innerHTML = '';
+
+        let popUpsAddButtons = document.querySelectorAll('*[id^="poi_add_"]');
+
+        for(let i = 0; i < popUpsAddButtons.length; i++)
+        {
+            popUpsAddButtons[i].classList.add("hidden");
+        }
     }
 
-    let popUpsAddButtons = document.querySelectorAll('*[id^="poi_add_"]');
-
-    for(let i = 0; i < popUpsAddButtons.length; i++)
-    {
-        popUpsAddButtons[i].classList.add("hidden");
-    }
+    addShareButtons(data.id);
 
     for(let i = 0; i < data.routes.length; i++)
     {
         if(data.routes[i].pois !== null && data.routes[i].pois.length > 0)
         {
+            let dateFormatted = data.routes[i].date.split("-");
             let dayStart = data.routes[i].pois.find( ({ord}) => ord === 0).visitTimesStart;
             let dayEnd = data.routes[i].pois.find( ({ord}) => ord === (data.routes[i].pois.length - 1)).visitTimesEnd;
 
@@ -692,10 +695,98 @@ function constructItinerary(data, switchTab)
                 dayEnd = data.routes[i].pois.find( ({ord}) => ord === 0).visitTimesEnd;
             }
 
-            addItineraryElement(i, data.routes[i].dayName, data.routes[i].date, dayStart, dayEnd,
-                data.routes[i].colour, data.routes[i].pois, data.routes[i].accommodation);
+            addItineraryElement(i, data.routes[i].dayName, dateFormatted[1] + '/' + dateFormatted[2] + '/' + dateFormatted[0],
+                dayStart, dayEnd, data.routes[i].colour, data.routes[i].pois, data.routes[i].accommodation);
         }
     }
+}
+
+function addShareButtons(path)
+{
+    let div = document.createElement('div');
+
+    div.className = 'm-2 mb-4 flex flex-col border rounded-xl';
+    div.id = 'itineraryShareContainer';
+    div.innerHTML = `
+        <div class="text-indigo-500 font-bold leading-tight flex flex-row justify-between items-center">
+            <div class="p-3 flex flex-row items-center justify-center">
+                <svg class="w-5 h-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886
+                   12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632
+                    3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0
+                     105.368 2.684 3 3 0 00-5.368-2.684z" />
+                </svg>
+                <p>
+                    Share your itinerary
+                </p>
+            </div>
+            <div class="flex flex-row items-center justify-center p-3">
+                <a class="px-1"
+                    href="https://facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A8080%2Fitinerary%2F${path}"
+                    target="_blank" rel="noopener" aria-label="">
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path style="fill: #3c4cdd" d="M12 0C5.38 0 0 5.38 0 12s5.38 12 12 12 12-5.38 12-12S18.62 0
+                         12 0zm3.6 11.5h-2.1v7h-3v-7h-2v-2h2V8.34c0-1.1.35-2.82
+                          2.65-2.82h2.35v2.3h-1.4c-.25 0-.6.13-.6.66V9.5h2.34l-.24 2z"/>
+                    </svg>
+                </a>
+                <a class="px-1"
+                    href="https://twitter.com/intent/tweet/?text=Check%20out%20my%20itinerary!%20
+                    http%3A%2F%2Flocalhost%3A8080%2Fitinerary%2F${path}" target="_blank" rel="noopener" aria-label="">
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path style="fill: #289acf" d="M12 0C5.38 0 0 5.38 0 12s5.38 12 12 12 12-5.38
+                         12-12S18.62 0 12 0zm5.26 9.38v.34c0 3.48-2.64 7.5-7.48
+                          7.5-1.48 0-2.87-.44-4.03-1.2 1.37.17 2.77-.2 3.9-1.08-1.16-.02-2.13-.78-2.46-1.83.38.1.8.07
+                           1.17-.03-1.2-.24-2.1-1.3-2.1-2.58v-.05c.35.2.75.32 1.18.33-.7-.47-1.17-1.28-1.17-2.2
+                            0-.47.13-.92.36-1.3C7.94 8.85 9.88 9.9 12.06 10c-.04-.2-.06-.4-.06-.6 0-1.46
+                             1.18-2.63 2.63-2.63.76 0 1.44.3 1.92.82.6-.12 1.95-.27 1.95-.27-.35.53-.72 1.66-1.24 2.04z"/>
+                    </svg>
+                </a>
+                <a class="px-1"
+                    href="https://reddit.com/submit/?url=http%3A%2F%2Flocalhost%3A8080%2Fitinerary%2F${path}&amp;
+                    resubmit=true&amp;title=Check%20out%20my%20itinerary!" target="_blank" rel="noopener" aria-label="">
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <circle style="fill: #cf2828" cx="9.391" cy="13.392" r=".978"/>
+                        <path style="fill: #cf2828" d="M14.057
+                              15.814c-1.14.66-2.987.655-4.122-.004-.238-.138-.545-.058-.684.182-.13.24-.05.545.19.685.72.417
+                              1.63.646 2.568.646.93 0 1.84-.228 2.558-.642.24-.13.32-.44.185-.68-.14-.24-.445-.32-.683-.18zM5 12.086c0
+                              .41.23.78.568.978.27-.662.735-1.264 1.353-1.774-.2-.207-.48-.334-.79-.334-.62 0-1.13.507-1.13 1.13z"/>
+                        <path style="fill: #cf2828" d="M12 0C5.383 0 0 5.383 0 12s5.383 12 12 12 12-5.383 12-12S18.617 0 12 0zm6.673
+                              14.055c.01.104.022.208.022.314 0 2.61-3.004 4.73-6.695
+                              4.73s-6.695-2.126-6.695-4.74c0-.105.013-.21.022-.313C4.537
+                              13.73 4 12.97 4 12.08c0-1.173.956-2.13 2.13-2.13.63 0 1.218.29 1.618.757 1.04-.607 2.345-.99
+                              3.77-1.063.057-.803.308-2.33 1.388-2.95.633-.366 1.417-.323 2.322.085.302-.81 1.076-1.397
+                              1.99-1.397 1.174 0 2.13.96 2.13 2.13 0 1.177-.956 2.133-2.13 2.133-1.065
+                              0-1.942-.79-2.098-1.81-.734-.4-1.315-.506-1.716-.276-.6.346-.818 1.395-.88 2.087
+                              1.407.08 2.697.46 3.728 1.065.4-.468.987-.756 1.617-.756 1.17 0 2.13.953 2.13
+                              2.13 0 .89-.54 1.65-1.33 1.97z"/>
+                        <circle style="fill: #cf2828" cx="14.609" cy="13.391" r=".978"/>
+                        <path style="fill: #cf2828" d="M17.87 10.956c-.302 0-.583.128-.79.334.616.51 1.082 1.112 1.352
+                              1.774.34-.197.568-.566.568-.978 0-.623-.507-1.13-1.13-1.13z"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+        <input class="w-full appearance-none rounded-b-xl py-2 px-2 text-gray-600 leading-tight
+         focus:outline-none truncate text-center bg-indigo-100"
+        type="text" id="itineraryShareLink"
+        name="itineraryShareLink" value="http://localhost:8080/itinerary/${path}"/>
+    `;
+
+    document.getElementById('itineraryContainer').appendChild(div);
+
+    document.getElementById("itineraryShareLink").addEventListener('click', function() {
+        this.select();
+        document.execCommand('copy');
+        this.value = "Copied!";
+        this.disabled = true;
+
+        let input = this;
+        setTimeout(function() {
+            input.value = `http://localhost:8080/itinerary/${path}`;
+            input.disabled = false;
+        }, 1000);
+    });
 }
 
 function addItineraryElement(id, dayName, date, dayStart, dayEnd, colour, pois, accommodation) {
@@ -1164,8 +1255,6 @@ document.addEventListener('DOMContentLoaded', function()
         }
     }).then(response => response.json())
     .then(data => {
-
-        console.log(data);
 
         if(data.schedule !== null)
         {
