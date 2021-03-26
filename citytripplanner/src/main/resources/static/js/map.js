@@ -254,7 +254,7 @@ function addPOItoDay(id, dayId, accommodation, visitDuration)
             </div>
         `;
 
-        if(poiContainer.innerText === 'No locations have been added')
+        if(poiContainer.childNodes.length === 1 && poiContainer.childNodes[0].nodeType === Node.TEXT_NODE)
         {
             document.getElementById(`poiContainer_${day.id}`).innerHTML = "";
             document.getElementById(`poiContainer_${day.id}`).appendChild(div);
@@ -651,11 +651,7 @@ function sendPOIByDayData()
     .then(data => {
 
         addLoadingSaved();
-
-        if(data.routes.length > 0)
-        {
-            constructItinerary(data, true);
-        }
+        constructItinerary(data, true);
     })
     .catch((error) => {
         console.error('Error:', error);
@@ -665,38 +661,61 @@ function sendPOIByDayData()
 function constructItinerary(data, switchTab)
 {
     document.getElementById("itineraryTab").classList.remove("hidden");
+    document.getElementById("itineraryContainer").innerHTML = '';
+
+    if(data.routes.length > 0)
+    {
+        addShareButtons(data.id);
+
+        for(let i = 0; i < data.routes.length; i++)
+        {
+            if(data.routes[i].pois !== null && data.routes[i].pois.length > 0)
+            {
+                let dateFormatted = data.routes[i].date.split("-");
+                let dayStart = data.routes[i].pois.find( ({ord}) => ord === 0).visitTimesStart;
+                let dayEnd = data.routes[i].pois.find( ({ord}) => ord === (data.routes[i].pois.length - 1)).visitTimesEnd;
+
+                if(data.routes[i].accommodation !== null)
+                {
+                    dayStart = data.routes[i].pois.find( ({ord}) => ord === 0).visitTimesStart;
+                    dayEnd = data.routes[i].pois.find( ({ord}) => ord === 0).visitTimesEnd;
+                }
+
+                addItineraryElement(i, data.routes[i].dayName, dateFormatted[1] + '/' + dateFormatted[2] + '/' + dateFormatted[0],
+                    dayStart, dayEnd, data.routes[i].colour, data.routes[i].pois, data.routes[i].accommodation);
+            }
+        }
+    }
+    else
+    {
+        let div = document.createElement('div');
+
+        div.className = 'm-2 mb-4 flex flex-col border rounded-xl';
+        div.id = 'itineraryNoSolutions';
+        div.innerHTML = `
+        <div class="p-3 w-full text-indigo-400 font-bold leading-tight flex flex-row justify-center items-center">
+            <p>
+                No solutions were found
+            </p>
+            <svg class="w-5 h-5 ml-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+               d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </div>
+        `;
+
+        document.getElementById('itineraryContainer').appendChild(div);
+    }
 
     if(switchTab)
     {
         document.getElementById("tabsContainer").__x.$data.tab = 'itinerary';
-        document.getElementById("itineraryContainer").innerHTML = '';
 
         let popUpsAddButtons = document.querySelectorAll('*[id^="poi_add_"]');
 
         for(let i = 0; i < popUpsAddButtons.length; i++)
         {
             popUpsAddButtons[i].classList.add("hidden");
-        }
-    }
-
-    addShareButtons(data.id);
-
-    for(let i = 0; i < data.routes.length; i++)
-    {
-        if(data.routes[i].pois !== null && data.routes[i].pois.length > 0)
-        {
-            let dateFormatted = data.routes[i].date.split("-");
-            let dayStart = data.routes[i].pois.find( ({ord}) => ord === 0).visitTimesStart;
-            let dayEnd = data.routes[i].pois.find( ({ord}) => ord === (data.routes[i].pois.length - 1)).visitTimesEnd;
-
-            if(data.routes[i].accommodation !== null)
-            {
-                dayStart = data.routes[i].pois.find( ({ord}) => ord === 0).visitTimesStart;
-                dayEnd = data.routes[i].pois.find( ({ord}) => ord === 0).visitTimesEnd;
-            }
-
-            addItineraryElement(i, data.routes[i].dayName, dateFormatted[1] + '/' + dateFormatted[2] + '/' + dateFormatted[0],
-                dayStart, dayEnd, data.routes[i].colour, data.routes[i].pois, data.routes[i].accommodation);
         }
     }
 }
@@ -708,13 +727,13 @@ function addShareButtons(path)
     div.className = 'm-2 mb-4 flex flex-col border rounded-xl';
     div.id = 'itineraryShareContainer';
     div.innerHTML = `
-        <div class="text-indigo-500 font-bold leading-tight flex flex-row justify-between items-center">
+        <div class="text-indigo-400 font-bold leading-tight flex flex-row justify-between items-center">
             <div class="p-3 flex flex-row items-center justify-center">
                 <svg class="w-5 h-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886
                    12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632
-                    3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0
-                     105.368 2.684 3 3 0 00-5.368-2.684z" />
+                   3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0
+                   105.368 2.684 3 3 0 00-5.368-2.684z" />
                 </svg>
                 <p>
                     Share your itinerary
@@ -727,7 +746,7 @@ function addShareButtons(path)
                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                         <path style="fill: #3c4cdd" d="M12 0C5.38 0 0 5.38 0 12s5.38 12 12 12 12-5.38 12-12S18.62 0
                          12 0zm3.6 11.5h-2.1v7h-3v-7h-2v-2h2V8.34c0-1.1.35-2.82
-                          2.65-2.82h2.35v2.3h-1.4c-.25 0-.6.13-.6.66V9.5h2.34l-.24 2z"/>
+                         2.65-2.82h2.35v2.3h-1.4c-.25 0-.6.13-.6.66V9.5h2.34l-.24 2z"/>
                     </svg>
                 </a>
                 <a class="px-1"
@@ -736,10 +755,10 @@ function addShareButtons(path)
                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                         <path style="fill: #289acf" d="M12 0C5.38 0 0 5.38 0 12s5.38 12 12 12 12-5.38
                          12-12S18.62 0 12 0zm5.26 9.38v.34c0 3.48-2.64 7.5-7.48
-                          7.5-1.48 0-2.87-.44-4.03-1.2 1.37.17 2.77-.2 3.9-1.08-1.16-.02-2.13-.78-2.46-1.83.38.1.8.07
-                           1.17-.03-1.2-.24-2.1-1.3-2.1-2.58v-.05c.35.2.75.32 1.18.33-.7-.47-1.17-1.28-1.17-2.2
-                            0-.47.13-.92.36-1.3C7.94 8.85 9.88 9.9 12.06 10c-.04-.2-.06-.4-.06-.6 0-1.46
-                             1.18-2.63 2.63-2.63.76 0 1.44.3 1.92.82.6-.12 1.95-.27 1.95-.27-.35.53-.72 1.66-1.24 2.04z"/>
+                         7.5-1.48 0-2.87-.44-4.03-1.2 1.37.17 2.77-.2 3.9-1.08-1.16-.02-2.13-.78-2.46-1.83.38.1.8.07
+                         1.17-.03-1.2-.24-2.1-1.3-2.1-2.58v-.05c.35.2.75.32 1.18.33-.7-.47-1.17-1.28-1.17-2.2
+                         0-.47.13-.92.36-1.3C7.94 8.85 9.88 9.9 12.06 10c-.04-.2-.06-.4-.06-.6 0-1.46
+                         1.18-2.63 2.63-2.63.76 0 1.44.3 1.92.82.6-.12 1.95-.27 1.95-.27-.35.53-.72 1.66-1.24 2.04z"/>
                     </svg>
                 </a>
                 <a class="px-1"
@@ -1149,6 +1168,7 @@ function savePlanner()
         addLoadingSaved();
     })
     .catch((error) => {
+        addLoadingError();
         console.error('Error:', error);
     });
 }
@@ -1240,6 +1260,23 @@ function addLoadingSaved()
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
         </div>
+    `;
+}
+
+function addLoadingError()
+{
+    let loadingDiv = document.getElementById("loadingContainer");
+    loadingDiv.__x.$data.state = 'unsaved';
+
+    loadingDiv.innerHTML = `
+        <button class="group hover:bg-indigo-500 rounded-full p-3 transition ease-out duration-300 focus:outline-none"
+                onclick="savePlanner()">
+            <svg class="w-5 h-5 text-indigo-500 group-hover:text-white"
+                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                       d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </button>
     `;
 }
 
@@ -1344,7 +1381,7 @@ document.addEventListener('DOMContentLoaded', function()
                 addLoadingSaved();
             })
             .catch((error) => {
-                addLoadingNotSaved();
+                addLoadingError();
                 console.error('Error:', error);
             });
         }
@@ -1355,7 +1392,7 @@ document.addEventListener('DOMContentLoaded', function()
 
     })
     .catch((error) => {
-        addLoadingNotSaved();
+        addLoadingError();
         console.error('Error:', error);
     });
 }, false);

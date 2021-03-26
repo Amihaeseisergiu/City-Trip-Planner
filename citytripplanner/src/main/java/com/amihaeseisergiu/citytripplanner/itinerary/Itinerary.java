@@ -29,6 +29,8 @@ public class Itinerary {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
+    private String userName;
+
     @Fetch(FetchMode.SELECT)
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "itinerary_id")

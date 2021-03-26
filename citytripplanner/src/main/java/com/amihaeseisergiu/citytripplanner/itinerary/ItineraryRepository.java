@@ -13,4 +13,5 @@ import java.util.UUID;
 public interface ItineraryRepository extends JpaRepository<Itinerary, UUID> {
 
     Optional<Itinerary> findItineraryByPlanner(Planner planner);
+    Optional<Itinerary> findItineraryById(UUID id);
 }

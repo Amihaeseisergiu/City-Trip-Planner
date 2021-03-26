@@ -37,7 +37,10 @@ public class PlannerService {
             if(scheduleDay.getPois().size() >= 2 && scheduleDay.getPois().size() <= 25)
             {
                 int[][] durationsMatrix = mapboxUtils.fetchDurationsMatrix(scheduleDay.getPois());
-                routes.add(solverUtils.getRoute(scheduleDay, durationsMatrix));
+                Route route = solverUtils.getRoute(scheduleDay, durationsMatrix);
+
+                if(route.getPois() != null)
+                    routes.add(route);
             }
         }
 
@@ -61,6 +64,7 @@ public class PlannerService {
             if(itinerary != null)
             {
                 itinerary.setPlanner(resultingPlanner);
+                itinerary.setUserName(user.getUserName());
                 itineraryService.assignDuplicates(itinerary);
 
                 resultingPlanner.setItinerary(itinerary);
@@ -75,6 +79,7 @@ public class PlannerService {
 
             if(itinerary != null)
             {
+                itinerary.setUserName(user.getUserName());
                 plannerToSave.setItinerary(itinerary);
                 itinerary.setPlanner(plannerToSave);
             }

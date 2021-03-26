@@ -1,0 +1,66 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org" xmlns:x-transition="http://www.w3.org/1999/xhtml"
+      xmlns:x-bind="http://www.w3.org/1999/xhtml" lang="en">
+<head>
+    <link rel="stylesheet" href="/css/application.css"/>
+    <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js" defer></script>
+
+    <script src='https://unpkg.com/@turf/turf/turf.min.js'></script>
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.css' rel='stylesheet' />
+
+    <title>Itinerary</title>
+</head>
+<body>
+<div class="h-screen w-screen flex flex-col justify-start">
+    <div class="bg-white border-b-2 flex flex-col justify-center items-center lg:flex-row lg:justify-between">
+        <div class="flex items-center justify-center lg:justify-start">
+            <svg class="w-10 inline-block lg:ml-10" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z"
+                      clip-rule="evenodd" />
+            </svg>
+            <a href="/">
+                <h1 class="text-4xl p-5 font-body text-gray-900 leading-tight inline-block">City Trip Planner</h1>
+            </a>
+        </div>
+        <th:block th:if="${#authorization.expression('hasRole(''ROLE_USER'')')}">
+            <a class="text-2xl p-5 font-bold text-gray-900 leading-tight inline-block lg:mr-10
+                      cursor-pointer transition duration-500 ease-in-out transform hover:translate-x-4" href="#" th:href="@{/logout}">
+                Logout
+                <svg class="w-8 inline-block hover" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6
+                     4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+            </a>
+        </th:block>
+    </div>
+
+    <div style="height:calc(100vh - 5.5rem)!important;" class="flex justify-start items-center flex-col lg:flex-row lg:justify-center">
+
+        <div class="w-full h-1/2 p-5 lg:w-2/6 lg:h-full">
+            <div class="h-full bg-white rounded-3xl shadow-2xl flex flex-col">
+
+                <div class="flex flex-row justify-center">
+                    <div class="flex w-full overflow-auto no-scrollbar break-all" id="itineraryCreatorName">
+
+                    </div>
+                </div>
+
+                <div class="overflow-auto no-scrollbar h-full rounded-b-3xl shadow-inner">
+
+                    <div class="bg-white w-full mt-6" x-data="{selected: null}" id="itineraryContainer"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="w-full h-1/2 p-5 lg:w-4/6 lg:h-full">
+            <div class="h-full rounded-3xl shadow-2xl focus:outline-none" id="map">
+
+            </div>
+        </div>
+
+    </div>
+</div>
+<script src='/js/itinerary.js'></script>
+</body>
+</html>
