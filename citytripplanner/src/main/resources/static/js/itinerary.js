@@ -11,6 +11,25 @@ let map = new mapboxgl.Map({
     zoom: 12
 });
 
+function getPOIDetails(id, marker)
+{
+    const url = `http://localhost:8080/poi/${id}`;
+    fetch(url, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+        .then(response => response.json())
+        .then(data => {
+
+            addPoiDetails(data, marker);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+}
+
 function addPoiDetails(data, marker)
 {
     let hoursHTML = ``;
@@ -535,7 +554,7 @@ document.addEventListener('DOMContentLoaded', function()
                             coordinates.push([poiData[i].lng, poiData[i].lat]);
                         }
 
-                        constructItinerary(data, false);
+                        constructItinerary(data);
 
                         let bounds = new mapboxgl.LngLatBounds();
                         coordinates.forEach(function(coordinate) {

@@ -72,10 +72,22 @@ public class SolverUtils {
             {
                 if(i != j)
                 {
-                    model.ifThen(
-                            ord[i].add(1).eq(ord[j]).and(ord[i].ne(n - 1)).decompose().reify(),
-                            succCost[i].ge(timeCost[i][j] + visitDurations[i]).decompose()
-                    );
+                    if(i != accommodation)
+                    {
+                        model.ifThen(
+                                ord[i].add(1).eq(ord[j]).and(ord[i].ne(n - 1)).decompose().reify(),
+                                succCost[i].eq(model.intVar(openingTimes[j]).sub(visitTimesEn[i].add(timeCost[i][j])).max(0)
+                                        .add(timeCost[i][j]).add(visitDurations[i])).decompose()
+                        );
+                    }
+                    else
+                    {
+                        model.ifThen(
+                                ord[i].add(1).eq(ord[j]).decompose().reify(),
+                                succCost[i].eq(model.intVar(openingTimes[j]).sub(visitTimesSt[i].add(timeCost[i][j])).max(0)
+                                        .add(timeCost[i][j])).decompose()
+                        );
+                    }
 
                     model.ifThen(
                             ord[i].sub(1).eq(ord[j]).decompose().reify(),
@@ -144,7 +156,16 @@ public class SolverUtils {
                         if(i != j && solution.getIntVal(ord[j]) == order + 1)
                         {
                             timeToNextPoi = timeCost[i][j];
-                            waitingTime = solution.getIntVal(succCost[i]) - visitDurations[i] - timeToNextPoi;
+
+                            if(accommodation != -1 && order == 0)
+                            {
+                                waitingTime = solution.getIntVal(succCost[i]) - timeToNextPoi;
+                            }
+                            else
+                            {
+                                waitingTime = solution.getIntVal(succCost[i]) - visitDurations[i] - timeToNextPoi;
+                            }
+
                             polyLine = mapboxUtils.fetchPolyLine(scheduleDay.getPois().get(i), scheduleDay.getPois().get(j));
                             break;
                         }

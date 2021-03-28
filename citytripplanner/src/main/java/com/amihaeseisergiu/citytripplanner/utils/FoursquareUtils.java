@@ -73,29 +73,43 @@ public class FoursquareUtils {
                 JsonObject element = e.getAsJsonObject();
                 List<Double> days = gson.fromJson(element.get("days"), ArrayList.class);
 
-                JsonObject open = element.getAsJsonArray("open").get(0).getAsJsonObject();
-                String start = gson.fromJson(open.get("start"), String.class);
-                String end = gson.fromJson(open.get("end"), String.class);
-                LocalTime startTime = null;
-                LocalTime endTime = null;
-
-                Matcher matcher = pattern.matcher(start);
-                if(matcher.find())
+                if(element.getAsJsonArray("open").size() > 0)
                 {
-                    startTime = LocalTime.parse(matcher.group(1) + ":" + matcher.group(2));
+                    JsonObject open = element.getAsJsonArray("open").get(0).getAsJsonObject();
+                    String start = gson.fromJson(open.get("start"), String.class);
+                    String end = gson.fromJson(open.get("end"), String.class);
+                    LocalTime startTime = null;
+                    LocalTime endTime = null;
+
+                    Matcher matcher = pattern.matcher(start);
+                    if(matcher.find())
+                    {
+                        startTime = LocalTime.parse(matcher.group(1) + ":" + matcher.group(2));
+                    }
+
+                    matcher = pattern.matcher(end);
+                    if(matcher.find())
+                    {
+                        endTime = LocalTime.parse(matcher.group(1) + ":" + matcher.group(2));
+                    }
+
+                    for(Double dayNumber : days)
+                    {
+                        String dayName = dayNames.get(dayNumber.intValue() - 1);
+
+                        poiHours.add(new PoiHours(dayNumber.intValue(), dayName, startTime, endTime));
+                    }
                 }
-
-                matcher = pattern.matcher(end);
-                if(matcher.find())
+                else
                 {
-                    endTime = LocalTime.parse(matcher.group(1) + ":" + matcher.group(2));
-                }
+                    for(Double dayNumber : days)
+                    {
+                        String dayName = dayNames.get(dayNumber.intValue() - 1);
 
-                for(Double dayNumber : days)
-                {
-                    String dayName = dayNames.get(dayNumber.intValue() - 1);
-
-                    poiHours.add(new PoiHours(dayNumber.intValue(), dayName, startTime, endTime));
+                        LocalTime startTime = LocalTime.parse("00:00");
+                        LocalTime endTime = LocalTime.parse("23:59");
+                        poiHours.add(new PoiHours(dayNumber.intValue(), dayName, startTime, endTime));
+                    }
                 }
             }
         }

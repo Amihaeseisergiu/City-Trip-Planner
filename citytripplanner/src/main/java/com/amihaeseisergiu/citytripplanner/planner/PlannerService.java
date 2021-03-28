@@ -70,7 +70,12 @@ public class PlannerService {
                 resultingPlanner.setItinerary(itinerary);
             }
 
-            plannerRepository.save(resultingPlanner);
+            Planner savedPlanner = plannerRepository.saveAndFlush(resultingPlanner);
+
+            if(itinerary != null)
+            {
+                itinerary.setId(savedPlanner.getItinerary().getId());
+            }
         }
         else
         {
@@ -84,7 +89,12 @@ public class PlannerService {
                 itinerary.setPlanner(plannerToSave);
             }
 
-            plannerRepository.save(plannerToSave);
+            Planner savedPlanner = plannerRepository.saveAndFlush(plannerToSave);
+
+            if(itinerary != null)
+            {
+                itinerary.setId(savedPlanner.getItinerary().getId());
+            }
         }
     }
 

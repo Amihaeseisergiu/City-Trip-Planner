@@ -27,15 +27,15 @@ map.addControl(geoLocate);
 
 function getTodaysDate()
 {
-    date = new Date();
-    day = date.getDate();
-    month = date.getMonth() + 1;
-    year = date.getFullYear();
+    let date = new Date();
+    let day = date.getDate();
+    let month = date.getMonth() + 1;
+    let year = date.getFullYear();
 
     if (month < 10) month = "0" + month;
     if (day < 10) day = "0" + day;
 
-    today = year + "-" + month + "-" + day;
+    let today = year + "-" + month + "-" + day;
 
     return today;
 }
@@ -150,7 +150,7 @@ function addPOItoDay(id, dayId, accommodation, visitDuration)
     let day = currentSelectedDay;
     if(dayId !== null)
     {
-       day = addedDays.find( ({id}) => id === dayId);
+        day = addedDays.find( ({id}) => id === dayId);
     }
 
     if(day && !day.pois.find( ({poi}) => poi.id === id))
@@ -851,7 +851,7 @@ function addItineraryElement(id, dayName, date, dayStart, dayEnd, colour, pois, 
                 zoom: map.getZoom()
             };
         }
-       viewItineraryOnMap(pois, colour, accommodation);
+        viewItineraryOnMap(pois, colour, accommodation);
     });
 
     let start = accommodation !== null ? 1 : 0;
