@@ -78,11 +78,12 @@
                         Create
                     </h1>
                     <div class="w-3/4">
-                        <div x-data="{selected: null, name: 'New Planner', dropdown: null, type: null}" class="relative w-full flex flex-col items-center">
+                        <div x-data="{selected: null, name: 'New Planner', dropdown: null, type: null}" id="newPlannerContainer"
+                             class="relative w-full flex flex-col items-center">
                             <div :class="{'hover:border-transparent border-transparent transform scale-100 -translate-y-1 transition ease-out duration-500 bg-white shadow-lg': selected === 1,
                                    'transform scale-95 -translate-y-0 transition ease-out duration-500 border-gray-200 hover:border-gray-400': selected !== 1}"
-                                 class="w-full z-10 group rounded-xl border-2 bg-gray-50 p-5 mt-5 ml-5 mr-5 cursor-pointer select-none flex flex-row justify-between">
-                                <div @click="selected !== 1 ? selected = 1 : selected = null" class="flex flex-col w-full">
+                                 class="w-full z-10 group rounded-xl border-2 bg-gray-50 mt-5 ml-5 mr-5 cursor-pointer select-none flex flex-row justify-between">
+                                <div @click="selected !== 1 ? selected = 1 : selected = null" class="flex flex-col w-full p-5">
                                     <p x-text="name"
                                        :class="{'text-indigo-500': selected === 1}"
                                        class="text-gray-500 group-hover:text-indigo-500 font-bold">
@@ -94,10 +95,9 @@
                                         Create a new editor and start planning your vacation.
                                     </p>
                                 </div>
-                                <button x-show="name.length > 0 && type !== null"
-                                        @click="selected = null; name = 'New Planner'; dropdown = null; type = null"
+                                <button x-show="name.length > 0 && type !== null" id="addPlannerButton"
                                         class="transform hover:scale-125 hover:text-green-400 transition ease-in-out
-                                       duration-500 focus:outline-none border-none text-gray-500">
+                                       duration-500 focus:outline-none border-none text-gray-500 p-5">
                                     <svg class="w-10 h-10" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.25"
                                               d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -114,6 +114,7 @@
                                         <label class="pr-5 font-bold tracking-tight text-gray-400" for="addName">Name:</label>
                                         <input x-model="name"
                                                @click.away="if(name.length === 0) name = 'New Planner';"
+                                               maxlength="20"
                                                class="w-full shadow appearance-none border rounded py-2 px-2 text-grey-darker
                                               focus:outline-none focus:ring" type="text" id="addName" name="add-name">
                                     </div>
@@ -157,35 +158,14 @@
                         View
                     </h1>
 
-                    <div class="w-3/4 h-full overflow-auto no-scrollbar flex flex-col items-center">
-                        <div class="w-11/12 group rounded-xl border-2 p-5 mt-5 cursor-pointer select-none flex flex-row justify-between
-                                    transform hover:translate-x-3 hover:bg-white hover:shadow-lg bg-gray-50
-                                    hover:border-transparent transition ease-out duration-700">
-                            <div class="flex flex-row w-full justify-between items-center">
-                                <div class="flex flex-col">
-                                    <p class="text-gray-500 group-hover:text-indigo-500 font-bold">
-                                        New Planner
-                                    </p>
-                                    <p class="text-gray-500 group-hover:text-gray-600">
-                                        Restricted
-                                    </p>
-                                </div>
-                                <div class="mr-5 ml-5">
-                                    324deaw-32342da-34234ee
-                                </div>
-                            </div>
-                            <button class="transform hover:scale-125 hover:text-red-400 transition ease-in-out
-                                       duration-500 focus:outline-none border-none text-gray-500">
-                                <svg class="w-10 h-10" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.25"
-                                          d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </button>
-                        </div>
+                    <div class="w-3/4 h-full overflow-auto no-scrollbar flex flex-col items-center" id="plannersContainer">
+
                     </div>
                 </div>
             </div>
         </div>
+
+        <script src="/js/index.js"></script>
     </th:block>
 </body>
 </html>

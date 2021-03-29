@@ -29,6 +29,9 @@ public class Planner {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
+    private String name;
+    private String type;
+
     @Fetch(FetchMode.SELECT)
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     private Schedule schedule;

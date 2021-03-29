@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -12,5 +13,6 @@ import java.util.UUID;
 @Transactional
 public interface PlannerRepository extends JpaRepository<Planner, UUID> {
 
-    Optional<Planner> findFirstByUser(AppUser user);
+    Optional<Planner> findByIdAndUser(UUID id, AppUser user);
+    List<Planner> findByUser(AppUser user);
 }

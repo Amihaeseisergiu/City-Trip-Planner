@@ -1,6 +1,7 @@
 package com.amihaeseisergiu.citytripplanner;
 
 import com.amihaeseisergiu.citytripplanner.itinerary.ItineraryService;
+import com.amihaeseisergiu.citytripplanner.planner.PlannerService;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,18 +21,13 @@ import java.util.UUID;
 public class MainController {
 
     private final ItineraryService itineraryService;
+    private final PlannerService plannerService;
 
     @GetMapping
     public String index()
     {
 
         return "index";
-    }
-
-    @GetMapping("/map")
-    public String map()
-    {
-        return "map";
     }
 
     @GetMapping("/login")
@@ -58,6 +54,19 @@ public class MainController {
         if(itineraryService.getItineraryById(id) != null)
         {
             return "itinerary";
+        }
+        else
+        {
+            return "error";
+        }
+    }
+
+    @GetMapping("/restricted/{id}")
+    public String restricted(@PathVariable UUID id)
+    {
+        if(plannerService.getUserPlanner(id) != null)
+        {
+            return "restricted";
         }
         else
         {

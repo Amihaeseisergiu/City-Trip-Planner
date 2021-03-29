@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @AllArgsConstructor
@@ -47,34 +48,37 @@ public class PlannerService {
         return new Itinerary(routes);
     }
 
-    public void saveRestricted(Schedule schedule, Itinerary itinerary)
+    public void saveRestricted(UUID plannerId, Schedule schedule, Itinerary itinerary)
     {
         AppUser user = appUserService.getLoggedInUser();
-        Optional<Planner> planner = plannerRepository.findFirstByUser(user);
+        Optional<Planner> planner = plannerRepository.findById(plannerId);
 
         if(planner.isPresent())
         {
             Planner resultingPlanner = planner.get();
 
-            schedule.setPlanner(resultingPlanner);
-            scheduleService.assignDuplicates(schedule);
-
-            resultingPlanner.setSchedule(schedule);
-
-            if(itinerary != null)
+            if(resultingPlanner.getUser().equals(user))
             {
-                itinerary.setPlanner(resultingPlanner);
-                itinerary.setUserName(user.getUserName());
-                itineraryService.assignDuplicates(itinerary);
+                schedule.setPlanner(resultingPlanner);
+                scheduleService.assignDuplicates(schedule);
 
-                resultingPlanner.setItinerary(itinerary);
-            }
+                resultingPlanner.setSchedule(schedule);
 
-            Planner savedPlanner = plannerRepository.saveAndFlush(resultingPlanner);
+                if(itinerary != null)
+                {
+                    itinerary.setPlanner(resultingPlanner);
+                    itinerary.setUserName(user.getUserName());
+                    itineraryService.assignDuplicates(itinerary);
 
-            if(itinerary != null)
-            {
-                itinerary.setId(savedPlanner.getItinerary().getId());
+                    resultingPlanner.setItinerary(itinerary);
+                }
+
+                Planner savedPlanner = plannerRepository.saveAndFlush(resultingPlanner);
+
+                if(itinerary != null)
+                {
+                    itinerary.setId(savedPlanner.getItinerary().getId());
+                }
             }
         }
         else
@@ -86,6 +90,8 @@ public class PlannerService {
             {
                 itinerary.setUserName(user.getUserName());
                 plannerToSave.setItinerary(itinerary);
+                plannerToSave.setName("API Generated");
+                plannerToSave.setType("restricted");
                 itinerary.setPlanner(plannerToSave);
             }
 
@@ -98,11 +104,48 @@ public class PlannerService {
         }
     }
 
-    public Planner getUserPlanner()
+    public Planner createPlanner(Planner planner)
     {
         AppUser user = appUserService.getLoggedInUser();
-        Optional<Planner> planner = plannerRepository.findFirstByUser(user);
+        planner.setUser(user);
 
-        return planner.orElseGet(Planner::new);
+        return plannerRepository.saveAndFlush(planner);
+    }
+
+    public Planner deletePlanner(Planner planner)
+    {
+        AppUser user = appUserService.getLoggedInUser();
+        Optional<Planner> foundPlanner = plannerRepository.findByIdAndUser(planner.getId(), user);
+
+        if(foundPlanner.isPresent())
+        {
+            plannerRepository.delete(foundPlanner.get());
+            return planner;
+        }
+
+        return null;
+    }
+
+    public List<Planner> getUserPlanners()
+    {
+        AppUser user = appUserService.getLoggedInUser();
+        return plannerRepository.findByUser(user);
+    }
+
+    public Planner getUserPlanner(UUID plannerId)
+    {
+        AppUser user = appUserService.getLoggedInUser();
+        Optional<Planner> planner = plannerRepository.findById(plannerId);
+
+        if(planner.isPresent())
+        {
+            Planner resultingPlanner = planner.get();
+
+            if(resultingPlanner.getUser().equals(user))
+            {
+                return resultingPlanner;
+            }
+        }
+        return null;
     }
 }

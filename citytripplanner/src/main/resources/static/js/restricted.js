@@ -9,7 +9,7 @@ let initialPoint = null;
 let movedPoint = null;
 let currentBounds = null;
 
-let map = new mapboxgl.Map({
+let restricted = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/mapbox/light-v10',
     center: [27.60, 47.16],
@@ -23,7 +23,7 @@ let geoLocate = new mapboxgl.GeolocateControl({
     trackUserLocation: true
 });
 
-map.addControl(geoLocate);
+restricted.addControl(geoLocate);
 
 function getTodaysDate()
 {
@@ -443,7 +443,7 @@ function addPoiMarker(poi)
 
         let marker = new mapboxgl.Marker(el)
             .setLngLat([poi.lng, poi.lat])
-            .addTo(map);
+            .addTo(restricted);
 
         let toAdd = {
             poi: poi,
@@ -479,26 +479,26 @@ geoLocate.on('geolocate', function(e) {
     initialPoint = [e.coords.longitude, e.coords.latitude];
 });
 
-map.on('load', function() {
-    initialPoint = [map.getCenter().lng, map.getCenter().lat];
+restricted.on('load', function() {
+    initialPoint = [restricted.getCenter().lng, restricted.getCenter().lat];
 
-    const lat = map.getCenter().lat;
-    const lng = map.getCenter().lng;
-    let radiusPoint = [map.getBounds()._ne.lng, map.getBounds()._ne.lat];
+    const lat = restricted.getCenter().lat;
+    const lng = restricted.getCenter().lng;
+    let radiusPoint = [restricted.getBounds()._ne.lng, restricted.getBounds()._ne.lat];
     let radius = turf.distance([lng, lat], radiusPoint, {units: 'kilometers'});
     addPOIs(lat, lng, radius / 2);
 });
 
-map.on('moveend', function() {
-    movedPoint = [map.getCenter().lng, map.getCenter().lat];
+restricted.on('moveend', function() {
+    movedPoint = [restricted.getCenter().lng, restricted.getCenter().lat];
     let distance = turf.distance(initialPoint, movedPoint, {units: 'kilometers'});
 
-    const lat = map.getCenter().lat;
-    const lng = map.getCenter().lng;
-    let radiusPoint = [map.getBounds()._ne.lng, map.getBounds()._ne.lat];
+    const lat = restricted.getCenter().lat;
+    const lng = restricted.getCenter().lng;
+    let radiusPoint = [restricted.getBounds()._ne.lng, restricted.getBounds()._ne.lat];
     let radius = turf.distance([lng, lat], radiusPoint, {units: 'kilometers'});
 
-    if(map.getZoom() >= 12 && distance >= radius / 4)
+    if(restricted.getZoom() >= 12 && distance >= radius / 4)
     {
         addPOIs(lat, lng, radius / 2);
         initialPoint = movedPoint;
@@ -638,8 +638,9 @@ function sendPOIByDayData()
     addLoading();
 
     let scheduleToSend = getScheduleToSend();
+    let pathArray = window.location.pathname.split('/');
 
-    const url = `http://localhost:8080/planner/solve/restricted`;
+    const url = `http://localhost:8080/planner/solve/restricted/${pathArray[2]}`;
     fetch(url, {
         method: 'POST',
         headers: {
@@ -846,9 +847,9 @@ function addItineraryElement(id, dayName, date, dayStart, dayEnd, colour, pois, 
         if(currentBounds === null)
         {
             currentBounds = {
-                coords: [[map.getBounds()._ne.lng, map.getBounds()._ne.lat],
-                    [map.getBounds()._sw.lng, map.getBounds()._sw.lat]],
-                zoom: map.getZoom()
+                coords: [[restricted.getBounds()._ne.lng, restricted.getBounds()._ne.lat],
+                    [restricted.getBounds()._sw.lng, restricted.getBounds()._sw.lat]],
+                zoom: restricted.getZoom()
             };
         }
         viewItineraryOnMap(pois, colour, accommodation);
@@ -1075,9 +1076,9 @@ function viewItineraryOnMap(pois, colour, accommodation)
         }
     }
 
-    map.addSource('route', geoJson);
+    restricted.addSource('route', geoJson);
 
-    map.addLayer({
+    restricted.addLayer({
         'id': 'route',
         'type': 'line',
         'source': 'route',
@@ -1095,7 +1096,7 @@ function viewItineraryOnMap(pois, colour, accommodation)
         return bounds.extend(coord);
     }, new mapboxgl.LngLatBounds(allCoordinates[0], allCoordinates[0]));
 
-    map.fitBounds(bounds, {
+    restricted.fitBounds(bounds, {
         padding: 20
     });
 }
@@ -1104,14 +1105,14 @@ function cleanShownRoutes()
 {
     if(currentShownRoute.length !== 0)
     {
-        if(map.getLayer('route'))
+        if(restricted.getLayer('route'))
         {
-            map.removeLayer('route');
+            restricted.removeLayer('route');
         }
 
-        if(map.getSource('route'))
+        if(restricted.getSource('route'))
         {
-            map.removeSource('route');
+            restricted.removeSource('route');
         }
 
         for(let i = 0; i < currentShownRoute.length; i++)
@@ -1126,7 +1127,7 @@ function cleanShownRoutes()
             recalculateColours(poi);
         }
 
-        map.fitBounds(currentBounds.coords);
+        restricted.fitBounds(currentBounds.coords);
     }
 }
 
@@ -1156,8 +1157,9 @@ function savePlanner()
     addLoading();
 
     let scheduleToSend = getScheduleToSend();
+    let pathArray = window.location.pathname.split('/');
 
-    const url = `http://localhost:8080/planner/save/restricted`;
+    const url = `http://localhost:8080/planner/save/restricted/${pathArray[2]}`;
     fetch(url, {
         method: 'POST',
         headers: {
@@ -1284,7 +1286,9 @@ document.addEventListener('DOMContentLoaded', function()
 {
     addLoading();
 
-    const url = `http://localhost:8080/planner/restricted`;
+    let pathArray = window.location.pathname.split('/');
+
+    const url = `http://localhost:8080/planner/${pathArray[2]}`;
     fetch(url, {
         method: 'GET',
         headers: {
@@ -1327,63 +1331,63 @@ document.addEventListener('DOMContentLoaded', function()
                 },
                 body: JSON.stringify(poisIds)
             }).then(response => response.json())
-            .then(poiData => {
+                .then(poiData => {
 
-                for(let i = 0; i < poiData.length; i++)
-                {
-                    addPoiMarker(poiData[i]);
-                }
-
-                for(let i = 0; i < data.schedule.scheduleDays.length; i++)
-                {
-                    addedDays.push({id: data.schedule.scheduleDays[i].dayId,
-                        date: data.schedule.scheduleDays[i].date,
-                        dayStart: data.schedule.scheduleDays[i].dayStart,
-                        dayEnd: data.schedule.scheduleDays[i].dayEnd,
-                        dayName: data.schedule.scheduleDays[i].dayName,
-                        dayNumber: data.schedule.scheduleDays[i].dayNumber,
-                        colour: data.schedule.scheduleDays[i].colour,
-                        visitDurations: [],
-                        pois: []
-                    });
-
-                    let dateFormatted = data.schedule.scheduleDays[i].date.split("-");
-                    let dayStart = (Math.floor(data.schedule.scheduleDays[i].dayStart / 60) < 10 ? '0'
-                        + Math.floor(data.schedule.scheduleDays[i].dayStart / 60) : Math.floor(data.schedule.scheduleDays[i].dayStart / 60))
-                        + ':' + (data.schedule.scheduleDays[i].dayStart % 60 < 10 ? '0' +
-                            data.schedule.scheduleDays[i].dayStart % 60 : data.schedule.scheduleDays[i].dayStart % 60);
-                    let dayEnd = (Math.floor(data.schedule.scheduleDays[i].dayEnd / 60) < 10 ? '0'
-                        + Math.floor(data.schedule.scheduleDays[i].dayEnd / 60) : Math.floor(data.schedule.scheduleDays[i].dayEnd / 60))
-                        + ':' + (data.schedule.scheduleDays[i].dayEnd % 60 < 10 ? '0' +
-                            data.schedule.scheduleDays[i].dayEnd % 60 : data.schedule.scheduleDays[i].dayEnd % 60);
-
-                    addDayElement(data.schedule.scheduleDays[i].dayId, data.schedule.scheduleDays[i].dayName,
-                        dateFormatted[1] + '/' + dateFormatted[2] + "/" + dateFormatted[0],
-                        dayStart, dayEnd, data.schedule.scheduleDays[i].colour, data.schedule.scheduleDays[i].accommodation);
-                }
-
-                for(let i = 0; i < data.schedule.scheduleDays.length; i++)
-                {
-                    for(let j = 0; j < data.schedule.scheduleDays[i].pois.length; j++)
+                    for(let i = 0; i < poiData.length; i++)
                     {
-                        addPOItoDay(data.schedule.scheduleDays[i].pois[j].poiId, data.schedule.scheduleDays[i].dayId,
-                            data.schedule.scheduleDays[i].accommodation, data.schedule.scheduleDays[i].pois[j].visitDuration);
+                        addPoiMarker(poiData[i]);
                     }
-                }
 
-                if(data.itinerary !== null)
-                {
-                    constructItinerary(data.itinerary, false);
-                }
+                    for(let i = 0; i < data.schedule.scheduleDays.length; i++)
+                    {
+                        addedDays.push({id: data.schedule.scheduleDays[i].dayId,
+                            date: data.schedule.scheduleDays[i].date,
+                            dayStart: data.schedule.scheduleDays[i].dayStart,
+                            dayEnd: data.schedule.scheduleDays[i].dayEnd,
+                            dayName: data.schedule.scheduleDays[i].dayName,
+                            dayNumber: data.schedule.scheduleDays[i].dayNumber,
+                            colour: data.schedule.scheduleDays[i].colour,
+                            visitDurations: [],
+                            pois: []
+                        });
 
-                newDayButton.disabled = false;
-                createItineraryButton.disabled = false;
-                addLoadingSaved();
-            })
-            .catch((error) => {
-                addLoadingError();
-                console.error('Error:', error);
-            });
+                        let dateFormatted = data.schedule.scheduleDays[i].date.split("-");
+                        let dayStart = (Math.floor(data.schedule.scheduleDays[i].dayStart / 60) < 10 ? '0'
+                            + Math.floor(data.schedule.scheduleDays[i].dayStart / 60) : Math.floor(data.schedule.scheduleDays[i].dayStart / 60))
+                            + ':' + (data.schedule.scheduleDays[i].dayStart % 60 < 10 ? '0' +
+                                data.schedule.scheduleDays[i].dayStart % 60 : data.schedule.scheduleDays[i].dayStart % 60);
+                        let dayEnd = (Math.floor(data.schedule.scheduleDays[i].dayEnd / 60) < 10 ? '0'
+                            + Math.floor(data.schedule.scheduleDays[i].dayEnd / 60) : Math.floor(data.schedule.scheduleDays[i].dayEnd / 60))
+                            + ':' + (data.schedule.scheduleDays[i].dayEnd % 60 < 10 ? '0' +
+                                data.schedule.scheduleDays[i].dayEnd % 60 : data.schedule.scheduleDays[i].dayEnd % 60);
+
+                        addDayElement(data.schedule.scheduleDays[i].dayId, data.schedule.scheduleDays[i].dayName,
+                            dateFormatted[1] + '/' + dateFormatted[2] + "/" + dateFormatted[0],
+                            dayStart, dayEnd, data.schedule.scheduleDays[i].colour, data.schedule.scheduleDays[i].accommodation);
+                    }
+
+                    for(let i = 0; i < data.schedule.scheduleDays.length; i++)
+                    {
+                        for(let j = 0; j < data.schedule.scheduleDays[i].pois.length; j++)
+                        {
+                            addPOItoDay(data.schedule.scheduleDays[i].pois[j].poiId, data.schedule.scheduleDays[i].dayId,
+                                data.schedule.scheduleDays[i].accommodation, data.schedule.scheduleDays[i].pois[j].visitDuration);
+                        }
+                    }
+
+                    if(data.itinerary !== null)
+                    {
+                        constructItinerary(data.itinerary, false);
+                    }
+
+                    newDayButton.disabled = false;
+                    createItineraryButton.disabled = false;
+                    addLoadingSaved();
+                })
+                .catch((error) => {
+                    addLoadingError();
+                    console.error('Error:', error);
+                });
         }
         else
         {
@@ -1395,4 +1399,5 @@ document.addEventListener('DOMContentLoaded', function()
         addLoadingError();
         console.error('Error:', error);
     });
+
 }, false);
