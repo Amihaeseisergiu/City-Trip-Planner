@@ -181,30 +181,34 @@ function addItineraryElement(id, dayName, date, dayStart, dayEnd, colour, pois, 
 
     const div = document.createElement('div');
 
-    div.className = 'relative m-2 border border-gray-300 rounded-xl';
+    div.className = 'relative w-full flex flex-col items-center';
     div.id = 'dayItinerary_' + id
     div.innerHTML = `
-        <div class="flex flex-row">
-            <div style="background-color: ${colour};" class="h-auto rounded-l-2xl w-2"></div>
-            <button type="button" class="w-full p-6 text-left text-gray-500 font-bold leading-tight focus:outline-none"
+        <div :class="{'hover:border-transparent border-transparent transform scale-100 -translate-y-1 transition ease-out duration-500 bg-white shadow-lg': selected === ${id},
+             'transform scale-95 -translate-y-0 transition ease-out duration-500 border-gray-200 hover:border-gray-400': selected !== ${id}}"
+             class="w-11/12 z-10 group rounded-xl border-2 bg-gray-50 cursor-pointer select-none flex flex-row justify-between">
+            <div style="background-color: ${colour};" class="absolute top-1 left-1 rounded-full w-3 h-3"></div>
+            <button type="button" class="flex-grow min-w-0 p-6 text-left text-gray-500 leading-tight focus:outline-none"
                 @click="selected !== ${id} ? selected = ${id} : selected = null;
                         if(selected !== ${id}) cleanShownRoutes();" id="viewItineraryOnMapButton_${id}">
-                <div class="flex flex-col justify-between">
-                   <p>${dayName}, ${date}</p>
-                   <p>${dayStart} - ${dayEnd}</p>
-                </div>
+                <p :class="{'text-indigo-400': selected === ${id}}"
+                  class="font-bold group-hover:text-indigo-400 truncate">
+                    ${dayName}, ${date}
+               </p>
+               <p class="truncate">${dayStart} - ${dayEnd}</p>
             </button>
-            <div x-show="selected === ${id}" class="p-7 bg-green-400 text-white rounded-xl flex flex-row items-center">
-                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013
+            <div x-show="selected === ${id}" class="p-6 text-green-400 rounded-xl flex flex-row items-center">
+                <svg class="w-10 h-10" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013
                    16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                 </svg>
             </div>
         </div>
-        <div class="relative overflow-hidden transition-all max-h-0 duration-700"
+        <div class="w-10/12 transform z-0 -translate-y-1 items-center relative
+             overflow-hidden transition-all max-h-0 ease-in-out duration-500"
              x-ref="dayContainerItinerary_${id}"
              x-bind:style="selected == ${id} ? 'max-height: ' + $refs.dayContainerItinerary_${id}.scrollHeight + 'px' : ''">
-            <div class="p-6" id="poiContainerItinerary_${id}">
+            <div class="flex flex-col p-5 bg-white border-l-2 border-r-2 border-b-2 rounded-b-xl items-center" id="poiContainerItinerary_${id}">
             </div>
         </div>
       `;
@@ -263,16 +267,14 @@ function addPOIToItinerary(poiInfo, dayId, addInfoToNext, accommodationTimeInfo)
         <div class="flex flex-row rounded-xl text-white"
                 style="background-image: url(${el['details'].photoPrefix}${500}${el['details'].photoSuffix});
                 background-position: center; background-repeat: no-repeat; background-size: cover;">
-            <div class="w-full p-4 text-left focus:outline-none">
-                <div class="flex flex-col justify-between">
-                    <p class="text-2xl font-bold leading-tight"
-                        style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;">
-                        ${el['poi'].name}
-                    </p>
-                    <p style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;">
-                        ${accommodationTimeInfo !== null ? accommodationTimeInfo : poiInfo.visitTimesStart + ' - ' + poiInfo.visitTimesEnd}
-                    </p>
-                </div>
+            <div class="flex-grow min-w-0 p-4 text-left focus:outline-none">
+                <p class="text-2xl font-bold leading-tight truncate"
+                    style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;">
+                    ${el['poi'].name}
+                </p>
+                <p class="truncate" style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;">
+                    ${accommodationTimeInfo !== null ? accommodationTimeInfo : poiInfo.visitTimesStart + ' - ' + poiInfo.visitTimesEnd}
+                </p>
             </div>
             <div class="p-7 text-white rounded-lg ${accommodationTimeInfo !== null ? '' : 'hidden'} flex flex-col justify-center">
                 <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -310,7 +312,7 @@ function addPOIToItinerary(poiInfo, dayId, addInfoToNext, accommodationTimeInfo)
         {
             const waitingDiv = document.createElement('div');
 
-            waitingDiv.className = 'w-full mt-5 mb-5';
+            waitingDiv.className = 'w-full mt-5';
             waitingDiv.innerHTML = `
                 <div class="flex flex-row text-gray-500 uppercase leading-tight">
                     <div class="flex flex-row justify-end w-full mr-2">

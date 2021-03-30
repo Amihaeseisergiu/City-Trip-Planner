@@ -40,16 +40,21 @@ function getTodaysDate()
     return today;
 }
 
+function getCurrentTime()
+{
+    return new Date().toLocaleTimeString('en-US',
+        {hour12: false,
+                hour: "numeric",
+                minute: "numeric"});
+}
+
+function dayIsAdded(value)
+{
+    return addedDays.find( ({date}) => date === value)
+}
+
 document.getElementById('addDay').setAttribute('min', getTodaysDate());
 document.getElementById('addDay').setAttribute('value', getTodaysDate());
-document.getElementById('dayStart').setAttribute('value', new Date().toLocaleTimeString('en-US',
-    {hour12: false,
-            hour: "numeric",
-            minute: "numeric"}));
-document.getElementById('dayEnd').setAttribute('value', new Date().toLocaleTimeString('en-US',
-    {hour12: false,
-            hour: "numeric",
-            minute: "numeric"}));
 
 function getPOIDetails(id, marker)
 {
@@ -203,48 +208,57 @@ function addPOItoDay(id, dayId, accommodation, visitDuration)
 
         const div = document.createElement('div');
 
-        div.className = 'relative border border-gray-300 rounded-xl mt-2';
+        div.className = 'w-full relative w-full flex flex-col items-center mt-2';
         div.id = `poi_${id}_day_${day.id}`;
         div.innerHTML = `
-            <div class="flex flex-row rounded-xl text-white break-all overflow-hidden"
+            <div class="w-full z-10 flex flex-row rounded-xl text-white overflow-hidden relative"
                     style="background-image: url(${el['details'].photoPrefix}${500}${el['details'].photoSuffix});
                     background-position: center; background-repeat: no-repeat; background-size: cover;">
-                <button type="button" class="w-full p-4 text-left focus:outline-none"
+                <div x-show="accommodation !== '${id}'"
+                     style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;" 
+                     class="absolute flex flex-row items-center select-none">
+                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p id="poiInDayVisitDurationText_${id}_${day.id}">
+                        ${visitDuration}
+                    </p>
+                </div>
+                <button type="button" class="flex-grow min-w-0 p-4 text-left focus:outline-none"
                     @click="selectedIn !== '${id}_${day.id}' ? selectedIn = '${id}_${day.id}' : selectedIn = null">
-                    <div class="flex flex-col justify-between">
-                        <p class="text-2xl font-bold leading-tight"
-                            style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;">
-                            ${el['poi'].name}
-                        </p>
-                        <p style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;">
-                            ${openingAt} - ${closingAt}
-                        </p>
-                    </div>
+                    <p class="text-2xl font-bold leading-tight truncate"
+                        style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;">
+                        ${el['poi'].name}
+                    </p>
+                    <p class="truncate" style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;">
+                        ${openingAt} - ${closingAt}
+                    </p>
                 </button>
                 <button type="button" x-show="'${el.details.type}' === 'Hotel'" id="poiInDayAccommodation_${id}_${day.id}"
-                        :class="{'active bg-green-400' : accommodation === '${id}'}"
-                        class="p-7 focus:outline-none hover:bg-green-400 hover:text-white rounded-lg transition ease-out duration-600"
+                        :class="{'active text-green-500 scale-125' : accommodation === '${id}'}"
+                        class="p-4 focus:outline-none transform hover:scale-125 hover:text-green-500 transition ease-in-out duration-500"
                         @click="if(accommodation === '${id}') {accommodation = null;} else {accommodation = '${id}';}
                                 verifyAccommodation('${id}', ${day.id}, accommodation);">
-                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg class="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1
                        1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                     </svg>
                 </button>
                 <button type="button" onclick="removePOIFromDay(\`${id}\`, ${day.id})" @click="if(accommodation === '${id}') {accommodation = null;}"
-                        class="p-7 focus:outline-none hover:bg-red-400 hover:text-white rounded-lg transition ease-out duration-600">
-                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                        class="p-4 text-white focus:outline-none transform hover:scale-125 hover:text-red-500 transition ease-in-out duration-500">
+                        <svg class="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
                 </button>
             </div>
-            <div class="relative overflow-hidden transition-all max-h-0 duration-700" id="poiInDay_${id}_${day.id}"
+            <div class="w-10/12 transform z-0 -translate-y-1 items-center relative
+                 overflow-hidden transition-all max-h-0 ease-in-out duration-500" id="poiInDay_${id}_${day.id}"
                  x-ref="poiInDay_${id}_${day.id}"
                  x-bind:style="selectedIn == '${id}_${day.id}' ?
                  'max-height: ' + $refs.poiInDay_${id}_${day.id}.scrollHeight + 'px' : ''">
-                <div class="p-6" id="poiInDayContainer_${id}_${day.id}">
-                    <div class="flex items-center justify-start">
-                        <label class="pr-4 font-bold tracking-tight text-gray-500" for="poiInDayVisit_${id}_${day.id}">Duration:</label>
+                <div class="flex flex-col p-5 bg-white border-l-2 border-r-2 border-b-2 rounded-b-xl items-center" id="poiInDayContainer_${id}_${day.id}">
+                    <div class="w-full flex items-center justify-start">
+                        <label class="pr-4 tracking-tight text-gray-500" for="poiInDayVisit_${id}_${day.id}">Duration:</label>
                         <input class="w-full shadow appearance-none border rounded py-2 px-2 text-grey-darker
                         focus:outline-none focus:ring" type="text" id="poiInDayVisit_${id}_${day.id}"
                         name="poiInDayVisit_${id}_${day.id}" pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]" value="${visitDuration}"
@@ -299,9 +313,9 @@ function verifyAccommodation(id, dayId, accommodation)
     if(accommodation === null)
     {
         input.innerHTML = `
-            <div class="p-6" id="poiInDayContainer_${id}_${dayId}">
-                <div class="flex items-center justify-start">
-                    <label class="pr-4 font-bold tracking-tight text-gray-500" for="poiInDayVisit_${id}_${dayId}">Duration:</label>
+            <div class="flex flex-col p-5 bg-white border-l-2 border-r-2 border-b-2 rounded-b-xl items-center" id="poiInDayContainer_${id}_${dayId}">
+                <div class="w-full flex items-center justify-start">
+                    <label class="pr-4 tracking-tight text-gray-500" for="poiInDayVisit_${id}_${dayId}">Duration:</label>
                     <input class="w-full shadow appearance-none border rounded py-2 px-2 text-grey-darker
                     focus:outline-none focus:ring" type="text" id="poiInDayVisit_${id}_${dayId}"
                     name="poiInDayVisit_${id}_${dayId}" pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]" value="1:00"
@@ -333,6 +347,7 @@ function addInputDurationRegex(poiId, day)
             input.classList.add('focus:ring-red-400');
 
             day.visitDurations.find(({id}) => id === poiId).visitDuration = '1:00';
+            document.getElementById(`poiInDayVisitDurationText_${poiId}_${day.id}`).innerText = '1:00';
         }
         else
         {
@@ -340,6 +355,7 @@ function addInputDurationRegex(poiId, day)
             input.classList.add('focus:ring-green-400');
 
             day.visitDurations.find(({id}) => id === poiId).visitDuration = input.value;
+            document.getElementById(`poiInDayVisitDurationText_${poiId}_${day.id}`).innerText = input.value;
         }
     });
 }
@@ -510,35 +526,44 @@ function addDayElement(id, dayName, date, dayStart, dayEnd, colour, accommodatio
     const div = document.createElement('div');
     document.getElementById("createItineraryButton").classList.remove("hidden");
 
-    div.className = 'relative m-2 border border-gray-300 rounded-xl';
+    div.className = 'relative w-full flex flex-col items-center';
     div.id = 'day_' + id
     div.innerHTML = `
-        <div class="flex flex-row">
-            <div style="background-color: ${colour};" class="h-auto rounded-l-3xl w-2"></div>
-            <button type="button" class="w-full p-6 text-left text-gray-500 font-bold leading-tight focus:outline-none"
+        <div :class="{'hover:border-transparent border-transparent transform scale-100 -translate-y-1 transition ease-out duration-500 bg-white shadow-lg': selected === ${id},
+             'transform scale-95 -translate-y-0 transition ease-out duration-500 border-gray-200 hover:border-gray-400': selected !== ${id}}"
+             class="w-11/12 z-10 group rounded-xl border-2 bg-gray-50 mt-3 cursor-pointer select-none flex flex-row justify-between">
+            <div style="background-color: ${colour};" class="absolute top-1 left-1 rounded-full w-3 h-3"></div>
+            <button type="button" class="flex-grow min-w-0 p-6 text-left text-gray-500 leading-tight focus:outline-none"
                 @click="selected !== ${id} ? selected = ${id} : selected = null;
                 selected === ${id} ? currentSelectedDay = addedDays.find( ({id}) => id === ${id}) : currentSelectedDay = null;">
-                <div class="flex flex-col justify-between">
-                   <p>${dayName}, ${date}</p>
-                   <p>${dayStart} - ${dayEnd}</p>
-                </div>
+                <p :class="{'text-indigo-400': selected === ${id}}"
+                      class="font-bold group-hover:text-indigo-400 truncate">
+                        ${dayName}, ${date}
+                   </p>
+                   <p class="truncate">
+                        ${dayStart} - ${dayEnd}
+                   </p>
             </button>
             <button x-show="selected !== ${id}"
-                onclick="removeDayElement(${id})" class="p-7 focus:outline-none hover:bg-red-400 hover:text-white rounded-xl transition ease-out duration-600">
-                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                onclick="removeDayElement(${id})" 
+                class="p-6 text-gray-500 focus:outline-none transform hover:scale-125 hover:text-red-500 transition ease-in-out duration-500">
+                <svg class="w-10 h-10" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
             </button>
-            <div x-show="selected === ${id}" class="p-7 bg-green-400 text-white rounded-xl flex flex-row items-center">
-                <svg class="w-6 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            <div x-show="selected === ${id}" class="p-6 text-green-400 rounded-xl flex flex-row items-center">
+                <svg class="w-10 h-10" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
             </div>
         </div>
-        <div class="relative overflow-hidden transition-all max-h-0 duration-700" id="poiContainerParent_${id}"
+        <div class="w-10/12 transform z-0 -translate-y-1 items-center relative
+             overflow-hidden transition-all max-h-0 ease-in-out duration-500" id="poiContainerParent_${id}"
              x-ref="dayContainer_${id}"
              x-bind:style="selected == ${id} ? 'max-height: ' + $refs.dayContainer_${id}.scrollHeight + 'px' : ''">
-            <div class="p-6" id="poiContainer_${id}" x-data="{accommodation: ${accommodation === null ? null : "'" + accommodation + "'"}, selectedIn: null}">
+            <div class="flex flex-col p-5 bg-white border-l-2 border-r-2 border-b-2 rounded-b-xl items-center"
+                 id="poiContainer_${id}" x-data="{accommodation: ${accommodation === null ? null : "'" + accommodation + "'"}, selectedIn: null}">
                 No locations have been added
             </div>
         </div>
@@ -725,23 +750,23 @@ function addShareButtons(path)
 {
     let div = document.createElement('div');
 
-    div.className = 'm-2 mb-4 flex flex-col border rounded-xl';
+    div.className = 'mb-4 flex flex-col border-2 rounded-xl w-11/12 transform scale-95 group hover:border-gray-400 transition ease-out duration-500';
     div.id = 'itineraryShareContainer';
     div.innerHTML = `
-        <div class="text-indigo-400 font-bold leading-tight flex flex-row justify-between items-center">
-            <div class="p-3 flex flex-row items-center justify-center">
+        <div class="font-bold leading-tight flex flex-row justify-between items-center">
+            <div class="p-3 min-w-0 flex flex-row items-center justify-center text-gray-500 group-hover:text-indigo-400">
                 <svg class="w-5 h-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886
                    12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632
                    3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0
                    105.368 2.684 3 3 0 00-5.368-2.684z" />
                 </svg>
-                <p>
+                <p class="truncate">
                     Share your itinerary
                 </p>
             </div>
             <div class="flex flex-row items-center justify-center p-3">
-                <a class="px-1"
+                <a class="px-1 transform hover:scale-125 transition ease-out duration-500"
                     href="https://facebook.com/sharer/sharer.php?u=http%3A%2F%2Flocalhost%3A8080%2Fitinerary%2F${path}"
                     target="_blank" rel="noopener" aria-label="">
                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -750,7 +775,7 @@ function addShareButtons(path)
                          2.65-2.82h2.35v2.3h-1.4c-.25 0-.6.13-.6.66V9.5h2.34l-.24 2z"/>
                     </svg>
                 </a>
-                <a class="px-1"
+                <a class="px-1 transform hover:scale-125 transition ease-out duration-500"
                     href="https://twitter.com/intent/tweet/?text=Check%20out%20my%20itinerary!%20
                     http%3A%2F%2Flocalhost%3A8080%2Fitinerary%2F${path}" target="_blank" rel="noopener" aria-label="">
                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -762,7 +787,7 @@ function addShareButtons(path)
                          1.18-2.63 2.63-2.63.76 0 1.44.3 1.92.82.6-.12 1.95-.27 1.95-.27-.35.53-.72 1.66-1.24 2.04z"/>
                     </svg>
                 </a>
-                <a class="px-1"
+                <a class="px-1 transform hover:scale-125 transition ease-out duration-500"
                     href="https://reddit.com/submit/?url=http%3A%2F%2Flocalhost%3A8080%2Fitinerary%2F${path}&amp;
                     resubmit=true&amp;title=Check%20out%20my%20itinerary!" target="_blank" rel="noopener" aria-label="">
                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -788,7 +813,7 @@ function addShareButtons(path)
             </div>
         </div>
         <input class="w-full appearance-none rounded-b-xl py-2 px-2 text-gray-600 leading-tight
-         focus:outline-none truncate text-center bg-indigo-100"
+         focus:outline-none truncate text-center bg-indigo-100 bg-opacity-40 group-hover:bg-opacity-80"
         type="text" id="itineraryShareLink"
         name="itineraryShareLink" value="http://localhost:8080/itinerary/${path}"/>
     `;
@@ -813,30 +838,34 @@ function addItineraryElement(id, dayName, date, dayStart, dayEnd, colour, pois, 
 
     const div = document.createElement('div');
 
-    div.className = 'relative m-2 border border-gray-300 rounded-xl';
+    div.className = 'relative w-full flex flex-col items-center';
     div.id = 'dayItinerary_' + id
     div.innerHTML = `
-        <div class="flex flex-row">
-            <div style="background-color: ${colour};" class="h-auto rounded-l-2xl w-2"></div>
-            <button type="button" class="w-full p-6 text-left text-gray-500 font-bold leading-tight focus:outline-none"
+        <div :class="{'hover:border-transparent border-transparent transform scale-100 -translate-y-1 transition ease-out duration-500 bg-white shadow-lg': selected === ${id},
+             'transform scale-95 -translate-y-0 transition ease-out duration-500 border-gray-200 hover:border-gray-400': selected !== ${id}}"
+             class="w-11/12 z-10 group rounded-xl border-2 bg-gray-50 cursor-pointer select-none flex flex-row justify-between">
+            <div style="background-color: ${colour};" class="absolute top-1 left-1 rounded-full w-3 h-3"></div>
+            <button type="button" class="flex-grow min-w-0 p-6 text-left text-gray-500 leading-tight focus:outline-none"
                 @click="selected !== ${id} ? selected = ${id} : selected = null;
                         if(selected !== ${id}) cleanShownRoutes();" id="viewItineraryOnMapButton_${id}">
-                <div class="flex flex-col justify-between">
-                   <p>${dayName}, ${date}</p>
-                   <p>${dayStart} - ${dayEnd}</p>
-                </div>
+                <p :class="{'text-indigo-400': selected === ${id}}"
+                  class="font-bold group-hover:text-indigo-400 truncate">
+                    ${dayName}, ${date}
+               </p>
+               <p class="truncate">${dayStart} - ${dayEnd}</p>
             </button>
-            <div x-show="selected === ${id}" class="p-7 bg-green-400 text-white rounded-xl flex flex-row items-center">
-                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013
+            <div x-show="selected === ${id}" class="p-6 text-green-400 rounded-xl flex flex-row items-center">
+                <svg class="w-10 h-10" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013
                    16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                 </svg>
             </div>
         </div>
-        <div class="relative overflow-hidden transition-all max-h-0 duration-700"
+        <div class="w-10/12 transform z-0 -translate-y-1 items-center relative
+             overflow-hidden transition-all max-h-0 ease-in-out duration-500"
              x-ref="dayContainerItinerary_${id}"
              x-bind:style="selected == ${id} ? 'max-height: ' + $refs.dayContainerItinerary_${id}.scrollHeight + 'px' : ''">
-            <div class="p-6" id="poiContainerItinerary_${id}">
+            <div class="flex flex-col p-5 bg-white border-l-2 border-r-2 border-b-2 rounded-b-xl items-center" id="poiContainerItinerary_${id}">
             </div>
         </div>
       `;
@@ -895,16 +924,14 @@ function addPOIToItinerary(poiInfo, dayId, addInfoToNext, accommodationTimeInfo)
         <div class="flex flex-row rounded-xl text-white"
                 style="background-image: url(${el['details'].photoPrefix}${500}${el['details'].photoSuffix});
                 background-position: center; background-repeat: no-repeat; background-size: cover;">
-            <div class="w-full p-4 text-left focus:outline-none">
-                <div class="flex flex-col justify-between">
-                    <p class="text-2xl font-bold leading-tight"
-                        style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;">
-                        ${el['poi'].name}
-                    </p>
-                    <p style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;">
-                        ${accommodationTimeInfo !== null ? accommodationTimeInfo : poiInfo.visitTimesStart + ' - ' + poiInfo.visitTimesEnd}
-                    </p>
-                </div>
+            <div class="flex-grow min-w-0 p-4 text-left focus:outline-none">
+                <p class="text-2xl font-bold leading-tight truncate"
+                    style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;">
+                    ${el['poi'].name}
+                </p>
+                <p class="truncate" style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;">
+                    ${accommodationTimeInfo !== null ? accommodationTimeInfo : poiInfo.visitTimesStart + ' - ' + poiInfo.visitTimesEnd}
+                </p>
             </div>
             <div class="p-7 text-white rounded-lg ${accommodationTimeInfo !== null ? '' : 'hidden'} flex flex-col justify-center">
                 <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -942,7 +969,7 @@ function addPOIToItinerary(poiInfo, dayId, addInfoToNext, accommodationTimeInfo)
         {
             const waitingDiv = document.createElement('div');
 
-            waitingDiv.className = 'w-full mt-5 mb-5';
+            waitingDiv.className = 'w-full mt-5';
             waitingDiv.innerHTML = `
                 <div class="flex flex-row text-gray-500 uppercase leading-tight">
                     <div class="flex flex-row justify-end w-full mr-2">
