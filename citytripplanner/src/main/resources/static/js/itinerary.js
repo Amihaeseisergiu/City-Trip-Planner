@@ -186,7 +186,7 @@ function addItineraryElement(id, dayName, date, dayStart, dayEnd, colour, pois, 
     div.innerHTML = `
         <div :class="{'hover:border-transparent border-transparent transform scale-100 -translate-y-1 transition ease-out duration-500 bg-white shadow-lg': selected === ${id},
              'transform scale-95 -translate-y-0 transition ease-out duration-500 border-gray-200 hover:border-gray-400': selected !== ${id}}"
-             class="w-11/12 z-10 group rounded-xl border-2 bg-gray-50 cursor-pointer select-none flex flex-row justify-between">
+             class="w-11/12 z-10 mt-3 group rounded-xl border-2 bg-gray-50 cursor-pointer select-none flex flex-row justify-between">
             <div style="background-color: ${colour};" class="absolute top-1 left-1 rounded-full w-3 h-3"></div>
             <button type="button" class="flex-grow min-w-0 p-6 text-left text-gray-500 leading-tight focus:outline-none"
                 @click="selected !== ${id} ? selected = ${id} : selected = null;

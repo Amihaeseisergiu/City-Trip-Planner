@@ -31,6 +31,9 @@ public class Planner {
 
     private String name;
     private String type;
+    private String place;
+    private Double lat;
+    private Double lng;
 
     @Fetch(FetchMode.SELECT)
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)

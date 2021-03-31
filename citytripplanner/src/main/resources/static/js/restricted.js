@@ -9,10 +9,10 @@ let initialPoint = null;
 let movedPoint = null;
 let currentBounds = null;
 
-let restricted = new mapboxgl.Map({
+let map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/mapbox/light-v10',
-    center: [27.60, 47.16],
+    center: [0, 0],
     zoom: 12
 });
 
@@ -23,7 +23,7 @@ let geoLocate = new mapboxgl.GeolocateControl({
     trackUserLocation: true
 });
 
-restricted.addControl(geoLocate);
+map.addControl(geoLocate);
 
 function getTodaysDate()
 {
@@ -85,14 +85,16 @@ function addPoiDetails(data, marker)
     for(const hours of data.poiHours)
     {
         hoursHTML += `
-            <div class="mt-3 bg-indigo-200 rounded-xl shadow">
-                <p class="text-center border-b-2 border-gray-400 font-bold text-gray-600">
+            <div class="mt-3 bg-gray-50 border-gray-300 border-2 rounded-xl shadow
+                        group hover:border-gray-400 transition ease-in duration-500">
+                <p class="text-center border-b-2 border-gray-200 font-bold text-gray-500
+                          group-hover:border-gray-300 group-hover:text-gray-700 transition ease-in duration-500">
                     ${hours.dayName ? hours.dayName : "unavailable"}
                 </p>
-                <p class="text-center font-bold text-gray-600">
+                <p class="text-center text-gray-500 group-hover:text-gray-700 transition ease-in duration-500">
                     Opening: ${hours.openingAt ? hours.openingAt : "unavailable"}
                 </p>
-                <p class="text-center font-bold text-gray-600">
+                <p class="text-center text-gray-500 group-hover:text-gray-700 transition ease-in duration-500">
                     Closing: ${hours.closingAt ? hours.closingAt : "unavailable"}
                 </p>
             </div>`;
@@ -104,32 +106,37 @@ function addPoiDetails(data, marker)
                 ${data.name}
             </p>
             <button id="poi_add_${data.id}"
-                    class="p-1 border-green-400 border-2 text-gray-600 hover:bg-green-400 hover:text-white
-                    focus:outline-none rounded-xl transition ease-out duration-600">
-                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    class="p-1 text-gray-500 transform focus:outline-none
+                    hover:scale-125 hover:text-green-400 transition ease-out duration-500">
+                <svg class="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                  d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
             </button>
         </div>
         
         ${data.photoPrefix ? `<img class="rounded-2xl shadow-xl" alt="POI Photo" src="${data.photoPrefix}500${data.photoSuffix}">` : ""}
          <div class="overflow-auto no-scrollbar max-h-36">
-            <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-600">
+            <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-500 hover:text-gray-600
+                      hover:border-indigo-400 transition ease-out duration-500">
                 Phone: ${data.formattedPhone ? data.formattedPhone : "unavailable"}
             </p>
-            <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-600">
+            <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-500 hover:text-gray-600
+                      hover:border-indigo-400 transition ease-out duration-500">
                 Rating: ${data.rating ? data.rating : "unavailable"}
             </p>
-            <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-600">
+            <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-500 hover:text-gray-600
+                      hover:border-indigo-400 transition ease-out duration-500">
                 Type: ${data.type ? data.type : "unavailable"}
             </p>
-            <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-600">
+            <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-500 hover:text-gray-600
+                      hover:border-indigo-400 transition ease-out duration-500">
                 Price Tier: ${data.priceTier ? data.priceTier : "unavailable"}
             </p>
             ${hoursHTML}
          </div>`;
 
-    let popUp = new mapboxgl.Popup({className: `mapbox-gl-popup-${data.id}`}).setHTML(html).on('open', e => {
+    let popUp = new mapboxgl.Popup({className: `mapbox-gl-popup-${data.id} z-20`}).setHTML(html).on('open', e => {
         if(document.getElementById("tabsContainer").__x.$data.tab === 'itinerary')
         {
             document.getElementById(`poi_add_${data.id}`).classList.add('hidden');
@@ -438,7 +445,7 @@ function addPOIs(lat, lng, radius)
         .then(data => {
             for(const poi of data)
             {
-                addPoiMarker(poi);
+                addPoiMarker(poi, false);
             }
         })
         .catch((error) => {
@@ -446,12 +453,20 @@ function addPOIs(lat, lng, radius)
         });
 }
 
-function addPoiMarker(poi)
+function addPoiMarker(poi, top)
 {
     if(!addedMarkers.some(e => e.poi.id === poi.id))
     {
         let el = document.createElement('div');
-        el.className = "block bg-indigo-400 rounded-full p-0 border-none cursor-pointer";
+
+        if(top)
+        {
+            el.className = "block bg-indigo-400 rounded-full p-0 border-none cursor-pointer z-10";
+        }
+        else
+        {
+            el.className = "block bg-indigo-400 rounded-full p-0 border-none cursor-pointer z-0";
+        }
         el.id = `poi_marker_${poi.id}`;
         el.style.backgroundImage = `url(${poi.iconPrefix}` + 32 + `${poi.iconSuffix}`;
         el.style.width = 32 + 'px';
@@ -459,7 +474,7 @@ function addPoiMarker(poi)
 
         let marker = new mapboxgl.Marker(el)
             .setLngLat([poi.lng, poi.lat])
-            .addTo(restricted);
+            .addTo(map);
 
         let toAdd = {
             poi: poi,
@@ -495,26 +510,16 @@ geoLocate.on('geolocate', function(e) {
     initialPoint = [e.coords.longitude, e.coords.latitude];
 });
 
-restricted.on('load', function() {
-    initialPoint = [restricted.getCenter().lng, restricted.getCenter().lat];
-
-    const lat = restricted.getCenter().lat;
-    const lng = restricted.getCenter().lng;
-    let radiusPoint = [restricted.getBounds()._ne.lng, restricted.getBounds()._ne.lat];
-    let radius = turf.distance([lng, lat], radiusPoint, {units: 'kilometers'});
-    addPOIs(lat, lng, radius / 2);
-});
-
-restricted.on('moveend', function() {
-    movedPoint = [restricted.getCenter().lng, restricted.getCenter().lat];
+map.on('moveend', function() {
+    movedPoint = [map.getCenter().lng, map.getCenter().lat];
     let distance = turf.distance(initialPoint, movedPoint, {units: 'kilometers'});
 
-    const lat = restricted.getCenter().lat;
-    const lng = restricted.getCenter().lng;
-    let radiusPoint = [restricted.getBounds()._ne.lng, restricted.getBounds()._ne.lat];
+    const lat = map.getCenter().lat;
+    const lng = map.getCenter().lng;
+    let radiusPoint = [map.getBounds()._ne.lng, map.getBounds()._ne.lat];
     let radius = turf.distance([lng, lat], radiusPoint, {units: 'kilometers'});
 
-    if(restricted.getZoom() >= 12 && distance >= radius / 4)
+    if(map.getZoom() >= 12 && distance >= radius / 4)
     {
         addPOIs(lat, lng, radius / 2);
         initialPoint = movedPoint;
@@ -675,6 +680,11 @@ function sendPOIByDayData()
     })
     .then(response => response.json())
     .then(data => {
+        currentBounds = {
+            coords: [[map.getBounds()._ne.lng, map.getBounds()._ne.lat],
+                [map.getBounds()._sw.lng, map.getBounds()._sw.lat]],
+            zoom: map.getZoom()
+        };
 
         addLoadingSaved();
         constructItinerary(data, true);
@@ -750,7 +760,7 @@ function addShareButtons(path)
 {
     let div = document.createElement('div');
 
-    div.className = 'mb-4 flex flex-col border-2 rounded-xl w-11/12 transform scale-95 group hover:border-gray-400 transition ease-out duration-500';
+    div.className = 'flex flex-col border-2 rounded-xl w-11/12 transform scale-95 group hover:border-gray-400 transition ease-out duration-500';
     div.id = 'itineraryShareContainer';
     div.innerHTML = `
         <div class="font-bold leading-tight flex flex-row justify-between items-center">
@@ -843,7 +853,7 @@ function addItineraryElement(id, dayName, date, dayStart, dayEnd, colour, pois, 
     div.innerHTML = `
         <div :class="{'hover:border-transparent border-transparent transform scale-100 -translate-y-1 transition ease-out duration-500 bg-white shadow-lg': selected === ${id},
              'transform scale-95 -translate-y-0 transition ease-out duration-500 border-gray-200 hover:border-gray-400': selected !== ${id}}"
-             class="w-11/12 z-10 group rounded-xl border-2 bg-gray-50 cursor-pointer select-none flex flex-row justify-between">
+             class="w-11/12 z-10 mt-3 group rounded-xl border-2 bg-gray-50 cursor-pointer select-none flex flex-row justify-between">
             <div style="background-color: ${colour};" class="absolute top-1 left-1 rounded-full w-3 h-3"></div>
             <button type="button" class="flex-grow min-w-0 p-6 text-left text-gray-500 leading-tight focus:outline-none"
                 @click="selected !== ${id} ? selected = ${id} : selected = null;
@@ -873,14 +883,6 @@ function addItineraryElement(id, dayName, date, dayStart, dayEnd, colour, pois, 
     document.getElementById('itineraryContainer').appendChild(div);
 
     document.getElementById(`viewItineraryOnMapButton_${id}`).addEventListener("click", function() {
-        if(currentBounds === null)
-        {
-            currentBounds = {
-                coords: [[restricted.getBounds()._ne.lng, restricted.getBounds()._ne.lat],
-                    [restricted.getBounds()._sw.lng, restricted.getBounds()._sw.lat]],
-                zoom: restricted.getZoom()
-            };
-        }
         viewItineraryOnMap(pois, colour, accommodation);
     });
 
@@ -1103,9 +1105,9 @@ function viewItineraryOnMap(pois, colour, accommodation)
         }
     }
 
-    restricted.addSource('route', geoJson);
+    map.addSource('route', geoJson);
 
-    restricted.addLayer({
+    map.addLayer({
         'id': 'route',
         'type': 'line',
         'source': 'route',
@@ -1123,7 +1125,7 @@ function viewItineraryOnMap(pois, colour, accommodation)
         return bounds.extend(coord);
     }, new mapboxgl.LngLatBounds(allCoordinates[0], allCoordinates[0]));
 
-    restricted.fitBounds(bounds, {
+    map.fitBounds(bounds, {
         padding: 20
     });
 }
@@ -1132,14 +1134,14 @@ function cleanShownRoutes()
 {
     if(currentShownRoute.length !== 0)
     {
-        if(restricted.getLayer('route'))
+        if(map.getLayer('route'))
         {
-            restricted.removeLayer('route');
+            map.removeLayer('route');
         }
 
-        if(restricted.getSource('route'))
+        if(map.getSource('route'))
         {
-            restricted.removeSource('route');
+            map.removeSource('route');
         }
 
         for(let i = 0; i < currentShownRoute.length; i++)
@@ -1154,13 +1156,21 @@ function cleanShownRoutes()
             recalculateColours(poi);
         }
 
-        restricted.fitBounds(currentBounds.coords);
+        map.fitBounds(currentBounds.coords);
     }
 }
 
 document.getElementById("plannerTabButton").addEventListener("click", function() {
     document.getElementById("itineraryContainer").__x.$data.selected = null;
 });
+
+document.getElementById("itineraryTab").addEventListener("click", function () {
+    currentBounds = {
+        coords: [[map.getBounds()._ne.lng, map.getBounds()._ne.lat],
+            [map.getBounds()._sw.lng, map.getBounds()._sw.lat]],
+        zoom: map.getZoom()
+    };
+})
 
 window.addEventListener('keydown', function(event) {
     if(event.ctrlKey || event.metaKey)
@@ -1313,10 +1323,21 @@ document.addEventListener('DOMContentLoaded', function()
 {
     addLoading();
 
+    const urlString = new URL(window.location.href);
+    let lat = urlString.searchParams.get("lat") === null ? 0 : urlString.searchParams.get("lat");
+    let lng = urlString.searchParams.get("lng") === null ? 0 : urlString.searchParams.get("lng");
+    map.on('load', function() {
+        initialPoint = [lng, lat];
+        map.setCenter(initialPoint);
+
+        let radiusPoint = [map.getBounds()._ne.lng, map.getBounds()._ne.lat];
+        let radius = turf.distance([lng, lat], radiusPoint, {units: 'kilometers'});
+        addPOIs(lat, lng, radius / 2);
+    });
+
     let pathArray = window.location.pathname.split('/');
 
-    const url = `http://localhost:8080/planner/${pathArray[2]}`;
-    fetch(url, {
+    fetch(`http://localhost:8080/planner/${pathArray[2]}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
@@ -1362,7 +1383,7 @@ document.addEventListener('DOMContentLoaded', function()
 
                     for(let i = 0; i < poiData.length; i++)
                     {
-                        addPoiMarker(poiData[i]);
+                        addPoiMarker(poiData[i], true);
                     }
 
                     for(let i = 0; i < data.schedule.scheduleDays.length; i++)

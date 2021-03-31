@@ -5,7 +5,19 @@
 <head>
     <link rel="stylesheet" href="/css/application.css"/>
     <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js" defer></script>
+    <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v2.2.0/mapbox-gl.js"></script>
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.0/mapbox-gl-geocoder.min.js"></script>
+    <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.0/mapbox-gl-geocoder.css" type="text/css"/>
     <title>City Trip Planner</title>
+
+    <style>
+        .mapboxgl-ctrl-geocoder {
+            min-width: 100%;
+        }
+        .mapboxgl-ctrl-geocoder--input:focus {
+            outline: none;
+        }
+    </style>
 </head>
 <body class="bg-gray-100 h-screen w-screen">
     <div class="bg-white border-b-2 flex flex-col justify-center items-center lg:flex-row lg:justify-between">
@@ -78,24 +90,29 @@
                         Create
                     </h1>
                     <div class="w-3/4">
-                        <div x-data="{selected: null, name: 'New Planner', dropdown: null, type: null}" id="newPlannerContainer"
+                        <div x-data="{selected: null, name: 'New Planner', dropdown: null, type: null, place: null, lng: null, lat: null}" id="newPlannerContainer"
                              class="relative w-full flex flex-col items-center">
                             <div :class="{'hover:border-transparent border-transparent transform scale-100 -translate-y-1 transition ease-out duration-500 bg-white shadow-lg': selected === 1,
                                    'transform scale-95 -translate-y-0 transition ease-out duration-500 border-gray-200 hover:border-gray-400': selected !== 1}"
                                  class="w-full z-10 group rounded-xl border-2 bg-gray-50 mt-5 ml-5 mr-5 cursor-pointer select-none flex flex-row justify-between">
-                                <div @click="selected !== 1 ? selected = 1 : selected = null" class="flex flex-col w-full p-5">
+                                <div @click="selected !== 1 ? selected = 1 : selected = null" class="flex flex-col flex-grow min-w-0 p-5">
                                     <p x-text="name"
                                        :class="{'text-indigo-500': selected === 1}"
-                                       class="text-gray-500 group-hover:text-indigo-500 font-bold">
+                                       class="text-gray-500 group-hover:text-indigo-500 font-bold truncate">
                                         New Planner
+                                    </p>
+                                    <p x-text="place !== null ? 'Visiting ' + place : 'Pick a city you would like to visit'"
+                                       :class="{'text-gray-700': selected === 1}"
+                                       class="text-gray-500 group-hover:text-gray-600 truncate">
+                                        Pick a city you would like to visit
                                     </p>
                                     <p x-text="type !== null ? type : 'Create a new Editor and start planning your vacation.'"
                                        :class="{'text-gray-700': selected === 1}"
-                                       class="text-gray-500 group-hover:text-gray-600">
+                                       class="text-gray-500 group-hover:text-gray-600 truncate">
                                         Create a new editor and start planning your vacation.
                                     </p>
                                 </div>
-                                <button x-show="name.length > 0 && type !== null" id="addPlannerButton"
+                                <button x-show="name.length > 0 && type !== null && place !== null" id="addPlannerButton"
                                         class="transform hover:scale-125 hover:text-green-400 transition ease-in-out
                                        duration-500 focus:outline-none border-none text-gray-500 p-5">
                                     <svg class="w-10 h-10" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -110,8 +127,11 @@
                                  x-bind:style="selected === 1 ? dropdown === 1 ? 'max-height: ' + ($refs.newEditorContainer.scrollHeight + 100) :
                                        'max-height: ' + $refs.newEditorContainer.scrollHeight : ''">
                                 <div class="flex flex-col p-5 bg-white border-l-2 border-r-2 border-b-2 rounded-b-xl items-center">
+                                    <div class="pb-4 w-full z-20 focus:outline-none" id="geocoder">
+
+                                    </div>
                                     <div class="pb-4 flex items-center w-full">
-                                        <label class="pr-5 font-bold tracking-tight text-gray-400" for="addName">Name:</label>
+                                        <label class="pr-5 tracking-tight text-gray-400" for="addName">Name:</label>
                                         <input x-model="name"
                                                @click.away="if(name.length === 0) name = 'New Planner';"
                                                maxlength="20"
@@ -119,7 +139,7 @@
                                               focus:outline-none focus:ring" type="text" id="addName" name="add-name">
                                     </div>
                                     <div class="flex flex-row items-start w-full relative">
-                                        <p class="pr-7 pt-2 font-bold tracking-tight text-gray-400">
+                                        <p class="pr-7 pt-2 tracking-tight text-gray-400">
                                             Type:
                                         </p>
                                         <div class="w-full flex flex-col items-center">
