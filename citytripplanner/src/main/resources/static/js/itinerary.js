@@ -7,7 +7,7 @@ let currentBounds = null;
 let map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/mapbox/light-v10',
-    center: [27.60, 47.16],
+    center: [0, 0],
     zoom: 12
 });
 
@@ -562,6 +562,7 @@ document.addEventListener('DOMContentLoaded', function()
                         coordinates.forEach(function(coordinate) {
                             bounds.extend(coordinate);
                         });
+                        map.setCenter([(bounds._ne.lng + bounds._sw.lng) / 2, (bounds._ne.lat + bounds._sw.lat) / 2]);
                         map.fitBounds(bounds, { padding: 300 });
                     })
                     .catch((error) => {
