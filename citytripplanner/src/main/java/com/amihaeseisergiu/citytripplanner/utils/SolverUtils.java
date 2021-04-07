@@ -196,7 +196,7 @@ public class SolverUtils {
         int m = 2;
         int n = 3;
 
-        int[] dayNumbers = new int[]{0, 0};
+        int[] dayNumbers = new int[]{0, 1};
         int[] daysStart = new int[]{360, 360};
         int[] daysEnd = new int[]{1080, 1080};
 
@@ -263,22 +263,32 @@ public class SolverUtils {
 
                         if(accommodation != -1)
                         {
-                            model.ifThen(
-                                    ord[i].add(1).eq(ord[j]).and(day[i].eq(k).and(day[i].ne(day[j]))).decompose().reify(),
-                                    succCost[i].eq(timeCost[i][accommodation] + visitDurations[i])
-                                            .and(visitTimesSt[i].add(succCost[i]).le(daysEnd[k])).decompose()
-                            );
+                            for(int p = 0; p < n; p++)
+                            {
+                                for(int q = 0; q < n; q++)
+                                {
+                                    model.ifThen(
+                                            ord[i].add(1).eq(ord[j]).and(day[i].eq(k).and(day[i].ne(day[j])))
+                                                    .and(ord[p].sub(1).eq(ord[q]).and(day[p].eq(day[i]).and(day[p].ne(day[q])))
+                                                    .or(ord[p].eq(0).and(day[p].eq(day[i])))).decompose().reify(),
+                                            succCost[i].eq(visitTimesSt[p].sub(daysStart[k]).add(timeCost[i][accommodation] + visitDurations[i]))
+                                                    .and(visitTimesSt[i].add(timeCost[i][accommodation] + visitDurations[i]).le(daysEnd[k])).decompose()
+                                    );
+
+                                    model.ifThen(
+                                            ord[i].eq(n - 1).and(day[i].eq(k))
+                                                    .and(ord[p].sub(1).eq(ord[q]).and(day[p].eq(day[i]).and(day[p].ne(day[q])))
+                                                            .or(ord[p].eq(0).and(day[p].eq(day[i])))).decompose().reify(),
+                                            succCost[i].eq(visitTimesSt[p].sub(daysStart[k]).add(timeCost[i][accommodation] + visitDurations[i]))
+                                                    .and(visitTimesSt[i].add(timeCost[i][accommodation] + visitDurations[i]).le(daysEnd[k])).decompose()
+                                    );
+                                }
+                            }
 
                             model.ifThen(
                                     ord[i].sub(1).eq(ord[j]).and(day[i].eq(k).and(day[i].ne(day[j]))).decompose().reify(),
                                     visitTimesSt[i].eq(model.intVar(openingTimes[i][dayNumbers[k]]).sub(model.intVar(daysStart[k])
                                             .add(timeCost[accommodation][i])).max(0).add(timeCost[accommodation][i]).add(daysStart[k])).decompose()
-                            );
-
-                            model.ifThen(
-                                    ord[i].eq(n - 1).and(day[i].eq(k)).decompose().reify(),
-                                    succCost[i].eq(timeCost[i][accommodation] + visitDurations[i])
-                                            .and(visitTimesSt[i].add(succCost[i]).le(daysEnd[k])).decompose()
                             );
 
                             model.ifThen(
