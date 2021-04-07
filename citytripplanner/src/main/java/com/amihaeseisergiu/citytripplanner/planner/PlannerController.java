@@ -24,6 +24,12 @@ public class PlannerController {
         return itinerary;
     }
 
+    @PostMapping("/solve/unrestricted")
+    public void solveUnrestricted()
+    {
+        plannerService.getItineraryUnrestricted();
+    }
+
     @PostMapping("/save/restricted/{id}")
     public void saveRestricted(@PathVariable UUID id, @RequestBody Schedule schedule)
     {

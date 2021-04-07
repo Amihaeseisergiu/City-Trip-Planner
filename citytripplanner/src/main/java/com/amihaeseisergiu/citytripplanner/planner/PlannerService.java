@@ -48,6 +48,11 @@ public class PlannerService {
         return new Itinerary(routes);
     }
 
+    public void getItineraryUnrestricted()
+    {
+        solverUtils.getRoutesUnrestricted();
+    }
+
     public void saveRestricted(UUID plannerId, Schedule schedule, Itinerary itinerary)
     {
         AppUser user = appUserService.getLoggedInUser();

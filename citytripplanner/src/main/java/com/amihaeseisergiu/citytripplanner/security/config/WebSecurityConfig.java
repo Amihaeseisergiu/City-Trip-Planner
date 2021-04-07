@@ -34,7 +34,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                             "/login/**",
                             "/",
                             "/poi/**",
-                            "/itinerary/**"
+                            "/itinerary/**",
+                            "/planner/**"
                             )
                     .permitAll()
                     .anyRequest()
