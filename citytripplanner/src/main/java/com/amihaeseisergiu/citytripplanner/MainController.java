@@ -73,4 +73,17 @@ public class MainController {
             return "error";
         }
     }
+
+    @GetMapping("/unrestricted/{id}")
+    public String unrestricted(@PathVariable UUID id)
+    {
+        if(plannerService.getUserPlanner(id) != null)
+        {
+            return "unrestricted";
+        }
+        else
+        {
+            return "error";
+        }
+    }
 }

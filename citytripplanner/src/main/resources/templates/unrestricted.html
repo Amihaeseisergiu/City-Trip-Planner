@@ -1,0 +1,188 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org" xmlns:x-transition="http://www.w3.org/1999/xhtml"
+      xmlns:x-bind="http://www.w3.org/1999/xhtml" lang="en">
+<head>
+    <link rel="stylesheet" href="/css/application.css"/>
+    <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js" defer></script>
+
+    <script src='https://unpkg.com/@turf/turf/turf.min.js'></script>
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.css' rel='stylesheet' />
+    <style>
+        .mapboxgl-popup-content {
+            border-radius: 25px;
+            padding: 20px;
+            box-shadow: 6px 6px 5px #cdcdcd;
+        }
+        .mapboxgl-popup-close-button {
+            padding: 0.5rem;
+            font-size: 1.5rem;
+            transition: all .2s ease-in-out;
+        }
+        .mapboxgl-popup-close-button:focus {
+            outline: none;
+        }
+        .mapboxgl-popup-close-button:hover {
+            color: red;
+            background-color: transparent;
+        }
+    </style>
+    <title>Planner Unrestricted</title>
+</head>
+<body>
+<div class="h-screen w-screen flex flex-col justify-start">
+    <div class="bg-white border-b-2 flex flex-col justify-center items-center lg:flex-row lg:justify-between">
+        <div class="flex items-center justify-center lg:justify-start">
+            <svg class="w-10 inline-block lg:ml-10" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z"
+                      clip-rule="evenodd" />
+            </svg>
+            <a href="/">
+                <h1 class="text-4xl p-5 font-body text-gray-900 leading-tight inline-block">City Trip Planner</h1>
+            </a>
+        </div>
+        <a class="text-2xl p-5 font-bold text-gray-900 leading-tight inline-block lg:mr-10
+                      cursor-pointer transition duration-500 ease-in-out transform hover:translate-x-4" href="#" th:href="@{/logout}">
+            Logout
+            <svg class="w-8 inline-block hover" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3
+                     3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+        </a>
+    </div>
+
+    <div style="height:calc(100vh - 5.5rem)!important;" class="flex justify-start items-center flex-col lg:flex-row lg:justify-center">
+
+        <div class="w-full h-1/2 p-5 lg:w-2/6 lg:h-full">
+            <div x-data="{tab: 'planner'}" class="h-full bg-white rounded-3xl shadow-2xl flex flex-col" id="tabsContainer">
+
+                <div class="flex flex-row justify-between">
+                    <div class="flex w-full overflow-auto no-scrollbar break-all">
+                        <button :class="{ 'active border-indigo-500 text-gray-600': tab === 'planner' }"
+                                class="p-3 focus:outline-none focus:border-indigo-500 focus:text-gray-600 border-b-2 border-white text-gray-400
+                                hover:border-indigo-500 font-bold uppercase tracking-tight transition ease-in duration-200"
+                                @click="tab = 'planner'" id="plannerTabButton"
+                                onclick="cleanShownRoutes()">
+                            Planner
+                        </button>
+                        <button :class="{ 'active border-indigo-500 text-gray-600': tab === 'itinerary' }"
+                                class="p-3 focus:outline-none focus:border-indigo-500 focus:text-gray-600 border-b-2 border-white text-gray-400
+                                hover:border-indigo-500 font-bold uppercase tracking-tight transition ease-in duration-200 hidden"
+                                @click="tab = 'itinerary'" id="itineraryTab">
+                            Itinerary
+                        </button>
+                    </div>
+
+                    <div x-data="{state: 'saved'}" class="flex flex-row items-center rounded-tr-3xl" id="loadingContainer">
+                        <div class="p-3">
+                            <svg class="w-5 h-5 text-indigo-500 group-hover:text-white"
+                                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div x-show="tab === 'planner'" class="overflow-auto no-scrollbar h-full rounded-b-3xl shadow-inner">
+                    <div x-data="{selected:null, date: getTodaysDate(), from: getCurrentTime(), to: getCurrentTime()}"
+                         class="relative w-full flex flex-col items-center" id="plannerContainer">
+                        <div class="w-full flex flex-col items-center">
+                            <div :class="{'hover:border-transparent border-transparent transform scale-100 -translate-y-1 transition ease-out duration-500 bg-white shadow-lg': selected === 1,
+                                   'transform scale-95 -translate-y-0 transition ease-out duration-500 border-gray-200 hover:border-gray-400': selected !== 1}"
+                                 class="w-11/12 z-10 group rounded-xl border-2 bg-gray-50 mt-5 cursor-pointer select-none flex flex-row justify-between">
+                                <button @click="selected !== 1 ? selected = 1 : selected = null" id="addNewDayButton"
+                                        class="flex-grow min-w-0 p-5 focus:outline-none">
+                                    <p :class="{'text-indigo-500': selected === 1}"
+                                       class="text-left text-gray-500 group-hover:text-indigo-500 font-bold truncate">
+                                        New day
+                                    </p>
+                                    <p x-show="date !== null && from !== null && to !== null"
+                                       x-text="date.split('-')[1] + '/' + date.split('-')[2] + '/' + date.split('-')[0] + ' ' + from + ' - ' + to"
+                                       :class="{'text-gray-700': selected === 1}"
+                                       class="text-left text-gray-500 group-hover:text-gray-600 truncate">
+                                        Add a new day to your schedule
+                                    </p>
+                                </button>
+
+                                <div class="flex flex-row justify-center">
+                                    <button x-show="date !== null && !dayIsAdded(date) &&
+                                                        ((parseInt(to.split(':')[0]) * 60 + parseInt(to.split(':')[1])) -
+                                                        (parseInt(from.split(':')[0]) * 60 + parseInt(from.split(':')[1])) > 0)"
+                                            @click="selected = null"
+                                            id="addNewDayButtonPlus" onclick="addDay()"
+                                            class="transform hover:scale-125 hover:text-green-400 transition ease-in-out
+                                                       duration-500 focus:outline-none border-none text-gray-500 p-5">
+                                        <svg class="w-10 h-10" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                             viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.25"
+                                                  d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </button>
+                                    <button id="createItineraryButton"  onclick="sendPOIByDayData()"
+                                            class="transform hover:scale-125 hover:text-green-400 transition ease-in-out
+                                                       hidden duration-500 focus:outline-none border-none text-gray-500 p-5 mr-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8"
+                                             viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                                             stroke-linecap="round" stroke-linejoin="round">
+                                            <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                            <line x1="18" y1="6" x2="18" y2="6.01"></line>
+                                            <path d="M18 13l-3.5 -5a4 4 0 1 1 7 0l-3.5 5"></path>
+                                            <polyline points="10.5 4.75 9 4 3 7 3 20 9 17 15 20 21 17 21 15"></polyline>
+                                            <line x1="9" y1="4" x2="9" y2="17"></line>
+                                            <line x1="15" y1="15" x2="15" y2="20"></line>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="w-10/12 transform z-0 -translate-y-1 items-center relative
+                                        overflow-hidden transition-all max-h-0 ease-in-out duration-500"
+                             x-ref="addNewDayContainer" x-bind:style="selected == 1 ? 'max-height: ' + $refs.addNewDayContainer.scrollHeight + 'px' : ''">
+
+                            <div class="flex flex-col p-5 bg-white border-l-2 border-r-2 border-b-2 rounded-b-xl items-center">
+                                <div class="pb-4 flex items-center w-full">
+                                    <label class="pr-5 tracking-tight text-gray-500" for="addDay">Date:</label>
+                                    <input x-model="date"
+                                           class="w-full shadow appearance-none border rounded py-2 px-2 text-grey-darker
+                                                      focus:outline-none focus:ring" type="date" id="addDay" name="add-day">
+                                </div>
+
+                                <div class="pb-4 flex items-center w-full">
+                                    <label class="pr-4 tracking-tight text-gray-500" for="dayStart">From:</label>
+                                    <input x-model="from"
+                                           class="w-full shadow appearance-none border rounded py-2 px-2 text-grey-darker
+                                                      focus:outline-none focus:ring" type="time" id="dayStart" name="start-day">
+                                </div>
+
+                                <div class="pb-4 flex items-center w-full">
+                                    <label class="pr-9 tracking-tight text-gray-500" for="dayEnd">To:</label>
+                                    <input x-model="to"
+                                           class="w-full shadow appearance-none border rounded py-2 px-2 text-grey-darker
+                                                      focus:outline-none focus:ring" type="time" id="dayEnd" name="end-day">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white w-full" x-data="{accommodation: null, selected: null}" id="daysPoisContainer"></div>
+                </div>
+
+                <div x-show="tab === 'itinerary'" class="overflow-auto no-scrollbar h-full rounded-b-3xl shadow-inner">
+
+                    <div class="bg-white w-full flex flex-col items-center mt-6" x-data="{selected: null}" id="itineraryContainer"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="w-full h-1/2 p-5 lg:w-4/6 lg:h-full">
+            <div class="h-full rounded-3xl shadow-2xl focus:outline-none" id="map">
+
+            </div>
+        </div>
+
+    </div>
+</div>
+<script src='/js/unrestricted.js'></script>
+</body>
+</html>
