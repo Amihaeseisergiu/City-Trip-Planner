@@ -232,7 +232,7 @@ function addPOItoDay(id, dayId, accommodation, visitDuration)
                     </p>
                 </div>
                 <button type="button" class="flex-grow min-w-0 p-4 text-left focus:outline-none"
-                    @click="selectedIn !== '${id}_${day.id}' ? selectedIn = '${id}_${day.id}' : selectedIn = null">
+                    @click="if(accommodation !== '${id}') selectedIn !== '${id}_${day.id}' ? selectedIn = '${id}_${day.id}' : selectedIn = null">
                     <p class="text-2xl font-bold leading-tight truncate"
                         style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;">
                         ${el['poi'].name}
@@ -244,8 +244,9 @@ function addPOItoDay(id, dayId, accommodation, visitDuration)
                 <button type="button" x-show="'${el.details.type}' === 'Hotel'" id="poiInDayAccommodation_${id}_${day.id}"
                         :class="{'active text-green-500 scale-125' : accommodation === '${id}'}"
                         class="p-4 focus:outline-none transform hover:scale-125 hover:text-green-500 transition ease-in-out duration-500"
-                        @click="if(accommodation === '${id}') {accommodation = null;} else {accommodation = '${id}';}
-                                verifyAccommodation('${id}', ${day.id}, accommodation);">
+                        onclick="addLoadingNotSaved()"
+                        @click="if(accommodation === '${id}') {accommodation = null; selectedIn = '${id}_${day.id}';} 
+                                else {accommodation = '${id}'; selectedIn = null;}">
                     <svg class="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1
                        1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -261,7 +262,7 @@ function addPOItoDay(id, dayId, accommodation, visitDuration)
             <div class="w-10/12 transform z-0 -translate-y-1 items-center relative
                  overflow-hidden transition-all max-h-0 ease-in-out duration-500" id="poiInDay_${id}_${day.id}"
                  x-ref="poiInDay_${id}_${day.id}"
-                 x-bind:style="selectedIn == '${id}_${day.id}' ?
+                 x-bind:style="selectedIn == '${id}_${day.id}' && accommodation !== '${id}' ?
                  'max-height: ' + $refs.poiInDay_${id}_${day.id}.scrollHeight + 'px' : ''">
                 <div class="flex flex-col p-5 bg-white border-l-2 border-r-2 border-b-2 rounded-b-xl items-center" id="poiInDayContainer_${id}_${day.id}">
                     <div class="w-full flex items-center justify-start">
@@ -302,42 +303,6 @@ function addPOItoDay(id, dayId, accommodation, visitDuration)
         });
 
         addInputDurationRegex(id, day);
-
-        if(accommodation !== null && accommodation === id)
-        {
-            let input = document.getElementById(`poiInDay_${id}_${dayId}`);
-            input.innerHTML = '';
-        }
-    }
-}
-
-function verifyAccommodation(id, dayId, accommodation)
-{
-    addLoadingNotSaved();
-
-    let input = document.getElementById(`poiInDay_${id}_${dayId}`);
-
-    if(accommodation === null)
-    {
-        input.innerHTML = `
-            <div class="flex flex-col p-5 bg-white border-l-2 border-r-2 border-b-2 rounded-b-xl items-center" id="poiInDayContainer_${id}_${dayId}">
-                <div class="w-full flex items-center justify-start">
-                    <label class="pr-4 tracking-tight text-gray-500" for="poiInDayVisit_${id}_${dayId}">Duration:</label>
-                    <input class="w-full shadow appearance-none border rounded py-2 px-2 text-grey-darker
-                    focus:outline-none focus:ring" type="text" id="poiInDayVisit_${id}_${dayId}"
-                    name="poiInDayVisit_${id}_${dayId}" pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]" value="1:00"
-                    @click.away="verifyDurationInput('poiInDayVisit_${id}_${dayId}')"/>
-                </div>
-            </div>
-        `;
-
-        let day = addedDays.find( ({id}) => id === dayId);
-
-        addInputDurationRegex(id, day);
-    }
-    else
-    {
-        input.innerHTML = '';
     }
 }
 

@@ -1,4 +1,4 @@
-package com.amihaeseisergiu.citytripplanner.planner.schedule;
+package com.amihaeseisergiu.citytripplanner.planner.scheduleunrestricted;
 
 import com.amihaeseisergiu.citytripplanner.planner.Planner;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -17,7 +17,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-public class Schedule {
+public class ScheduleUnrestricted {
 
     @Id
     @GeneratedValue(generator = "UUID")
@@ -30,7 +30,15 @@ public class Schedule {
 
     @Fetch(FetchMode.SELECT)
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ScheduleDay> scheduleDays;
+    private List<ScheduleDayUnrestricted> scheduleDays;
+
+    @Fetch(FetchMode.SELECT)
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SchedulePoiUnrestricted> schedulePois;
+
+    @Fetch(FetchMode.SELECT)
+    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    private SchedulePoiUnrestricted accommodationPoi;
 
     @OneToOne
     @JsonIgnore

@@ -1,8 +1,8 @@
 package com.amihaeseisergiu.citytripplanner.utils;
 
-import com.amihaeseisergiu.citytripplanner.itinerary.route.Route;
-import com.amihaeseisergiu.citytripplanner.itinerary.route.poi.RoutePoi;
-import com.amihaeseisergiu.citytripplanner.planner.schedule.day.ScheduleDay;
+import com.amihaeseisergiu.citytripplanner.itinerary.Route;
+import com.amihaeseisergiu.citytripplanner.itinerary.RoutePoi;
+import com.amihaeseisergiu.citytripplanner.planner.schedule.ScheduleDay;
 import lombok.AllArgsConstructor;
 import org.chocosolver.solver.Model;
 import org.chocosolver.solver.Solution;
@@ -166,7 +166,8 @@ public class SolverUtils {
                                 waitingTime = solution.getIntVal(succCost[i]) - visitDurations[i] - timeToNextPoi;
                             }
 
-                            polyLine = mapboxUtils.fetchPolyLine(scheduleDay.getPois().get(i), scheduleDay.getPois().get(j));
+                            polyLine = mapboxUtils.fetchPolyLine(scheduleDay.getPois().get(i).getCoordsString(),
+                                    scheduleDay.getPois().get(j).getCoordsString());
                             break;
                         }
                     }
@@ -175,7 +176,8 @@ public class SolverUtils {
                 {
                     timeToNextPoi = timeCost[i][accommodation];
                     waitingTime = solution.getIntVal(succCost[i]) - visitDurations[i] - timeToNextPoi;
-                    polyLine = mapboxUtils.fetchPolyLine(scheduleDay.getPois().get(i), scheduleDay.getPois().get(accommodation));
+                    polyLine = mapboxUtils.fetchPolyLine(scheduleDay.getPois().get(i).getCoordsString(),
+                            scheduleDay.getPois().get(accommodation).getCoordsString());
                 }
 
                 routePois.add(new RoutePoi(id, order, visitTimesStart, visitTimesEnd, timeToNextPoi, waitingTime, polyLine));

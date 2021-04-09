@@ -2,6 +2,7 @@ package com.amihaeseisergiu.citytripplanner.planner;
 
 import com.amihaeseisergiu.citytripplanner.itinerary.Itinerary;
 import com.amihaeseisergiu.citytripplanner.planner.schedule.Schedule;
+import com.amihaeseisergiu.citytripplanner.planner.scheduleunrestricted.ScheduleUnrestricted;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,6 +35,12 @@ public class PlannerController {
     public void saveRestricted(@PathVariable UUID id, @RequestBody Schedule schedule)
     {
         plannerService.saveRestricted(id, schedule, null);
+    }
+
+    @PostMapping("/save/unrestricted/{id}")
+    public void saveUnrestricted(@PathVariable UUID id, @RequestBody ScheduleUnrestricted schedule)
+    {
+        plannerService.saveUnrestricted(id, schedule, null);
     }
 
     @PostMapping("/create")

@@ -1,6 +1,5 @@
 package com.amihaeseisergiu.citytripplanner.utils;
 
-import com.amihaeseisergiu.citytripplanner.planner.schedule.day.poi.SchedulePoi;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -10,7 +9,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Component
@@ -26,17 +24,8 @@ public class MapboxUtils {
         this.endPoint = endPoint;
     }
 
-    public int[][] fetchDurationsMatrix(List<SchedulePoi> schedulePois)
+    public int[][] fetchDurationsMatrix(String coordinatesList)
     {
-        SchedulePoi firstPoi = schedulePois.get(0);
-        StringBuilder coordinatesList = new StringBuilder(firstPoi.getLng() + "," + firstPoi.getLat());
-
-        for(int i = 1; i < schedulePois.size(); i++)
-        {
-            SchedulePoi poi = schedulePois.get(i);
-            coordinatesList.append(";").append(poi.getLng()).append(",").append(poi.getLat());
-        }
-
         String url = endPoint + "directions-matrix/v1/mapbox/walking/" + coordinatesList + "?access_token={access_token}";
         RestTemplate restTemplate = new RestTemplate();
 
@@ -61,9 +50,9 @@ public class MapboxUtils {
         return durationsMatrix;
     }
 
-    public String fetchPolyLine(SchedulePoi p1, SchedulePoi p2)
+    public String fetchPolyLine(String coords1, String coords2)
     {
-        String coordinatesList = p1.getLng() + "," + p1.getLat() + ";" + p2.getLng() + "," + p2.getLat();
+        String coordinatesList = coords1 + ";" + coords2;
 
         String url = endPoint + "directions/v5/mapbox/walking/" + coordinatesList + "?geometries=polyline6&access_token={access_token}";
         RestTemplate restTemplate = new RestTemplate();

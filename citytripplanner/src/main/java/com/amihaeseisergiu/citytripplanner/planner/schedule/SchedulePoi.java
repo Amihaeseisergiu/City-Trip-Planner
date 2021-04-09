@@ -1,6 +1,5 @@
-package com.amihaeseisergiu.citytripplanner.planner.schedule.day.poi;
+package com.amihaeseisergiu.citytripplanner.planner.schedule;
 
-import com.amihaeseisergiu.citytripplanner.planner.schedule.day.ScheduleDay;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.hibernate.annotations.Fetch;
@@ -42,7 +41,9 @@ public class SchedulePoi {
     private String closingAt;
     private String visitDuration;
 
-    @ManyToOne
     @JsonIgnore
-    private ScheduleDay scheduleDay;
+    public String getCoordsString()
+    {
+        return lng + "," + lat;
+    }
 }

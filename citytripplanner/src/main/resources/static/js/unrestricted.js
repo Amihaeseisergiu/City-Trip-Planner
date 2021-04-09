@@ -173,18 +173,15 @@ function addPoiDetails(data, marker)
     addedMarkers.find( ({poi}) => poi.id === data.id)['details'] = data;
 
     document.getElementById(`poi_add_${data.id}`).addEventListener('click', function() {
-        addPOI(data.id, null, '1:00');
+        addPOI(data.id,  '1:00');
     });
 }
 
-function addPOI(id, accommodation, visitDuration)
+function addPOI(id, visitDuration)
 {
     if(!addedPOIs.find( ({poi}) => poi.id === id))
     {
-        if(accommodation === null)
-        {
-            addLoadingNotSaved();
-        }
+        addLoadingNotSaved();
 
         let el = addedMarkers.find( ({poi}) => poi.id === id);
 
@@ -215,7 +212,7 @@ function addPOI(id, accommodation, visitDuration)
                     </p>
                 </div>
                 <button type="button" class="flex-grow min-w-0 p-7 text-left focus:outline-none"
-                    @click="selected !== '${id}' ? selected = '${id}' : selected = null">
+                    @click="if(accommodation !== '${id}') selected !== '${id}' ? selected = '${id}' : selected = null">
                     <p class="text-2xl font-bold leading-tight truncate"
                         style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;">
                         ${el['poi'].name}
@@ -280,11 +277,6 @@ function addPOI(id, accommodation, visitDuration)
                 document.getElementById(`poiVisitDurationText_${id}`).innerText = input.value;
             }
         });
-
-        if(accommodation !== null)
-        {
-            document.getElementById("daysPoisContainer").__x.$data.accommodation = accommodation;
-        }
     }
 }
 
@@ -1062,6 +1054,7 @@ function savePlanner()
     addLoading();
 
     let scheduleToSend = getScheduleToSend();
+    console.log(scheduleToSend);
     let pathArray = window.location.pathname.split('/');
 
     const url = `http://localhost:8080/planner/save/unrestricted/${pathArray[2]}`;
@@ -1096,6 +1089,11 @@ function getScheduleToSend()
             dayEnd: addedDays[i].dayEnd
         });
     }
+
+    scheduleDays.sort(function(a, b)
+    {
+        return new Date(a.date) - new Date(b.date);
+    })
 
     let schedulePois = [];
     let accommodationId = document.getElementById(`daysPoisContainer`).__x.$data.accommodation;
@@ -1231,7 +1229,7 @@ document.addEventListener('DOMContentLoaded', function()
     }).then(response => response.json())
         .then(data => {
 
-            if(data.schedule !== null)
+            if(data.scheduleUnrestricted !== null)
             {
                 let newDayButton = document.getElementById("addNewDayButton");
                 let createItineraryButton = document.getElementById("createItineraryButton");
@@ -1239,12 +1237,14 @@ document.addEventListener('DOMContentLoaded', function()
                 createItineraryButton.disabled = true;
 
                 let poisIds = [];
-                for(let i = 0; i < data.schedule.scheduleDays.length; i++)
+                for(let i = 0; i < data.scheduleUnrestricted.schedulePois.length; i++)
                 {
-                    for(let j = 0; j < data.schedule.scheduleDays[i].pois.length; j++)
-                    {
-                        poisIds.push(data.schedule.scheduleDays[i].pois[j].poiId);
-                    }
+                    poisIds.push(data.scheduleUnrestricted.schedulePois[i].poiId);
+                }
+
+                if(data.scheduleUnrestricted.accommodationPoi !== null)
+                {
+                    poisIds.push(data.scheduleUnrestricted.accommodationPoi.poiId);
                 }
 
                 if(data.itinerary !== null)
@@ -1272,41 +1272,47 @@ document.addEventListener('DOMContentLoaded', function()
                             addPoiMarker(poiData[i], true);
                         }
 
-                        for(let i = 0; i < data.schedule.scheduleDays.length; i++)
+                        for(let i = 0; i < data.scheduleUnrestricted.scheduleDays.length; i++)
                         {
-                            addedDays.push({id: data.schedule.scheduleDays[i].dayId,
-                                date: data.schedule.scheduleDays[i].date,
-                                dayStart: data.schedule.scheduleDays[i].dayStart,
-                                dayEnd: data.schedule.scheduleDays[i].dayEnd,
-                                dayName: data.schedule.scheduleDays[i].dayName,
-                                dayNumber: data.schedule.scheduleDays[i].dayNumber,
-                                colour: data.schedule.scheduleDays[i].colour,
-                                visitDurations: [],
-                                pois: []
+                            addedDays.push({id: data.scheduleUnrestricted.scheduleDays[i].dayId,
+                                date: data.scheduleUnrestricted.scheduleDays[i].date,
+                                dayStart: data.scheduleUnrestricted.scheduleDays[i].dayStart,
+                                dayEnd: data.scheduleUnrestricted.scheduleDays[i].dayEnd,
+                                dayName: data.scheduleUnrestricted.scheduleDays[i].dayName,
+                                dayNumber: data.scheduleUnrestricted.scheduleDays[i].dayNumber,
+                                colour: data.scheduleUnrestricted.scheduleDays[i].colour
                             });
 
-                            let dateFormatted = data.schedule.scheduleDays[i].date.split("-");
-                            let dayStart = (Math.floor(data.schedule.scheduleDays[i].dayStart / 60) < 10 ? '0'
-                                + Math.floor(data.schedule.scheduleDays[i].dayStart / 60) : Math.floor(data.schedule.scheduleDays[i].dayStart / 60))
-                                + ':' + (data.schedule.scheduleDays[i].dayStart % 60 < 10 ? '0' +
-                                    data.schedule.scheduleDays[i].dayStart % 60 : data.schedule.scheduleDays[i].dayStart % 60);
-                            let dayEnd = (Math.floor(data.schedule.scheduleDays[i].dayEnd / 60) < 10 ? '0'
-                                + Math.floor(data.schedule.scheduleDays[i].dayEnd / 60) : Math.floor(data.schedule.scheduleDays[i].dayEnd / 60))
-                                + ':' + (data.schedule.scheduleDays[i].dayEnd % 60 < 10 ? '0' +
-                                    data.schedule.scheduleDays[i].dayEnd % 60 : data.schedule.scheduleDays[i].dayEnd % 60);
+                            let dateFormatted = data.scheduleUnrestricted.scheduleDays[i].date.split("-");
+                            let dayStart = (Math.floor(data.scheduleUnrestricted.scheduleDays[i].dayStart / 60) < 10 ? '0'
+                                + Math.floor(data.scheduleUnrestricted.scheduleDays[i].dayStart / 60) :
+                                  Math.floor(data.scheduleUnrestricted.scheduleDays[i].dayStart / 60))
+                                + ':' + (data.scheduleUnrestricted.scheduleDays[i].dayStart % 60 < 10 ? '0'
+                                + data.scheduleUnrestricted.scheduleDays[i].dayStart % 60 : data.scheduleUnrestricted.scheduleDays[i].dayStart % 60);
+                            let dayEnd = (Math.floor(data.scheduleUnrestricted.scheduleDays[i].dayEnd / 60) < 10 ? '0'
+                                + Math.floor(data.scheduleUnrestricted.scheduleDays[i].dayEnd / 60) :
+                                  Math.floor(data.scheduleUnrestricted.scheduleDays[i].dayEnd / 60))
+                                + ':' + (data.scheduleUnrestricted.scheduleDays[i].dayEnd % 60 < 10 ? '0'
+                                + data.scheduleUnrestricted.scheduleDays[i].dayEnd % 60 : data.scheduleUnrestricted.scheduleDays[i].dayEnd % 60);
 
-                            addDayElement(data.schedule.scheduleDays[i].dayId, data.schedule.scheduleDays[i].dayName,
+                            addDayElement(data.scheduleUnrestricted.scheduleDays[i].dayId, data.scheduleUnrestricted.scheduleDays[i].dayName,
                                 dateFormatted[1] + '/' + dateFormatted[2] + "/" + dateFormatted[0],
-                                dayStart, dayEnd, data.schedule.scheduleDays[i].colour, data.schedule.scheduleDays[i].accommodation);
+                                dayStart, dayEnd, data.scheduleUnrestricted.scheduleDays[i].colour);
                         }
 
-                        for(let i = 0; i < data.schedule.scheduleDays.length; i++)
+                        if(data.scheduleUnrestricted.accommodationPoi !== null)
                         {
-                            for(let j = 0; j < data.schedule.scheduleDays[i].pois.length; j++)
-                            {
-                                addPOI(data.schedule.scheduleDays[i].pois[j].poiId, data.schedule.scheduleDays[i].accommodation,
-                                       data.schedule.scheduleDays[i].pois[j].visitDuration);
-                            }
+                            document.getElementById("daysPoisContainer").__x.$data.accommodation =
+                                data.scheduleUnrestricted.accommodationPoi.poiId;
+
+                            addPOI(data.scheduleUnrestricted.accommodationPoi.poiId,
+                                   data.scheduleUnrestricted.accommodationPoi.visitDuration);
+                        }
+
+                        for(let i = 0; i < data.scheduleUnrestricted.schedulePois.length; i++)
+                        {
+                            addPOI(data.scheduleUnrestricted.schedulePois[i].poiId,
+                                   data.scheduleUnrestricted.schedulePois[i].visitDuration);
                         }
 
                         if(data.itinerary !== null)

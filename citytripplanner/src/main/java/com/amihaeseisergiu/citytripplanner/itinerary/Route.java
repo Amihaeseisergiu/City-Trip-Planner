@@ -1,8 +1,6 @@
-package com.amihaeseisergiu.citytripplanner.itinerary.route;
+package com.amihaeseisergiu.citytripplanner.itinerary;
 
-import com.amihaeseisergiu.citytripplanner.itinerary.Itinerary;
-import com.amihaeseisergiu.citytripplanner.itinerary.route.poi.RoutePoi;
-import com.amihaeseisergiu.citytripplanner.planner.schedule.day.ScheduleDay;
+import com.amihaeseisergiu.citytripplanner.planner.schedule.ScheduleDay;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.hibernate.annotations.Fetch;
@@ -44,12 +42,7 @@ public class Route {
 
     @Fetch(FetchMode.SELECT)
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "route_id")
     private List<RoutePoi> pois;
-
-    @ManyToOne
-    @JsonIgnore
-    private Itinerary itinerary;
 
     public Route(ScheduleDay scheduleDay)
     {

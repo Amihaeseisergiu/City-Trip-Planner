@@ -1,14 +1,11 @@
-package com.amihaeseisergiu.citytripplanner.planner.schedule;
+package com.amihaeseisergiu.citytripplanner.planner.scheduleunrestricted;
 
-import com.amihaeseisergiu.citytripplanner.planner.Planner;
+import com.amihaeseisergiu.citytripplanner.planner.scheduleunrestricted.ScheduleUnrestricted;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
-import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -17,7 +14,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-public class Schedule {
+public class ScheduleDayUnrestricted {
 
     @Id
     @GeneratedValue(generator = "UUID")
@@ -26,13 +23,16 @@ public class Schedule {
             strategy = "org.hibernate.id.UUIDGenerator"
     )
     @Column(name = "id", updatable = false, nullable = false)
+    @JsonIgnore
     private UUID id;
 
-    @Fetch(FetchMode.SELECT)
-    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ScheduleDay> scheduleDays;
+    private Long dayId;
 
-    @OneToOne
-    @JsonIgnore
-    private Planner planner;
+    private String dayName;
+    private Integer dayNumber;
+
+    private String date;
+    private String colour;
+    private Integer dayStart;
+    private Integer dayEnd;
 }

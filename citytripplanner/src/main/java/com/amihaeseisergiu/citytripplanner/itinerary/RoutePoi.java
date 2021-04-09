@@ -1,6 +1,5 @@
-package com.amihaeseisergiu.citytripplanner.itinerary.route.poi;
+package com.amihaeseisergiu.citytripplanner.itinerary;
 
-import com.amihaeseisergiu.citytripplanner.itinerary.route.Route;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
@@ -37,10 +36,6 @@ public class RoutePoi {
     private Integer waitingTime;
 
     private String polyLine;
-
-    @ManyToOne
-    @JsonIgnore
-    private Route route;
 
     public RoutePoi(String poiId,
                     Integer ord,

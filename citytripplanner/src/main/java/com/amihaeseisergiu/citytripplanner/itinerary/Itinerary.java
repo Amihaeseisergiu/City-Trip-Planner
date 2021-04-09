@@ -1,6 +1,5 @@
 package com.amihaeseisergiu.citytripplanner.itinerary;
 
-import com.amihaeseisergiu.citytripplanner.itinerary.route.Route;
 import com.amihaeseisergiu.citytripplanner.planner.Planner;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
@@ -33,7 +32,6 @@ public class Itinerary {
 
     @Fetch(FetchMode.SELECT)
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "itinerary_id")
     private List<Route> routes;
 
     @OneToOne

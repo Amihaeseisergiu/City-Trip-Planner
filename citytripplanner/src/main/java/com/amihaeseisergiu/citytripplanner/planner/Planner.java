@@ -3,6 +3,7 @@ package com.amihaeseisergiu.citytripplanner.planner;
 import com.amihaeseisergiu.citytripplanner.appuser.AppUser;
 import com.amihaeseisergiu.citytripplanner.itinerary.Itinerary;
 import com.amihaeseisergiu.citytripplanner.planner.schedule.Schedule;
+import com.amihaeseisergiu.citytripplanner.planner.scheduleunrestricted.ScheduleUnrestricted;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.hibernate.annotations.Fetch;
@@ -41,6 +42,10 @@ public class Planner {
 
     @Fetch(FetchMode.SELECT)
     @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    private ScheduleUnrestricted scheduleUnrestricted;
+
+    @Fetch(FetchMode.SELECT)
+    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     private Itinerary itinerary;
 
     @ManyToOne
@@ -50,6 +55,12 @@ public class Planner {
     Planner(Schedule schedule, AppUser user)
     {
         this.schedule = schedule;
+        this.user = user;
+    }
+
+    Planner(ScheduleUnrestricted schedule, AppUser user)
+    {
+        this.scheduleUnrestricted = schedule;
         this.user = user;
     }
 }

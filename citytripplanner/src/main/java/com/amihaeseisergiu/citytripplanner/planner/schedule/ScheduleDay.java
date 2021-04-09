@@ -1,7 +1,5 @@
-package com.amihaeseisergiu.citytripplanner.planner.schedule.day;
+package com.amihaeseisergiu.citytripplanner.planner.schedule;
 
-import com.amihaeseisergiu.citytripplanner.planner.schedule.Schedule;
-import com.amihaeseisergiu.citytripplanner.planner.schedule.day.poi.SchedulePoi;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.hibernate.annotations.Fetch;
@@ -44,12 +42,22 @@ public class ScheduleDay {
 
     @Fetch(FetchMode.SELECT)
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "schedule_day_id")
     private List<SchedulePoi> pois;
 
-    @ManyToOne
     @JsonIgnore
-    private Schedule schedule;
+    public String getCoordinatesList()
+    {
+        SchedulePoi firstPoi = pois.get(0);
+        StringBuilder coordinatesList = new StringBuilder(firstPoi.getCoordsString());
+
+        for(int i = 1; i < pois.size(); i++)
+        {
+            SchedulePoi poi = pois.get(i);
+            coordinatesList.append(";").append(poi.getCoordsString());
+        }
+
+        return coordinatesList.toString();
+    }
 
     @JsonIgnore
     public int[] getOpeningTimes()
