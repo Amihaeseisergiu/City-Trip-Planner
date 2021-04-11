@@ -586,7 +586,7 @@ function constructItinerary(data, switchTab)
     {
         let div = document.createElement('div');
 
-        div.className = 'm-2 mb-4 flex flex-col border rounded-xl';
+        div.className = 'mb-4 flex flex-col border rounded-xl w-full transform scale-95';
         div.id = 'itineraryNoSolutions';
         div.innerHTML = `
         <div class="p-3 w-full text-indigo-400 font-bold leading-tight flex flex-row justify-center items-center">
@@ -981,9 +981,19 @@ function viewItineraryOnMap(pois, colour, accommodation)
         }
     });
 
-    let bounds = allCoordinates.reduce(function (bounds, coord) {
-        return bounds.extend(coord);
-    }, new mapboxgl.LngLatBounds(allCoordinates[0], allCoordinates[0]));
+    let bounds = null;
+
+    if(allCoordinates.length > 0)
+    {
+        bounds = allCoordinates.reduce(function (bounds, coord) {
+            return bounds.extend(coord);
+        }, new mapboxgl.LngLatBounds(allCoordinates[0], allCoordinates[0]));
+    }
+    else
+    {
+        let poi = addedMarkers.find( ({poi}) => poi.id === pois[0].poiId).poi;
+        bounds = [[poi.lng, poi.lat], [poi.lng, poi.lat]];
+    }
 
     map.fitBounds(bounds, {
         padding: 20

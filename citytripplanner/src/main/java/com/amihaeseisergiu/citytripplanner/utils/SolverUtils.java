@@ -3,6 +3,7 @@ package com.amihaeseisergiu.citytripplanner.utils;
 import com.amihaeseisergiu.citytripplanner.itinerary.Route;
 import com.amihaeseisergiu.citytripplanner.itinerary.RoutePoi;
 import com.amihaeseisergiu.citytripplanner.planner.schedule.ScheduleDay;
+import com.amihaeseisergiu.citytripplanner.planner.scheduleunrestricted.*;
 import lombok.AllArgsConstructor;
 import org.chocosolver.solver.Model;
 import org.chocosolver.solver.Solution;
@@ -11,6 +12,8 @@ import org.chocosolver.solver.variables.IntVar;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 @Component
@@ -193,36 +196,21 @@ public class SolverUtils {
         return route;
     }
 
-    public void getRoutesUnrestricted()
+    public List<Route> getRoutesUnrestricted(ScheduleUnrestricted schedule, int[][] timeCost)
     {
-        int m = 7;
-        int n = 3;
+        int m = schedule.getScheduleDays().size();
+        int n = schedule.getSchedulePois().size();
 
-        int[] dayNumbers = new int[]{0, 1, 2, 3, 4, 5, 6};
-        int[] daysStart = new int[]{360, 360, 360, 360, 360, 360, 360};
-        int[] daysEnd = new int[]{1080, 1080, 1080, 1080, 1080, 1080, 1080};
+        DayDataUnrestricted dayDataUnrestricted = schedule.getDayData();
+        int[] dayNumbers = dayDataUnrestricted.getDayNumbers();
+        int[] daysStart = dayDataUnrestricted.getDaysStart();
+        int[] daysEnd = dayDataUnrestricted.getDaysEnd();
 
-        int[][] openingTimes = new int[][]{
-                {360, 360, 360, 360, 360, 360, 360},
-                {1000, 360, 360, 360, 360, 360, 360},
-                {400, 360, 360, 360, 360, 360, 360},
-                {1000, 360, 360, 360, 360, 360, 360}
-        };
-        int[][] closingTimes = new int[][]{
-                {460, 1080, 1080, 1080, 1080, 1080, 1080},
-                {1060, 1080, 1080, 1080, 1080, 1080, 1080},
-                {480, 1080, 1080, 1080, 1080, 1080, 1080},
-                {1060, 1080, 1080, 1080, 1080, 1080, 1080}
-        };
-        int[] visitDurations = new int[]{60, 60, 60, 60};
-        int accommodation = 3;
-
-        int[][] timeCost = new int[][]{
-                {0, 5, 3, 4},
-                {5, 0, 10, 5},
-                {3, 10, 0, 6},
-                {4, 5, 6, 0},
-        };
+        PoiDataUnrestricted poiDataUnrestricted = schedule.getPoiData();
+        int[][] openingTimes = poiDataUnrestricted.getOpeningTimes();
+        int[][] closingTimes = poiDataUnrestricted.getClosingTimes();
+        int[] visitDurations = poiDataUnrestricted.getVisitDurations();
+        int accommodation = schedule.getIndexOfAccommodation();
 
         Model model = new Model("City Planner Unrestricted");
 
@@ -325,34 +313,121 @@ public class SolverUtils {
         model.setObjective(Model.MINIMIZE, totalTimeCost);
 
         Solver solver = model.getSolver();
+        Solution solution = new Solution(model);
 
         solver.showShortStatistics();
         while(solver.solve()){
-            for (int i = 0; i < n; i++)
-            {
-                System.out.printf("day[%d]=%d ", i, day[i].getValue());
-            }
-            System.out.println();
-            for (int i = 0; i < n; i++)
-            {
-                System.out.printf("ord[%d]=%d ", i, ord[i].getValue());
-            }
-            System.out.println();
-            for (int i = 0; i < n; i++)
-            {
-                System.out.printf("vSt[%d]=%d ", i, visitTimesSt[i].getValue());
-            }
-            System.out.println();
-            for (int i = 0; i < n; i++)
-            {
-                System.out.printf("vEn[%d]=%d ", i, visitTimesEn[i].getValue());
-            }
-            System.out.println();
-            for (int i = 0; i < n; i++)
-            {
-                System.out.printf("sCo[%d]=%d ", i, succCost[i].getValue());
-            }
-            System.out.printf("\nTotal time cost = %d\n", totalTimeCost.getValue());
+            solution.record();
         }
+
+        List<Route> routes = new ArrayList<>();
+
+        if(solution.exists())
+        {
+            for(int i = 0; i < n; i++)
+            {
+                ScheduleDayUnrestricted assignedDay = schedule.getScheduleDays().get(solution.getIntVal(day[i]));
+                SchedulePoiUnrestricted poi = schedule.getSchedulePois().get(i);
+                int order = solution.getIntVal(ord[i]);
+
+                int visitTimesStVal = solution.getIntVal(visitTimesSt[i]);
+                String visitTimesStart = visitTimesStVal / 60 + ":"
+                        + ( (visitTimesStVal % 60) < 10 ? "0" + (visitTimesStVal % 60) : (visitTimesStVal % 60));
+
+                int visitTimesEnVal = solution.getIntVal(visitTimesEn[i]);
+                String visitTimesEnd = visitTimesEnVal / 60 + ":"
+                        + ( (visitTimesEnVal % 60) < 10 ? "0" + (visitTimesEnVal % 60) : (visitTimesEnVal % 60));
+
+                Route foundRoute = routes.stream().filter(r -> r.getDayId().equals(assignedDay.getDayId())).findFirst().orElse(null);
+
+                if(foundRoute == null)
+                {
+                    Route route = new Route(assignedDay);
+
+                    List<RoutePoi> routePois = new ArrayList<>();
+                    routePois.add(new RoutePoi(i, poi.getPoiId(), order, visitTimesStart, visitTimesEnd,
+                            null, null, null));
+
+                    route.setPois(routePois);
+                    routes.add(route);
+                }
+                else
+                {
+                    foundRoute.getPois().add(new RoutePoi(i, poi.getPoiId(), order, visitTimesStart, visitTimesEnd,
+                            null, null, null));
+                }
+            }
+
+            for(Route route : routes)
+            {
+                RoutePoi minOrderPoi = Collections.min(route.getPois(), Comparator.comparing(RoutePoi::getOrd));
+                RoutePoi maxOrderPoi = Collections.max(route.getPois(), Comparator.comparing(RoutePoi::getOrd));
+                int valueToNormalize = accommodation == -1 ? minOrderPoi.getOrd() : minOrderPoi.getOrd() - 1;
+
+                for(RoutePoi routePoi : route.getPois())
+                {
+                    int newOrder = routePoi.getOrd() - valueToNormalize;
+                    routePoi.setOrd(newOrder);
+                }
+
+                for(RoutePoi routePoi : route.getPois())
+                {
+                    RoutePoi successor = route.getPois().stream().filter(
+                            p -> p.getOrd() == (routePoi.getOrd() + 1)).findFirst().orElse(null);
+
+                    int timeToNextPoi = -1;
+                    int waitingTime = -1;
+                    String polyLine = null;
+
+                    if(successor != null)
+                    {
+                        timeToNextPoi = timeCost[routePoi.getSolutionIndex()][successor.getSolutionIndex()];
+                        waitingTime = solution.getIntVal(succCost[routePoi.getSolutionIndex()])
+                                - visitDurations[routePoi.getSolutionIndex()] - timeToNextPoi;
+                        polyLine = mapboxUtils.fetchPolyLine(schedule.getSchedulePois().get(routePoi.getSolutionIndex()).getCoordsString(),
+                                schedule.getSchedulePois().get(successor.getSolutionIndex()).getCoordsString());
+                    }
+                    else if(accommodation != -1)
+                    {
+                        timeToNextPoi = timeCost[routePoi.getSolutionIndex()][accommodation];
+                        polyLine = mapboxUtils.fetchPolyLine(schedule.getSchedulePois().get(routePoi.getSolutionIndex()).getCoordsString(),
+                                schedule.getAccommodationPoi().getCoordsString());
+                    }
+
+                    routePoi.setTimeToNextPoi(timeToNextPoi);
+                    routePoi.setWaitingTime(waitingTime);
+                    routePoi.setPolyLine(polyLine);
+                }
+
+                if(accommodation != -1)
+                {
+                    SchedulePoiUnrestricted accommodationPoi = schedule.getAccommodationPoi();
+
+                    int visitTimesStVal = route.getDayStart();
+                    String visitTimesStart = visitTimesStVal / 60 + ":"
+                            + ( (visitTimesStVal % 60) < 10 ? "0" + (visitTimesStVal % 60) : (visitTimesStVal % 60));
+
+                    String[] splitTimesEn = maxOrderPoi.getVisitTimesEnd().split(":");
+                    int visitTimesEnVal = Integer.parseInt(splitTimesEn[0]) * 60 + Integer.parseInt(splitTimesEn[1])
+                            + timeCost[maxOrderPoi.getSolutionIndex()][accommodation];
+                    String visitTimesEnd = visitTimesEnVal / 60 + ":" +
+                            ( (visitTimesEnVal % 60) < 10 ? "0" + (visitTimesEnVal % 60) : (visitTimesEnVal % 60));
+
+                    String[] splitTimesSt = minOrderPoi.getVisitTimesStart().split(":");
+                    int waitingTime = (Integer.parseInt(splitTimesSt[0]) * 60 + Integer.parseInt(splitTimesSt[1]))
+                            - (visitTimesStVal + timeCost[accommodation][minOrderPoi.getSolutionIndex()]);
+
+                    String polyLine = mapboxUtils.fetchPolyLine(accommodationPoi.getCoordsString(),
+                            schedule.getSchedulePois().get(minOrderPoi.getSolutionIndex()).getCoordsString());
+
+                    route.getPois().add(new RoutePoi(accommodationPoi.getPoiId(), 0, visitTimesStart, visitTimesEnd,
+                            timeCost[accommodation][minOrderPoi.getSolutionIndex()], waitingTime, polyLine));
+
+                    route.setAccommodation(accommodationPoi.getPoiId());
+                }
+            }
+        }
+
+        return routes;
     }
 }

@@ -43,4 +43,10 @@ public class SchedulePoiUnrestricted {
     private List<String> closingAt;
 
     private String visitDuration;
+
+    @JsonIgnore
+    public String getCoordsString()
+    {
+        return lng + "," + lat;
+    }
 }

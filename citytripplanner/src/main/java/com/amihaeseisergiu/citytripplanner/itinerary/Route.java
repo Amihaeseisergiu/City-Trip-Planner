@@ -1,6 +1,7 @@
 package com.amihaeseisergiu.citytripplanner.itinerary;
 
 import com.amihaeseisergiu.citytripplanner.planner.schedule.ScheduleDay;
+import com.amihaeseisergiu.citytripplanner.planner.scheduleunrestricted.ScheduleDayUnrestricted;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.hibernate.annotations.Fetch;
@@ -45,6 +46,17 @@ public class Route {
     private List<RoutePoi> pois;
 
     public Route(ScheduleDay scheduleDay)
+    {
+        this.dayId = scheduleDay.getDayId();
+        this.dayName = scheduleDay.getDayName();
+        this.dayNumber = scheduleDay.getDayNumber();
+        this.date = scheduleDay.getDate();
+        this.colour = scheduleDay.getColour();
+        this.dayStart = scheduleDay.getDayStart();
+        this.dayEnd = scheduleDay.getDayEnd();
+    }
+
+    public Route(ScheduleDayUnrestricted scheduleDay)
     {
         this.dayId = scheduleDay.getDayId();
         this.dayName = scheduleDay.getDayName();

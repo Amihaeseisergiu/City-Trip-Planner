@@ -3,13 +3,10 @@ package com.amihaeseisergiu.citytripplanner.planner;
 import com.amihaeseisergiu.citytripplanner.appuser.AppUser;
 import com.amihaeseisergiu.citytripplanner.appuser.AppUserService;
 import com.amihaeseisergiu.citytripplanner.itinerary.Itinerary;
-import com.amihaeseisergiu.citytripplanner.itinerary.ItineraryService;
 import com.amihaeseisergiu.citytripplanner.itinerary.Route;
 import com.amihaeseisergiu.citytripplanner.planner.schedule.Schedule;
-import com.amihaeseisergiu.citytripplanner.planner.schedule.ScheduleService;
 import com.amihaeseisergiu.citytripplanner.planner.schedule.ScheduleDay;
 import com.amihaeseisergiu.citytripplanner.planner.scheduleunrestricted.ScheduleUnrestricted;
-import com.amihaeseisergiu.citytripplanner.planner.scheduleunrestricted.ScheduleUnrestrictedService;
 import com.amihaeseisergiu.citytripplanner.utils.MapboxUtils;
 import com.amihaeseisergiu.citytripplanner.utils.SolverUtils;
 import lombok.AllArgsConstructor;
@@ -27,9 +24,6 @@ public class PlannerService {
     private final MapboxUtils mapboxUtils;
     private final SolverUtils solverUtils;
     private final PlannerRepository plannerRepository;
-    private final ItineraryService itineraryService;
-    private final ScheduleService scheduleService;
-    private final ScheduleUnrestrictedService scheduleUnrestrictedService;
     private final AppUserService appUserService;
 
     public Itinerary getItineraryRestricted(Schedule schedule)
@@ -51,9 +45,17 @@ public class PlannerService {
         return new Itinerary(routes);
     }
 
-    public void getItineraryUnrestricted()
+    public Itinerary getItineraryUnrestricted(ScheduleUnrestricted schedule)
     {
-        solverUtils.getRoutesUnrestricted();
+        List<Route> routes = new ArrayList<>();
+
+        if(schedule.getScheduleDays().size() > 0 && schedule.getSchedulePois().size() > 0)
+        {
+            int[][] durationsMatrix = mapboxUtils.fetchDurationsMatrix(schedule.getCoordinatesList());
+            routes = solverUtils.getRoutesUnrestricted(schedule, durationsMatrix);
+        }
+
+        return new Itinerary(routes);
     }
 
     public void saveRestricted(UUID plannerId, Schedule schedule, Itinerary itinerary)
@@ -68,7 +70,6 @@ public class PlannerService {
             if(resultingPlanner.getUser().equals(user))
             {
                 schedule.setPlanner(resultingPlanner);
-                scheduleService.assignDuplicates(schedule);
 
                 resultingPlanner.setSchedule(schedule);
 
@@ -76,7 +77,6 @@ public class PlannerService {
                 {
                     itinerary.setPlanner(resultingPlanner);
                     itinerary.setUserName(user.getUserName());
-                    itineraryService.assignDuplicates(itinerary);
 
                     resultingPlanner.setItinerary(itinerary);
                 }
@@ -124,7 +124,6 @@ public class PlannerService {
             if(resultingPlanner.getUser().equals(user))
             {
                 schedule.setPlanner(resultingPlanner);
-                scheduleUnrestrictedService.assignDuplicates(schedule);
 
                 resultingPlanner.setScheduleUnrestricted(schedule);
 
@@ -132,7 +131,6 @@ public class PlannerService {
                 {
                     itinerary.setPlanner(resultingPlanner);
                     itinerary.setUserName(user.getUserName());
-                    itineraryService.assignDuplicates(itinerary);
 
                     resultingPlanner.setItinerary(itinerary);
                 }

@@ -37,6 +37,9 @@ public class RoutePoi {
 
     private String polyLine;
 
+    @JsonIgnore
+    private Integer solutionIndex;
+
     public RoutePoi(String poiId,
                     Integer ord,
                     String visitTimesStart,
@@ -45,6 +48,25 @@ public class RoutePoi {
                     Integer waitingTime,
                     String polyLine)
     {
+        this.poiId = poiId;
+        this.ord = ord;
+        this.visitTimesStart = visitTimesStart;
+        this.visitTimesEnd = visitTimesEnd;
+        this.timeToNextPoi = timeToNextPoi;
+        this.waitingTime = waitingTime;
+        this.polyLine = polyLine;
+    }
+
+    public RoutePoi(Integer solutionIndex,
+                    String poiId,
+                    Integer ord,
+                    String visitTimesStart,
+                    String visitTimesEnd,
+                    Integer timeToNextPoi,
+                    Integer waitingTime,
+                    String polyLine)
+    {
+        this.solutionIndex = solutionIndex;
         this.poiId = poiId;
         this.ord = ord;
         this.visitTimesStart = visitTimesStart;

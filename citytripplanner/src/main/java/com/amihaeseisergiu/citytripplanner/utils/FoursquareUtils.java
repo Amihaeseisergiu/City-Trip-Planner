@@ -112,6 +112,16 @@ public class FoursquareUtils {
                     }
                 }
             }
+
+            for(String dayName : dayNames)
+            {
+                if(poiHours.stream().noneMatch(p -> p.getDayName().equals(dayName)))
+                {
+                    LocalTime startTime = LocalTime.parse("00:00");
+                    LocalTime endTime = LocalTime.parse("23:59");
+                    poiHours.add(new PoiHours(dayNames.indexOf(dayName) + 1, dayName, startTime, endTime));
+                }
+            }
         }
         else
         {
