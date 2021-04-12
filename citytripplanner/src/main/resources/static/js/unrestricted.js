@@ -933,12 +933,6 @@ function viewItineraryOnMap(pois, colour, accommodation)
         let el = document.getElementById(`poi_marker_${pois[i].poiId}`);
         let styleBackgroundImage = el.style.backgroundImage;
 
-        currentShownRoute.push({
-            marker: el,
-            id: pois[i].poiId,
-            backgroundImage: styleBackgroundImage
-        });
-
         el.style.backgroundImage = '';
         el.style.boxShadow = '';
         el.innerHTML = `
@@ -953,10 +947,59 @@ function viewItineraryOnMap(pois, colour, accommodation)
             </div>
         `;
 
-        if(pois[i].polyLine !== null && (pois.length === 2 ? pois[i].ord === 0 : true))
+        let arrow = null;
+
+        if(pois[i].polyLine !== null)
         {
             let coordinates = flipped(decodePolyLine(pois[i].polyLine, 6));
             allCoordinates.push(...coordinates);
+
+            const lineBearing = turf.bearing(coordinates[Math.floor(coordinates.length / 2)],
+                coordinates[Math.floor(coordinates.length / 2) + 1]);
+
+            let foundArrow = null;
+            for(let j = 0; j < currentShownRoute.length; j++)
+            {
+                if(currentShownRoute[j].arrow !== null)
+                {
+                    let coords = [currentShownRoute[j].arrow.getLngLat().lng, currentShownRoute[j].arrow.getLngLat().lat];
+                    let coords2 = coordinates[Math.floor(coordinates.length / 2)];
+
+                    if(coords[0] === coords2[0] && coords[1] === coords2[1])
+                    {
+                        foundArrow = currentShownRoute[j].arrow;
+                    }
+                }
+            }
+
+            let marker_el = document.createElement('div');
+            marker_el.className = 'flex flex-row justify-center items-center text-white rounded-full'
+            if(foundArrow !== null)
+            {
+                marker_el.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-full w-full" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                </svg>`
+            }
+            else
+            {
+                marker_el.innerHTML = `
+                <svg class="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                    stroke-width="2" d="M9 11l3-3m0 0l3 3m-3-3v8m0-13a9 9 0 110 18 9 9 0 010-18z">
+                    </path>
+                </svg>`
+            }
+            marker_el.style.width = 20 + 'px';
+            marker_el.style.height = 20 + 'px';
+            marker_el.style.backgroundColor = colour;
+
+            var arrowMarker = new mapboxgl.Marker(marker_el);
+            arrowMarker.setLngLat(coordinates[Math.floor(coordinates.length / 2)])
+                .setRotation(lineBearing).setRotationAlignment('map')
+                .setPitchAlignment('map').addTo(map);
+            arrow = arrowMarker;
 
             geoJson.data.features.push({
                 'type': 'Feature',
@@ -967,6 +1010,13 @@ function viewItineraryOnMap(pois, colour, accommodation)
                 }
             });
         }
+
+        currentShownRoute.push({
+            marker: el,
+            id: pois[i].poiId,
+            backgroundImage: styleBackgroundImage,
+            arrow: arrow
+        });
     }
 
     map.addSource('route', geoJson);
@@ -1028,6 +1078,11 @@ function cleanShownRoutes()
             let poi = addedMarkers.find( ({poi}) => poi.id === currentShownRoute[i].id);
 
             recalculateColours(poi);
+
+            if(currentShownRoute[i].arrow !== null)
+            {
+                currentShownRoute[i].arrow.remove();
+            }
         }
 
         map.fitBounds(currentBounds.coords);

@@ -60,14 +60,14 @@
                     <div class="flex w-full overflow-auto no-scrollbar break-all">
                         <button :class="{ 'active border-indigo-500 text-gray-600': tab === 'planner' }"
                                 class="p-3 focus:outline-none focus:border-indigo-500 focus:text-gray-600 border-b-2 border-white text-gray-400
-                                hover:border-indigo-500 font-bold uppercase tracking-tight transition ease-in duration-200"
+                                hover:border-gray-300 font-bold uppercase tracking-tight transition ease-in duration-200"
                                 @click="tab = 'planner'" id="plannerTabButton"
                                 onclick="cleanShownRoutes()">
                             Planner
                         </button>
                         <button :class="{ 'active border-indigo-500 text-gray-600': tab === 'itinerary' }"
                                 class="p-3 focus:outline-none focus:border-indigo-500 focus:text-gray-600 border-b-2 border-white text-gray-400
-                                hover:border-indigo-500 font-bold uppercase tracking-tight transition ease-in duration-200 hidden"
+                                hover:border-gray-300 font-bold uppercase tracking-tight transition ease-in duration-200 hidden"
                                 @click="tab = 'itinerary'" id="itineraryTab">
                             Itinerary
                         </button>
