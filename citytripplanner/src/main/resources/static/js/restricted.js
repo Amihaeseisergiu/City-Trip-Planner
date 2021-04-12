@@ -666,6 +666,10 @@ function constructItinerary(data, switchTab)
 
     if(data.routes.length > 0)
     {
+        let viewConstraintsDiv = document.getElementById("viewConstraintsContainer");
+        viewConstraintsDiv.classList.remove("hidden");
+        viewConstraintsDiv.__x.$data.constraints = data.constraints;
+
         addShareButtons(data.id);
 
         for(let i = 0; i < data.routes.length; i++)
@@ -1101,7 +1105,7 @@ function viewItineraryOnMap(pois, colour, accommodation)
     }
 
     map.fitBounds(bounds, {
-        padding: 20
+        padding: 100
     });
 }
 
@@ -1253,7 +1257,7 @@ function addLoading()
     loadingDiv.__x.$data.state = 'loading';
 
     loadingDiv.innerHTML = `
-        <div class="p-3">
+        <div class="p-3.5">
             <div class="h-4 w-4 relative">
                 <div class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400"></div>
                 <div class="rounded-full h-full h-full bg-indigo-500"></div>

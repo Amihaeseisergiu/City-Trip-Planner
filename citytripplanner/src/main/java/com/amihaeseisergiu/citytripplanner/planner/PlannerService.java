@@ -2,13 +2,15 @@ package com.amihaeseisergiu.citytripplanner.planner;
 
 import com.amihaeseisergiu.citytripplanner.appuser.AppUser;
 import com.amihaeseisergiu.citytripplanner.appuser.AppUserService;
+import com.amihaeseisergiu.citytripplanner.generator.DataRestricted;
+import com.amihaeseisergiu.citytripplanner.generator.DataUnrestricted;
 import com.amihaeseisergiu.citytripplanner.itinerary.Itinerary;
 import com.amihaeseisergiu.citytripplanner.itinerary.Route;
 import com.amihaeseisergiu.citytripplanner.planner.schedule.Schedule;
 import com.amihaeseisergiu.citytripplanner.planner.schedule.ScheduleDay;
 import com.amihaeseisergiu.citytripplanner.planner.scheduleunrestricted.ScheduleUnrestricted;
 import com.amihaeseisergiu.citytripplanner.utils.MapboxUtils;
-import com.amihaeseisergiu.citytripplanner.utils.SolverUtils;
+import com.amihaeseisergiu.citytripplanner.generator.RouteGenerator;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -22,40 +24,48 @@ import java.util.UUID;
 public class PlannerService {
 
     private final MapboxUtils mapboxUtils;
-    private final SolverUtils solverUtils;
+    private final RouteGenerator routeGenerator;
     private final PlannerRepository plannerRepository;
     private final AppUserService appUserService;
 
     public Itinerary getItineraryRestricted(Schedule schedule)
     {
         List<Route> routes = new ArrayList<>();
+        StringBuilder constraints = new StringBuilder();
 
         for(ScheduleDay scheduleDay : schedule.getScheduleDays())
         {
             if(scheduleDay.getPois().size() >= 2 && scheduleDay.getPois().size() <= 25)
             {
                 int[][] durationsMatrix = mapboxUtils.fetchDurationsMatrix(scheduleDay.getCoordinatesList());
-                Route route = solverUtils.getRoute(scheduleDay, durationsMatrix);
+                DataRestricted dataRestricted = routeGenerator.getRouteRestricted(scheduleDay, durationsMatrix);
 
-                if(route.getPois() != null)
-                    routes.add(route);
+                if(dataRestricted.getRoute().getPois() != null)
+                {
+                    routes.add(dataRestricted.getRoute());
+                    constraints.append(dataRestricted.getConstraints());
+                }
             }
         }
 
-        return new Itinerary(routes);
+        return new Itinerary(routes, constraints.toString());
     }
 
     public Itinerary getItineraryUnrestricted(ScheduleUnrestricted schedule)
     {
         List<Route> routes = new ArrayList<>();
+        String constraints = null;
 
         if(schedule.getScheduleDays().size() > 0 && schedule.getSchedulePois().size() > 0)
         {
             int[][] durationsMatrix = mapboxUtils.fetchDurationsMatrix(schedule.getCoordinatesList());
-            routes = solverUtils.getRoutesUnrestricted(schedule, durationsMatrix);
+            DataUnrestricted dataUnrestricted = routeGenerator.getRoutesUnrestricted(schedule, durationsMatrix);
+
+            routes = dataUnrestricted.getRoutes();
+            constraints = dataUnrestricted.getConstraints();
         }
 
-        return new Itinerary(routes);
+        return new Itinerary(routes, constraints);
     }
 
     public void saveRestricted(UUID plannerId, Schedule schedule, Itinerary itinerary)

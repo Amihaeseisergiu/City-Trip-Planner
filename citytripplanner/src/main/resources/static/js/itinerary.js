@@ -477,7 +477,7 @@ function viewItineraryOnMap(pois, colour, accommodation)
     }
 
     map.fitBounds(bounds, {
-        padding: 20
+        padding: 100
     });
 }
 

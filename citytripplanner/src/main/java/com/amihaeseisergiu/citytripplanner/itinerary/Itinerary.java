@@ -34,12 +34,16 @@ public class Itinerary {
     @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Route> routes;
 
+    @Lob
+    private String constraints;
+
     @OneToOne
     @JsonIgnore
     private Planner planner;
 
-    public Itinerary(List<Route> routes)
+    public Itinerary(List<Route> routes, String constraints)
     {
         this.routes = routes;
+        this.constraints = constraints;
     }
 }

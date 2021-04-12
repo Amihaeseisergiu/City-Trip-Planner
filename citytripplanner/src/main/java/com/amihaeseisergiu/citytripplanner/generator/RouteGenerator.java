@@ -1,9 +1,10 @@
-package com.amihaeseisergiu.citytripplanner.utils;
+package com.amihaeseisergiu.citytripplanner.generator;
 
 import com.amihaeseisergiu.citytripplanner.itinerary.Route;
 import com.amihaeseisergiu.citytripplanner.itinerary.RoutePoi;
 import com.amihaeseisergiu.citytripplanner.planner.schedule.ScheduleDay;
 import com.amihaeseisergiu.citytripplanner.planner.scheduleunrestricted.*;
+import com.amihaeseisergiu.citytripplanner.utils.MapboxUtils;
 import lombok.AllArgsConstructor;
 import org.chocosolver.solver.Model;
 import org.chocosolver.solver.Solution;
@@ -18,11 +19,11 @@ import java.util.List;
 
 @Component
 @AllArgsConstructor
-public class SolverUtils {
+public class RouteGenerator {
 
     private final MapboxUtils mapboxUtils;
 
-    public Route getRoute(ScheduleDay scheduleDay, int[][] timeCost)
+    public DataRestricted getRouteRestricted(ScheduleDay scheduleDay, int[][] timeCost)
     {
         Route route = new Route(scheduleDay);
 
@@ -55,7 +56,7 @@ public class SolverUtils {
                 }
                 catch(Exception e)
                 {
-                    return route;
+                    return new DataRestricted(route, null);
                 }
             }
         }
@@ -193,10 +194,10 @@ public class SolverUtils {
                 route.setAccommodation(scheduleDay.getAccommodation());
             }
         }
-        return route;
+        return new DataRestricted(route, model.toString());
     }
 
-    public List<Route> getRoutesUnrestricted(ScheduleUnrestricted schedule, int[][] timeCost)
+    public DataUnrestricted getRoutesUnrestricted(ScheduleUnrestricted schedule, int[][] timeCost)
     {
         int m = schedule.getScheduleDays().size();
         int n = schedule.getSchedulePois().size();
@@ -284,7 +285,7 @@ public class SolverUtils {
 
                 model.ifThen(
                         ord[i].ne(n - 1).and(ord[i].add(1).eq(ord[j])).decompose(),
-                        day[i].eq(day[j]).or(day[j].eq(day[i].add(1))).decompose()
+                        day[i].le(day[j]).decompose()
                 );
 
                 if(accommodation == -1)
@@ -428,6 +429,6 @@ public class SolverUtils {
             }
         }
 
-        return routes;
+        return new DataUnrestricted(routes, model.toString());
     }
 }
