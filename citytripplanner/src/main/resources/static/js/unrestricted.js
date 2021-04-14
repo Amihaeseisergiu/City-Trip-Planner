@@ -1127,7 +1127,6 @@ function savePlanner()
     addLoading();
 
     let scheduleToSend = getScheduleToSend();
-    console.log(scheduleToSend);
     let pathArray = window.location.pathname.split('/');
 
     const url = `http://localhost:8080/planner/save/unrestricted/${pathArray[2]}`;
@@ -1174,24 +1173,25 @@ function getScheduleToSend()
 
     for(let i = 0; i < addedPOIs.length; i++)
     {
-        let openingAt = [];
-        let closingAt = [];
+        let hours = [];
 
         for(let j = 0; j < addedPOIs[i].details.poiHours.length; j++)
         {
             let splittedOpeningAt = addedPOIs[i].details.poiHours[j].openingAt.split(":");
             let splittedClosingAt = addedPOIs[i].details.poiHours[j].closingAt.split(":");
 
-            openingAt.push(splittedOpeningAt[0] + ":" + splittedOpeningAt[1]);
-            closingAt.push(splittedClosingAt[0] + ":" + splittedClosingAt[1]);
+            hours.push({
+                dayNumber: addedPOIs[i].details.poiHours[j].dayNumber - 1,
+                openingAt: splittedOpeningAt[0] + ":" + splittedOpeningAt[1],
+                closingAt: splittedClosingAt[0] + ":" + splittedClosingAt[1]
+            });
         }
 
         let poi = {
             poiId:  addedPOIs[i].poi.id,
             lat: addedPOIs[i].poi.lat,
             lng: addedPOIs[i].poi.lng,
-            openingAt: openingAt,
-            closingAt: closingAt,
+            hours: hours,
             visitDuration: addedPOIs[i].visitDuration
         };
 

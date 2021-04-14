@@ -8,6 +8,7 @@ import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -95,18 +96,25 @@ public class ScheduleUnrestricted {
         {
             for(int j = 0; j < 7; j++)
             {
-                String[] splitOpening = poi.getOpeningAt().get(j).split(":");
-                String[] splitClosed = poi.getClosingAt().get(j).split(":");
-                int openingTime = Integer.parseInt(splitOpening[0]) * 60 + Integer.parseInt(splitOpening[1]);
-                int closingTime = Integer.parseInt(splitClosed[0]) * 60 + Integer.parseInt(splitClosed[1]);
+                int finalJ = j;
+                SchedulePoiHoursUnrestricted hours = poi.getHours().stream().filter(h -> h.getDayNumber() == finalJ)
+                        .findFirst().orElse(null);
 
-                if(openingTime >= closingTime)
+                if(hours != null)
                 {
-                    closingTime = 23 * 60 + 59;
-                }
+                    String[] splitOpening = hours.getOpeningAt().split(":");
+                    String[] splitClosed = hours.getClosingAt().split(":");
+                    int openingTime = Integer.parseInt(splitOpening[0]) * 60 + Integer.parseInt(splitOpening[1]);
+                    int closingTime = Integer.parseInt(splitClosed[0]) * 60 + Integer.parseInt(splitClosed[1]);
 
-                openingTimes[i][j] = openingTime;
-                closingTimes[i][j] = closingTime;
+                    if(openingTime >= closingTime)
+                    {
+                        closingTime = 23 * 60 + 59;
+                    }
+
+                    openingTimes[i][j] = openingTime;
+                    closingTimes[i][j] = closingTime;
+                }
             }
 
             String[] split = poi.getVisitDuration().split(":");

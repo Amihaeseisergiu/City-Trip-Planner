@@ -225,20 +225,42 @@ public class RouteGenerator {
         IntVar[] succCost = model.intVarArray("succCost", n, 0, 1440);
         IntVar totalTimeCost = model.intVar("Total time cost", 0, m * 1440);
 
+        for(int i = 0; i < n; i++)
+        {
+            for(int k = 0; k < m; k++)
+            {
+                model.ifThen(
+                        day[i].eq(k).decompose().reify(),
+                        visitTimesSt[i].ge(Math.max(daysStart[k], openingTimes[i][dayNumbers[k]]))
+                                .and(visitTimesSt[i].le(Math.min(daysEnd[k], closingTimes[i][dayNumbers[k]] - visitDurations[i])))
+                                .and(visitTimesEn[i].ge(Math.max(daysStart[k], openingTimes[i][dayNumbers[k]]) + visitDurations[i]))
+                                .and(visitTimesEn[i].le(Math.min(daysEnd[k], closingTimes[i][dayNumbers[k]]))).decompose()
+                );
+
+                if(accommodation != -1)
+                {
+                    model.ifThen(
+                            ord[i].eq(n - 1).and(day[i].eq(k)).decompose().reify(),
+                            succCost[i].eq(surplus[k].add(timeCost[i][accommodation] + visitDurations[i]))
+                                    .and(visitTimesSt[i].add(timeCost[i][accommodation] + visitDurations[i]).le(daysEnd[k])).decompose()
+                    );
+
+                    model.ifThen(
+                            ord[i].eq(0).and(day[i].eq(k)).decompose().reify(),
+                            visitTimesSt[i].eq(model.intVar(openingTimes[i][dayNumbers[k]]).sub(model.intVar(daysStart[k])
+                                    .add(timeCost[accommodation][i])).max(0).add(timeCost[accommodation][i]).add(daysStart[k]))
+                                    .and(surplus[k].eq(visitTimesSt[i].sub(daysStart[k]))).decompose()
+                    );
+                }
+            }
+        }
+
         for (int i = 0; i < n; i++)
         {
             for (int j = 0; j < n; j++)
             {
                 for(int k = 0; k < m; k++)
                 {
-                    model.ifThen(
-                            day[i].eq(k).decompose().reify(),
-                            visitTimesSt[i].ge(Math.max(daysStart[k], openingTimes[i][dayNumbers[k]]))
-                                    .and(visitTimesSt[i].le(Math.min(daysEnd[k], closingTimes[i][dayNumbers[k]] - visitDurations[i])))
-                                    .and(visitTimesEn[i].ge(Math.max(daysStart[k], openingTimes[i][dayNumbers[k]]) + visitDurations[i]))
-                                    .and(visitTimesEn[i].le(Math.min(daysEnd[k], closingTimes[i][dayNumbers[k]]))).decompose()
-                    );
-
                     if(i != j)
                     {
                         model.ifThen(
@@ -256,20 +278,7 @@ public class RouteGenerator {
                             );
 
                             model.ifThen(
-                                    ord[i].eq(n - 1).and(day[i].eq(k)).decompose().reify(),
-                                    succCost[i].eq(surplus[k].add(timeCost[i][accommodation] + visitDurations[i]))
-                                            .and(visitTimesSt[i].add(timeCost[i][accommodation] + visitDurations[i]).le(daysEnd[k])).decompose()
-                            );
-
-                            model.ifThen(
                                     ord[i].sub(1).eq(ord[j]).and(day[i].eq(k).and(day[i].ne(day[j]))).decompose().reify(),
-                                    visitTimesSt[i].eq(model.intVar(openingTimes[i][dayNumbers[k]]).sub(model.intVar(daysStart[k])
-                                            .add(timeCost[accommodation][i])).max(0).add(timeCost[accommodation][i]).add(daysStart[k]))
-                                            .and(surplus[k].eq(visitTimesSt[i].sub(daysStart[k]))).decompose()
-                            );
-
-                            model.ifThen(
-                                    ord[i].eq(0).and(day[i].eq(k)).decompose().reify(),
                                     visitTimesSt[i].eq(model.intVar(openingTimes[i][dayNumbers[k]]).sub(model.intVar(daysStart[k])
                                             .add(timeCost[accommodation][i])).max(0).add(timeCost[accommodation][i]).add(daysStart[k]))
                                             .and(surplus[k].eq(visitTimesSt[i].sub(daysStart[k]))).decompose()
@@ -284,7 +293,7 @@ public class RouteGenerator {
                 );
 
                 model.ifThen(
-                        ord[i].ne(n - 1).and(ord[i].add(1).eq(ord[j])).decompose(),
+                        ord[i].ne(n - 1).and(ord[i].add(1).eq(ord[j])).decompose().reify(),
                         day[i].le(day[j]).decompose()
                 );
 
@@ -314,6 +323,7 @@ public class RouteGenerator {
         model.setObjective(Model.MINIMIZE, totalTimeCost);
 
         Solver solver = model.getSolver();
+        solver.limitTime("120s");
         Solution solution = new Solution(model);
 
         solver.showShortStatistics();
