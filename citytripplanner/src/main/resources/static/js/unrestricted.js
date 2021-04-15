@@ -156,7 +156,7 @@ function addPoiDetails(data, marker)
             ${hoursHTML}
          </div>`;
 
-    let popUp = new mapboxgl.Popup({className: `mapbox-gl-popup-${data.id} z-20`}).setHTML(html).on('open', e => {
+    let popUp = new mapboxgl.Popup({className: `mapbox-gl-popup-${data.id} z-40`}).setHTML(html).on('open', e => {
         if(document.getElementById("tabsContainer").__x.$data.tab === 'itinerary')
         {
             document.getElementById(`poi_add_${data.id}`).classList.add('hidden');
@@ -190,6 +190,7 @@ function addPOI(id, visitDuration)
 
         el['colour'] = '#22d625';
         el['marker']._element.style.boxShadow = `0 0 0 3px ${el['colour']}`;
+        el['marker']._element.classList.add('z-20');
 
         const div = document.createElement('div');
 
@@ -218,7 +219,7 @@ function addPOI(id, visitDuration)
                         ${el['poi'].name}
                     </p>
                 </button>
-                <button type="button" x-show="'${el.details.type}' === 'Hotel'" id="poiAccommodation_${id}"
+                <button type="button" x-show="'${el.details.type.replace(/['"]+/g, '')}' === 'Hotel'" id="poiAccommodation_${id}"
                         :class="{'active text-green-500 scale-125' : accommodation === '${id}'}"
                         class="p-4 focus:outline-none transform hover:scale-125 hover:text-green-500 transition ease-in-out duration-500"
                         onclick="addLoadingNotSaved()"
@@ -304,6 +305,8 @@ function removePOI(id)
 
     let el = addedMarkers.find( ({poi}) => poi.id === id);
     delete el['colour'];
+    el['marker']._element.classList.remove('z-20');
+    el['marker']._element.classList.add('z-10');
 
     recalculateColours(el);
 
@@ -351,11 +354,11 @@ function addPoiMarker(poi, top)
 
         if(top)
         {
-            el.className = "block bg-indigo-400 rounded-full p-0 border-none cursor-pointer z-10";
+            el.className = "block bg-indigo-400 rounded-full p-0 border-none cursor-pointer z-20";
         }
         else
         {
-            el.className = "block bg-indigo-400 rounded-full p-0 border-none cursor-pointer z-0";
+            el.className = "block bg-indigo-400 rounded-full p-0 border-none cursor-pointer z-10";
         }
         el.id = `poi_marker_${poi.id}`;
         el.style.backgroundImage = `url(${poi.iconPrefix}` + 32 + `${poi.iconSuffix}`;
@@ -935,6 +938,7 @@ function viewItineraryOnMap(pois, colour, accommodation)
 
         el.style.backgroundImage = '';
         el.style.boxShadow = '';
+        el.classList.add('z-30');
         el.innerHTML = `
             <div class="flex flex-row justify-center font-bold text-white text-2xl rounded-full"
                  style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased; background-color: ${colour}">
@@ -976,7 +980,7 @@ function viewItineraryOnMap(pois, colour, accommodation)
                 }
 
                 let marker_el = document.createElement('div');
-                marker_el.className = 'flex flex-row justify-center items-center text-white rounded-full'
+                marker_el.className = 'z-0 flex flex-row justify-center items-center text-white rounded-full'
                 if(foundArrow !== null)
                 {
                     marker_el.innerHTML = `
@@ -1074,8 +1078,17 @@ function cleanShownRoutes()
 
         for(let i = 0; i < currentShownRoute.length; i++)
         {
-            el = currentShownRoute[i].marker;
+            let el = currentShownRoute[i].marker;
             el.innerHTML = '';
+            el.classList.remove('z-30');
+            if('colour' in el)
+            {
+                el.classList.add('z-20');
+            }
+            else
+            {
+                el.classList.add('z-10');
+            }
             el.style.backgroundImage = currentShownRoute[i].backgroundImage;
             el.style.boxShadow = currentShownRoute[i].boxShadow;
 

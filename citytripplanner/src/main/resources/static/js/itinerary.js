@@ -40,14 +40,16 @@ function addPoiDetails(data, marker)
     for(const hours of data.poiHours)
     {
         hoursHTML += `
-            <div class="mt-3 bg-indigo-200 rounded-xl shadow">
-                <p class="text-center border-b-2 border-gray-400 font-bold text-gray-600">
+            <div class="mt-3 bg-gray-50 border-gray-300 border-2 rounded-xl shadow
+                        group hover:border-gray-400 transition ease-in duration-500">
+                <p class="text-center border-b-2 border-gray-200 font-bold text-gray-500
+                          group-hover:border-gray-300 group-hover:text-gray-700 transition ease-in duration-500">
                     ${hours.dayName ? hours.dayName : "unavailable"}
                 </p>
-                <p class="text-center font-bold text-gray-600">
+                <p class="text-center text-gray-500 group-hover:text-gray-700 transition ease-in duration-500">
                     Opening: ${hours.openingAt ? hours.openingAt : "unavailable"}
                 </p>
-                <p class="text-center font-bold text-gray-600">
+                <p class="text-center text-gray-500 group-hover:text-gray-700 transition ease-in duration-500">
                     Closing: ${hours.closingAt ? hours.closingAt : "unavailable"}
                 </p>
             </div>`;
@@ -62,22 +64,26 @@ function addPoiDetails(data, marker)
         
         ${data.photoPrefix ? `<img class="rounded-2xl shadow-xl" alt="POI Photo" src="${data.photoPrefix}500${data.photoSuffix}">` : ""}
          <div class="overflow-auto no-scrollbar max-h-36">
-            <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-600">
+            <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-500 hover:text-gray-600
+                      hover:border-indigo-400 transition ease-out duration-500">
                 Phone: ${data.formattedPhone ? data.formattedPhone : "unavailable"}
             </p>
-            <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-600">
+            <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-500 hover:text-gray-600
+                      hover:border-indigo-400 transition ease-out duration-500">
                 Rating: ${data.rating ? data.rating : "unavailable"}
             </p>
-            <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-600">
+            <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-500 hover:text-gray-600
+                      hover:border-indigo-400 transition ease-out duration-500">
                 Type: ${data.type ? data.type : "unavailable"}
             </p>
-            <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-600">
+            <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-500 hover:text-gray-600
+                      hover:border-indigo-400 transition ease-out duration-500">
                 Price Tier: ${data.priceTier ? data.priceTier : "unavailable"}
             </p>
             ${hoursHTML}
          </div>`;
 
-    let popUp = new mapboxgl.Popup({className: `mapbox-gl-popup-${data.id}`}).setHTML(html);
+    let popUp = new mapboxgl.Popup({className: `mapbox-gl-popup-${data.id} z-40`}).setHTML(html);
 
     marker.setPopup(popUp);
     marker.togglePopup();
@@ -90,7 +96,7 @@ function addPoiMarker(poi)
     if(!addedMarkers.some(e => e.poi.id === poi.id))
     {
         let el = document.createElement('div');
-        el.className = "block bg-indigo-400 rounded-full p-0 border-none cursor-pointer";
+        el.className = "z-10 block bg-indigo-400 rounded-full p-0 border-none cursor-pointer";
         el.id = `poi_marker_${poi.id}`;
         el.style.backgroundImage = `url(${poi.iconPrefix}` + 32 + `${poi.iconSuffix}`;
         el.style.width = 32 + 'px';
@@ -412,6 +418,8 @@ function viewItineraryOnMap(pois, colour, accommodation)
 
         el.style.backgroundImage = '';
         el.style.boxShadow = '';
+        el.classList.remove('z-10');
+        el.classList.add('z-20');
         el.innerHTML = `
             <div class="flex flex-row justify-center font-bold text-white text-2xl rounded-full"
                  style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased; background-color: ${colour}">
@@ -453,7 +461,7 @@ function viewItineraryOnMap(pois, colour, accommodation)
                 }
 
                 let marker_el = document.createElement('div');
-                marker_el.className = 'flex flex-row justify-center items-center text-white rounded-full'
+                marker_el.className = 'z-0 flex flex-row justify-center items-center text-white rounded-full'
                 if(foundArrow !== null)
                 {
                     marker_el.innerHTML = `
@@ -551,8 +559,10 @@ function cleanShownRoutes()
 
         for(let i = 0; i < currentShownRoute.length; i++)
         {
-            el = currentShownRoute[i].marker;
+            let el = currentShownRoute[i].marker;
             el.innerHTML = '';
+            el.classList.remove('z-20');
+            el.classList.add('z-10');
             el.style.backgroundImage = currentShownRoute[i].backgroundImage;
             el.style.boxShadow = currentShownRoute[i].boxShadow;
 

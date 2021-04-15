@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import org.chocosolver.solver.Model;
 import org.chocosolver.solver.Solution;
 import org.chocosolver.solver.Solver;
+import org.chocosolver.solver.constraints.nary.cnf.LogOp;
 import org.chocosolver.solver.variables.IntVar;
 import org.springframework.stereotype.Component;
 
@@ -215,42 +216,42 @@ public class RouteGenerator {
 
         Model model = new Model("City Planner Unrestricted");
 
-        IntVar[] visitTimesSt = model.intVarArray("visitTimesSt", n, 0, 1440);
-        IntVar[] visitTimesEn = model.intVarArray("visitTimesEn", n, 0, 1440);
+        IntVar[] visitTimesSt = model.intVarArray("visitTimesSt", n, 0, 1440, true);
+        IntVar[] visitTimesEn = model.intVarArray("visitTimesEn", n, 0, 1440, true);
 
         IntVar[] ord = model.intVarArray("ord", n, 0, n - 1);
         IntVar[] day = model.intVarArray("day", n, 0, m - 1);
-        IntVar[] surplus = model.intVarArray("surplus", m, 0, 1440);
+        IntVar[] surplus = model.intVarArray("surplus", m, 0, 1440, true);
 
-        IntVar[] succCost = model.intVarArray("succCost", n, 0, 1440);
-        IntVar totalTimeCost = model.intVar("Total time cost", 0, m * 1440);
+        IntVar[] succCost = model.intVarArray("succCost", n, 0, 1440, true);
+        IntVar totalTimeCost = model.intVar("Total time cost", 0, m * 1440, true);
 
         for(int i = 0; i < n; i++)
         {
             for(int k = 0; k < m; k++)
             {
-                model.ifThen(
+                model.addClauses(LogOp.implies(
                         day[i].eq(k).decompose().reify(),
                         visitTimesSt[i].ge(Math.max(daysStart[k], openingTimes[i][dayNumbers[k]]))
                                 .and(visitTimesSt[i].le(Math.min(daysEnd[k], closingTimes[i][dayNumbers[k]] - visitDurations[i])))
                                 .and(visitTimesEn[i].ge(Math.max(daysStart[k], openingTimes[i][dayNumbers[k]]) + visitDurations[i]))
-                                .and(visitTimesEn[i].le(Math.min(daysEnd[k], closingTimes[i][dayNumbers[k]]))).decompose()
-                );
+                                .and(visitTimesEn[i].le(Math.min(daysEnd[k], closingTimes[i][dayNumbers[k]]))).decompose().reify()
+                ));
 
                 if(accommodation != -1)
                 {
-                    model.ifThen(
+                    model.addClauses(LogOp.implies(
                             ord[i].eq(n - 1).and(day[i].eq(k)).decompose().reify(),
                             succCost[i].eq(surplus[k].add(timeCost[i][accommodation] + visitDurations[i]))
-                                    .and(visitTimesSt[i].add(timeCost[i][accommodation] + visitDurations[i]).le(daysEnd[k])).decompose()
-                    );
+                                    .and(visitTimesSt[i].add(timeCost[i][accommodation] + visitDurations[i]).le(daysEnd[k])).decompose().reify()
+                    ));
 
-                    model.ifThen(
+                    model.addClauses(LogOp.implies(
                             ord[i].eq(0).and(day[i].eq(k)).decompose().reify(),
                             visitTimesSt[i].eq(model.intVar(openingTimes[i][dayNumbers[k]]).sub(model.intVar(daysStart[k])
                                     .add(timeCost[accommodation][i])).max(0).add(timeCost[accommodation][i]).add(daysStart[k]))
-                                    .and(surplus[k].eq(visitTimesSt[i].sub(daysStart[k]))).decompose()
-                    );
+                                    .and(surplus[k].eq(visitTimesSt[i].sub(daysStart[k]))).decompose().reify()
+                    ));
                 }
             }
         }
@@ -263,46 +264,46 @@ public class RouteGenerator {
                 {
                     if(i != j)
                     {
-                        model.ifThen(
+                        model.addClauses(LogOp.implies(
                                 ord[i].add(1).eq(ord[j]).and(day[i].eq(k).and(day[i].eq(day[j]))).decompose().reify(),
                                 succCost[i].eq(model.intVar(openingTimes[j][dayNumbers[k]]).sub(visitTimesEn[i].add(timeCost[i][j])).max(0)
-                                        .add(timeCost[i][j]).add(visitDurations[i])).decompose()
-                        );
+                                        .add(timeCost[i][j]).add(visitDurations[i])).decompose().reify()
+                        ));
 
                         if(accommodation != -1)
                         {
-                            model.ifThen(
+                            model.addClauses(LogOp.implies(
                                     ord[i].add(1).eq(ord[j]).and(day[i].eq(k).and(day[i].ne(day[j]))).decompose().reify(),
                                     succCost[i].eq(surplus[k].add(timeCost[i][accommodation] + visitDurations[i]))
-                                            .and(visitTimesSt[i].add(timeCost[i][accommodation] + visitDurations[i]).le(daysEnd[k])).decompose()
-                            );
+                                            .and(visitTimesSt[i].add(timeCost[i][accommodation] + visitDurations[i]).le(daysEnd[k])).decompose().reify()
+                            ));
 
-                            model.ifThen(
+                            model.addClauses(LogOp.implies(
                                     ord[i].sub(1).eq(ord[j]).and(day[i].eq(k).and(day[i].ne(day[j]))).decompose().reify(),
                                     visitTimesSt[i].eq(model.intVar(openingTimes[i][dayNumbers[k]]).sub(model.intVar(daysStart[k])
                                             .add(timeCost[accommodation][i])).max(0).add(timeCost[accommodation][i]).add(daysStart[k]))
-                                            .and(surplus[k].eq(visitTimesSt[i].sub(daysStart[k]))).decompose()
-                            );
+                                            .and(surplus[k].eq(visitTimesSt[i].sub(daysStart[k]))).decompose().reify()
+                            ));
                         }
                     }
                 }
 
-                model.ifThen(
+                model.addClauses(LogOp.implies(
                         ord[i].sub(1).eq(ord[j]).and(day[i].eq(day[j])).decompose().reify(),
-                        visitTimesSt[i].eq(visitTimesSt[j].add(succCost[j])).decompose()
-                );
+                        visitTimesSt[i].eq(visitTimesSt[j].add(succCost[j])).decompose().reify()
+                ));
 
-                model.ifThen(
+                model.addClauses(LogOp.implies(
                         ord[i].ne(n - 1).and(ord[i].add(1).eq(ord[j])).decompose().reify(),
-                        day[i].le(day[j]).decompose()
-                );
+                        day[i].le(day[j]).decompose().reify()
+                ));
 
                 if(accommodation == -1)
                 {
-                    model.ifThen(
+                    model.addClauses(LogOp.implies(
                             ord[i].add(1).eq(ord[j]).and(day[i].ne(day[j])).decompose().reify(),
-                            succCost[i].eq(visitDurations[i]).decompose()
-                    );
+                            succCost[i].eq(visitDurations[i]).decompose().reify()
+                    ));
                 }
             }
 
@@ -310,10 +311,10 @@ public class RouteGenerator {
 
             if(accommodation == -1)
             {
-                model.ifThen(
+                model.addClauses(LogOp.implies(
                         ord[i].eq(n - 1).decompose().reify(),
-                        succCost[i].eq(visitDurations[i]).decompose()
-                );
+                        succCost[i].eq(visitDurations[i]).decompose().reify()
+                ));
             }
         }
 
@@ -323,7 +324,7 @@ public class RouteGenerator {
         model.setObjective(Model.MINIMIZE, totalTimeCost);
 
         Solver solver = model.getSolver();
-        solver.limitTime("120s");
+        solver.limitTime("60s");
         Solution solution = new Solution(model);
 
         solver.showShortStatistics();

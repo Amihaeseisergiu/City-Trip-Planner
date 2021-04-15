@@ -136,7 +136,7 @@ function addPoiDetails(data, marker)
             ${hoursHTML}
          </div>`;
 
-    let popUp = new mapboxgl.Popup({className: `mapbox-gl-popup-${data.id} z-20`}).setHTML(html).on('open', e => {
+    let popUp = new mapboxgl.Popup({className: `mapbox-gl-popup-${data.id} z-40`}).setHTML(html).on('open', e => {
         if(document.getElementById("tabsContainer").__x.$data.tab === 'itinerary')
         {
             document.getElementById(`poi_add_${data.id}`).classList.add('hidden');
@@ -194,6 +194,11 @@ function addPOItoDay(id, dayId, accommodation, visitDuration)
 
         if('colours' in el)
         {
+            if(el['colours'].length === 0)
+            {
+                el['marker']._element.classList.add('z-20');
+            }
+
             el['colours'].push(day.colour);
             let boxShadowString = `0 0 0 3px ${el['colours'][0]}`;
 
@@ -208,6 +213,7 @@ function addPOItoDay(id, dayId, accommodation, visitDuration)
         {
             el['colours'] = [day.colour];
             el['marker']._element.style.boxShadow = `0 0 0 3px ${el['colours'][0]}`;
+            el['marker']._element.classList.add('z-20');
         }
 
         let poiContainer = document.getElementById(`poiContainer_${day.id}`);
@@ -241,7 +247,7 @@ function addPOItoDay(id, dayId, accommodation, visitDuration)
                         ${openingAt} - ${closingAt}
                     </p>
                 </button>
-                <button type="button" x-show="'${el.details.type}' === 'Hotel'" id="poiInDayAccommodation_${id}_${day.id}"
+                <button type="button" x-show="'${el.details.type.replace(/['"]+/g, '')}' === 'Hotel'" id="poiInDayAccommodation_${id}_${day.id}"
                         :class="{'active text-green-500 scale-125' : accommodation === '${id}'}"
                         class="p-4 focus:outline-none transform hover:scale-125 hover:text-green-500 transition ease-in-out duration-500"
                         onclick="addLoadingNotSaved()"
@@ -362,6 +368,12 @@ function removePOIFromDay(id, dayId)
 
     el['colours'].splice(index, 1);
 
+    if(!('colours' in el) || (('colours' in el) && el['colours'].length === 0))
+    {
+        el['marker']._element.classList.remove('z-20');
+        el['marker']._element.classList.add('z-10');
+    }
+
     recalculateColours(el);
 
     day.pois.splice(indexOfPoi, 1);
@@ -426,11 +438,11 @@ function addPoiMarker(poi, top)
 
         if(top)
         {
-            el.className = "block bg-indigo-400 rounded-full p-0 border-none cursor-pointer z-10";
+            el.className = "block bg-indigo-400 rounded-full p-0 border-none cursor-pointer z-20";
         }
         else
         {
-            el.className = "block bg-indigo-400 rounded-full p-0 border-none cursor-pointer z-0";
+            el.className = "block bg-indigo-400 rounded-full p-0 border-none cursor-pointer z-10";
         }
         el.id = `poi_marker_${poi.id}`;
         el.style.backgroundImage = `url(${poi.iconPrefix}` + 32 + `${poi.iconSuffix}`;
@@ -1040,6 +1052,7 @@ function viewItineraryOnMap(pois, colour, accommodation)
 
         el.style.backgroundImage = '';
         el.style.boxShadow = '';
+        el.classList.add('z-30');
         el.innerHTML = `
             <div class="flex flex-row justify-center font-bold text-white text-2xl rounded-full"
                  style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased; background-color: ${colour}">
@@ -1081,7 +1094,7 @@ function viewItineraryOnMap(pois, colour, accommodation)
                 }
 
                 let marker_el = document.createElement('div');
-                marker_el.className = 'flex flex-row justify-center items-center text-white rounded-full'
+                marker_el.className = 'z-0 flex flex-row justify-center items-center text-white rounded-full'
                 if(foundArrow !== null)
                 {
                     marker_el.innerHTML = `
@@ -1179,8 +1192,17 @@ function cleanShownRoutes()
 
         for(let i = 0; i < currentShownRoute.length; i++)
         {
-            el = currentShownRoute[i].marker;
+            let el = currentShownRoute[i].marker;
             el.innerHTML = '';
+            el.classList.remove('z-30');
+            if(!('colours' in el) || (('colours' in el) && el['colours'].length === 0))
+            {
+                el.classList.add('z-10');
+            }
+            else
+            {
+                el.classList.add('z-20');
+            }
             el.style.backgroundImage = currentShownRoute[i].backgroundImage;
             el.style.boxShadow = currentShownRoute[i].boxShadow;
 

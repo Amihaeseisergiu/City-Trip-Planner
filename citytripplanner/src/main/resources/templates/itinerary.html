@@ -8,7 +8,25 @@
     <script src='https://unpkg.com/@turf/turf/turf.min.js'></script>
     <script src='https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.js'></script>
     <link href='https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.css' rel='stylesheet' />
-
+    <style>
+        .mapboxgl-popup-content {
+            border-radius: 25px;
+            padding: 20px;
+            box-shadow: 6px 6px 5px #cdcdcd;
+        }
+        .mapboxgl-popup-close-button {
+            padding: 0.5rem;
+            font-size: 1.5rem;
+            transition: all .2s ease-in-out;
+        }
+        .mapboxgl-popup-close-button:focus {
+            outline: none;
+        }
+        .mapboxgl-popup-close-button:hover {
+            color: red;
+            background-color: transparent;
+        }
+    </style>
     <title>Itinerary</title>
 </head>
 <body>
