@@ -4,6 +4,7 @@ let addedMarkers = [];
 let addedDays = [];
 let addedPOIs = [];
 let currentShownRoute = [];
+let currentSelectedDay = null;
 
 let initialPoint = null;
 let movedPoint = null;
@@ -188,73 +189,166 @@ function addPOI(id, visitDuration)
         let indexOfAdded = addedPOIs.push(el) - 1;
         addedPOIs[indexOfAdded]['visitDuration'] = visitDuration;
 
-        el['colour'] = '#22d625';
-        el['marker']._element.style.boxShadow = `0 0 0 3px ${el['colour']}`;
         el['marker']._element.classList.add('z-20');
 
         const div = document.createElement('div');
-
         div.className = 'w-full relative w-full flex flex-col items-center mt-2';
         div.id = `poiAdded_${id}`;
-        div.innerHTML = `
-            <div :class="{'hover:border-transparent border-transparent transform scale-100 -translate-y-1 transition ease-out duration-500 bg-white shadow-lg': selected === '${id}' && accommodation !== '${id}',
-                 'transform scale-95 -translate-y-0 transition ease-out duration-500 border-gray-200 hover:border-gray-400': selected !== '${id}' || accommodation === '${id}'}"
-                 class="w-11/12 z-10 group rounded-xl border-2 bg-gray-50 cursor-pointer select-none flex flex-row justify-between text-white"
-                    style="background-image: url(${el['details'].photoPrefix}${500}${el['details'].photoSuffix});
-                    background-position: center; background-repeat: no-repeat; background-size: cover;">
-                <div x-show="accommodation !== '${id}'"
-                     style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;" 
-                     class="absolute flex flex-row items-center select-none">
-                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <p id="poiVisitDurationText_${id}">
-                        ${visitDuration}
-                    </p>
-                </div>
-                <button type="button" class="flex-grow min-w-0 p-7 text-left focus:outline-none"
-                    @click="if(accommodation !== '${id}') selected !== '${id}' ? selected = '${id}' : selected = null">
-                    <p class="text-2xl font-bold leading-tight truncate"
-                        style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;">
-                        ${el['poi'].name}
-                    </p>
-                </button>
-                <button type="button" x-show="'${el.details.type.replace(/['"]+/g, '')}' === 'Hotel'" id="poiAccommodation_${id}"
-                        :class="{'active text-green-500 scale-125' : accommodation === '${id}'}"
-                        class="p-4 focus:outline-none transform hover:scale-125 hover:text-green-500 transition ease-in-out duration-500"
-                        onclick="addLoadingNotSaved()"
-                        @click="if(accommodation === '${id}') {accommodation = null; selected = '${id}';} 
-                                else {accommodation = '${id}'; selected = null;}">
-                    <svg class="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1
-                       1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                    </svg>
-                </button>
-                <button type="button" onclick="removePOI(\`${id}\`)" @click="if(accommodation === '${id}') {accommodation = null;}"
-                        class="p-4 text-white focus:outline-none transform hover:scale-125 hover:text-red-500 transition ease-in-out duration-500">
-                        <svg class="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+
+        if(currentSelectedDay === null)
+        {
+            el['colour'] = '#22d625';
+            el['marker']._element.style.boxShadow = `0 0 0 3px ${el['colour']}`;
+
+            div.innerHTML = `
+                <div :class="{'hover:border-transparent border-transparent transform scale-100 -translate-y-1 transition ease-out duration-500 bg-white shadow-lg': selected === '${id}' && accommodation !== '${id}',
+                     'transform scale-95 -translate-y-0 transition ease-out duration-500 border-gray-200 hover:border-gray-400': selected !== '${id}' || accommodation === '${id}'}"
+                     class="w-11/12 z-10 group rounded-xl border-2 bg-gray-50 cursor-pointer select-none flex flex-row justify-between text-white"
+                        style="background-image: url(${el['details'].photoPrefix}${500}${el['details'].photoSuffix});
+                        background-position: center; background-repeat: no-repeat; background-size: cover;">
+                    <div x-show="accommodation !== '${id}'"
+                         style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;" 
+                         class="absolute flex flex-row items-center select-none">
+                        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                </button>
-            </div>
-            <div class="w-10/12 transform z-0 -translate-y-1 items-center relative
-                 overflow-hidden transition-all max-h-0 ease-in-out duration-500" id="poiVisitDurationParent_${id}"
-                 x-ref="poiVisitDurationParent_${id}"
-                 x-bind:style="selected === '${id}' && accommodation !== '${id}' ?
-                 'max-height: ' + $refs.poiVisitDurationParent_${id}.scrollHeight + 'px' : ''">
-                <div class="flex flex-col p-5 bg-white border-l-2 border-r-2 border-b-2 rounded-b-xl items-center" id="poiVisitDurationContainer_${id}">
-                    <div class="w-full flex items-center justify-start">
-                        <label class="pr-4 tracking-tight text-gray-500" for="poiVisitDurationInput_${id}">Duration:</label>
-                        <input class="w-full shadow appearance-none border rounded py-2 px-2 text-grey-darker
-                        focus:outline-none focus:ring" type="text" id="poiVisitDurationInput_${id}"
-                        name="poiVisitDurationInput_${id}" pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]" value="${visitDuration}"
-                        @click.away="verifyDurationInput('poiVisitDurationInput_${id}')"/>
+                        <p id="poiVisitDurationText_${id}">
+                            ${visitDuration}
+                        </p>
+                    </div>
+                    <button type="button" class="flex-grow min-w-0 p-7 text-left focus:outline-none"
+                        @click="if(accommodation !== '${id}') selected !== '${id}' ? selected = '${id}' : selected = null">
+                        <p class="text-2xl font-bold leading-tight truncate"
+                            style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;">
+                            ${el['poi'].name}
+                        </p>
+                    </button>
+                    <button type="button" x-show="'${el.details.type.replace(/['"]+/g, '')}' === 'Hotel'" id="poiAccommodation_${id}"
+                            :class="{'active text-green-500 scale-125' : accommodation === '${id}'}"
+                            class="p-4 focus:outline-none transform hover:scale-125 hover:text-green-500 transition ease-in-out duration-500"
+                            onclick="addLoadingNotSaved()"
+                            @click="if(accommodation === '${id}') {accommodation = null; selected = '${id}';} 
+                                    else {accommodation = '${id}'; selected = null;}">
+                        <svg class="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1
+                           1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                    </button>
+                    <button type="button" onclick="removePOI(\`${id}\`)" @click="if(accommodation === '${id}') {accommodation = null;}"
+                            class="p-4 text-white focus:outline-none transform hover:scale-125 hover:text-red-500 transition ease-in-out duration-500">
+                            <svg class="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                    </button>
+                </div>
+                <div class="w-10/12 transform z-0 -translate-y-1 items-center relative
+                     overflow-hidden transition-all max-h-0 ease-in-out duration-500" id="poiVisitDurationParent_${id}"
+                     x-ref="poiVisitDurationParent_${id}"
+                     x-bind:style="selected === '${id}' && accommodation !== '${id}' ?
+                     'max-height: ' + $refs.poiVisitDurationParent_${id}.scrollHeight + 'px' : ''">
+                    <div class="flex flex-col p-5 bg-white border-l-2 border-r-2 border-b-2 rounded-b-xl items-center" id="poiVisitDurationContainer_${id}">
+                        <div class="w-full flex items-center justify-start">
+                            <label class="pr-4 tracking-tight text-gray-500" for="poiVisitDurationInput_${id}">Duration:</label>
+                            <input class="w-full shadow appearance-none border rounded py-2 px-2 text-grey-darker
+                            focus:outline-none focus:ring" type="text" id="poiVisitDurationInput_${id}"
+                            name="poiVisitDurationInput_${id}" pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]" value="${visitDuration}"
+                            @click.away="verifyDurationInput('poiVisitDurationInput_${id}')"/>
+                        </div>
                     </div>
                 </div>
-            </div>
-        `;
+            `;
+            document.getElementById("daysPoisContainer").appendChild(div);
+        }
+        else
+        {
+            el['colour'] = currentSelectedDay.colour;
+            el['marker']._element.style.boxShadow = `0 0 0 3px ${el['colour']}`;
 
-        document.getElementById("daysPoisContainer").appendChild(div);
+            let poiHoursInfo = el.details.poiHours.find( ({dayNumber}) => dayNumber === currentSelectedDay.dayNumber);
+            let openingAt = null;
+            let closingAt = null;
+
+            if(poiHoursInfo)
+            {
+                openingAt = poiHoursInfo.openingAt.split(':')[0] + ':' + poiHoursInfo.openingAt.split(':')[1];
+                closingAt = poiHoursInfo.closingAt.split(':')[0] + ':' + poiHoursInfo.closingAt.split(':')[1];
+            }
+
+            div.innerHTML = `
+                <div class="w-full z-10 flex flex-row rounded-xl text-white overflow-hidden relative"
+                     style="background-image: url(${el['details'].photoPrefix}${500}${el['details'].photoSuffix});
+                     background-position: center; background-repeat: no-repeat; background-size: cover;">
+                    <div style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;" 
+                         class="absolute flex flex-row items-center select-none">
+                        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p id="poiVisitDurationText_${id}">
+                            ${visitDuration}
+                        </p>
+                    </div>
+                    <button type="button" class="flex-grow min-w-0 p-4 text-left focus:outline-none"
+                        @click="selected !== '${id}' ? selected = '${id}' : selected = null">
+                        <p class="text-2xl font-bold leading-tight truncate"
+                            style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;">
+                            ${el['poi'].name}
+                        </p>
+                        <p class="truncate" style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;">
+                            ${openingAt} - ${closingAt}
+                        </p>
+                    </button>
+                    <button type="button" onclick="removePOI(\`${id}\`)"
+                            class="p-4 text-white focus:outline-none transform hover:scale-125 hover:text-red-500 transition ease-in-out duration-500">
+                            <svg class="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                    </button>
+                </div>
+                <div class="w-10/12 transform z-0 -translate-y-1 items-center relative
+                     overflow-hidden transition-all max-h-0 ease-in-out duration-500" id="poiVisitDurationParent_${id}"
+                     x-ref="poiVisitDurationParent_${id}"
+                     x-bind:style="selected === '${id}' ?
+                     'max-height: ' + $refs.poiVisitDurationParent_${id}.scrollHeight + 'px' : ''">
+                    <div class="flex flex-col p-5 bg-white border-l-2 border-r-2 border-b-2 rounded-b-xl items-center" id="poiVisitDurationContainer_${id}">
+                        <div class="w-full flex items-center justify-start">
+                            <label class="pr-4 tracking-tight text-gray-500" for="poiVisitDurationInput_${id}">Duration:</label>
+                            <input class="w-full shadow appearance-none border rounded py-2 px-2 text-grey-darker
+                            focus:outline-none focus:ring" type="text" id="poiVisitDurationInput_${id}"
+                            name="poiVisitDurationInput_${id}" pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]" value="${visitDuration}"
+                            @click.away="verifyDurationInput('poiVisitDurationInput_${id}')"/>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            let poiContainer = document.getElementById(`poiContainer_${currentSelectedDay.id}`);
+            let poiContainerParent = document.getElementById(`poiContainerParent_${currentSelectedDay.id}`);
+
+            if(poiContainer.childNodes.length === 1 && poiContainer.childNodes[0].nodeType === Node.TEXT_NODE)
+            {
+                poiContainer.innerHTML = "";
+                poiContainer.appendChild(div);
+                poiContainerParent.style.maxHeight = poiContainerParent.scrollHeight + 'px';
+            }
+            else
+            {
+                poiContainer.appendChild(div);
+                poiContainerParent.style.maxHeight = poiContainerParent.scrollHeight + 'px';
+            }
+
+            document.getElementById(`poiVisitDurationParent_${id}`).addEventListener('transitionstart', () => {
+                if(document.getElementById(`poiAdded_${id}`))
+                {
+                    const calc = parseInt(poiContainerParent.style.maxHeight.replace('px','')) +
+                        parseInt(document.getElementById(`poiVisitDurationParent_${id}`).style.maxHeight.replace('px',''));
+
+                    if(calc)
+                        poiContainerParent.style.maxHeight = calc + 'px';
+                }
+            });
+
+            addedPOIs[indexOfAdded]['day'] = currentSelectedDay.id;
+        }
 
         document.getElementById(`poiVisitDurationInput_${id}`).addEventListener('input', () => {
             addLoadingNotSaved();
@@ -309,6 +403,16 @@ function removePOI(id)
     el['marker']._element.classList.add('z-10');
 
     recalculateColours(el);
+
+    if('day' in addedPOIs[indexOfPoi])
+    {
+        let poiContainer = document.getElementById(`poiContainer_${addedPOIs[indexOfPoi]['day']}`);
+
+        if(poiContainer.childNodes.length === 0)
+        {
+            poiContainer.innerText = 'No locations have been added';
+        }
+    }
 
     addedPOIs.splice(indexOfPoi, 1);
 }
@@ -407,10 +511,13 @@ function addDayElement(id, dayName, date, dayStart, dayEnd, colour)
     div.className = 'relative w-full flex flex-col items-center';
     div.id = 'day_' + id
     div.innerHTML = `
-        <div class="w-11/12 mt-2 z-10 group rounded-xl border-2 bg-gray-50 select-none flex flex-row justify-between
-                    transform scale-95 -translate-y-0 transition ease-out duration-500 border-gray-200 hover:border-gray-400">
+        <div :class="{'hover:border-transparent border-transparent transform scale-100 -translate-y-1 transition ease-out duration-500 bg-white shadow-lg': selected === ${id},
+             'transform scale-95 -translate-y-0 transition ease-out duration-500 border-gray-200 hover:border-gray-400': selected !== ${id}}"
+             class="w-11/12 z-10 group rounded-xl border-2 bg-gray-50 mt-3 cursor-pointer select-none flex flex-row justify-between">
             <div style="background-color: ${colour};" class="absolute top-1 left-1 rounded-full w-3 h-3"></div>
-            <div class="flex-grow min-w-0 p-6 text-left text-gray-500 leading-tight">
+            <button type="button" class="flex-grow min-w-0 p-6 text-left text-gray-500 leading-tight focus:outline-none"
+                @click="selected !== ${id} ? selected = ${id} : selected = null;
+                selected === ${id} ? currentSelectedDay = addedDays.find( ({id}) => id === ${id}) : currentSelectedDay = null;">
                 <p :class="{'text-indigo-400': selected === ${id}}"
                    class="font-bold group-hover:text-indigo-400 truncate">
                     ${dayName}, ${date}
@@ -418,14 +525,29 @@ function addDayElement(id, dayName, date, dayStart, dayEnd, colour)
                 <p class="truncate">
                     ${dayStart} - ${dayEnd}
                 </p>
-            </div>
-            <button onclick="removeDayElement(${id})" 
+            </button>
+            <button x-show="selected !== ${id}"
+                onclick="removeDayElement(${id})" 
                 class="p-6 text-gray-500 focus:outline-none transform hover:scale-125 hover:text-red-500 transition ease-in-out duration-500">
                 <svg class="w-10 h-10" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                   d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
             </button>
+            <div x-show="selected === ${id}" class="p-6 text-green-400 rounded-xl flex flex-row items-center">
+                <svg class="w-10 h-10" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+        </div>
+        <div class="w-10/12 transform z-0 -translate-y-1 items-center relative
+             overflow-hidden transition-all max-h-0 ease-in-out duration-500" id="poiContainerParent_${id}"
+             x-ref="dayContainer_${id}"
+             x-bind:style="selected == ${id} ? 'max-height: ' + $refs.dayContainer_${id}.scrollHeight + 'px' : ''">
+            <div class="flex flex-col p-5 bg-white border-l-2 border-r-2 border-b-2 rounded-b-xl items-center"
+                 id="poiContainer_${id}" x-data="{selected: null}">
+                No locations have been added
+            </div>
         </div>
       `;
 
@@ -455,6 +577,14 @@ function addDayElement(id, dayName, date, dayStart, dayEnd, colour)
 function removeDayElement(id)
 {
     addLoadingNotSaved();
+
+    for(let i = addedPOIs.length - 1; i >= 0; i--)
+    {
+        if(('day' in addedPOIs[i]) && addedPOIs[i]['day'] === id)
+        {
+            removePOI(addedPOIs[i].poi.id);
+        }
+    }
 
     const index = addedDays.findIndex(function(day) { return day.id === id});
     let dayRet = addedDays[index];
@@ -1205,7 +1335,8 @@ function getScheduleToSend()
             lat: addedPOIs[i].poi.lat,
             lng: addedPOIs[i].poi.lng,
             hours: hours,
-            visitDuration: addedPOIs[i].visitDuration
+            visitDuration: addedPOIs[i].visitDuration,
+            day: ('day' in addedPOIs[i]) ? addedPOIs[i].day : null
         };
 
         if(accommodationId !== null && addedPOIs[i].poi.id === accommodationId)
@@ -1397,8 +1528,19 @@ document.addEventListener('DOMContentLoaded', function()
 
                         for(let i = 0; i < data.scheduleUnrestricted.schedulePois.length; i++)
                         {
+                            if(data.scheduleUnrestricted.schedulePois[i].day !== null)
+                            {
+                                const dayOfPoi = addedDays.find( (day) => day.id === data.scheduleUnrestricted.schedulePois[i].day);
+                                if (dayOfPoi)
+                                {
+                                    currentSelectedDay = dayOfPoi;
+                                }
+                            }
+
                             addPOI(data.scheduleUnrestricted.schedulePois[i].poiId,
                                    data.scheduleUnrestricted.schedulePois[i].visitDuration);
+
+                            currentSelectedDay = null;
                         }
 
                         if(data.itinerary !== null)

@@ -29,6 +29,7 @@ public class SchedulePoiUnrestricted {
     private UUID id;
 
     private String poiId;
+    private Long day;
 
     private Double lat;
     private Double lng;

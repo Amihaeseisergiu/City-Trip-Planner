@@ -226,6 +226,22 @@ public class RouteGenerator {
         IntVar[] succCost = model.intVarArray("succCost", n, 0, 1440, true);
         IntVar totalTimeCost = model.intVar("Total time cost", 0, m * 1440, true);
 
+        for(int i = 0; i < schedule.getSchedulePois().size(); i++)
+        {
+            Long dayOfPoi = schedule.getSchedulePois().get(i).getDay();
+            if(dayOfPoi != null)
+            {
+                for(int j = 0; j < schedule.getScheduleDays().size(); j++)
+                {
+                    if(schedule.getScheduleDays().get(j).getDayId().equals(dayOfPoi))
+                    {
+                        model.arithm(day[i], "=", j).post();
+                        break;
+                    }
+                }
+            }
+        }
+
         for(int i = 0; i < n; i++)
         {
             for(int k = 0; k < m; k++)
