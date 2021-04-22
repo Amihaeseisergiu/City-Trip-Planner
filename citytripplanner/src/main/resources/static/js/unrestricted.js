@@ -4,6 +4,7 @@ let addedMarkers = [];
 let addedDays = [];
 let addedPOIs = [];
 let currentShownRoute = [];
+let currentShownPopUp = null;
 let currentSelectedDay = null;
 
 let initialPoint = null;
@@ -106,76 +107,188 @@ function addPoiDetails(data, marker)
     for(const hours of data.poiHours)
     {
         hoursHTML += `
-            <div class="mt-3 bg-gray-50 border-gray-300 border-2 rounded-xl shadow
-                        group hover:border-gray-400 transition ease-in duration-500">
-                <p class="text-center border-b-2 border-gray-200 font-bold text-gray-500
-                          group-hover:border-gray-300 group-hover:text-gray-700 transition ease-in duration-500">
-                    ${hours.dayName ? hours.dayName : "unavailable"}
+            <div class="flex flex-row justify-between">
+                <p class="text-gray-500 font-light">
+                    ${hours.dayName} : 
+                    
                 </p>
-                <p class="text-center text-gray-500 group-hover:text-gray-700 transition ease-in duration-500">
-                    Opening: ${hours.openingAt ? hours.openingAt : "unavailable"}
-                </p>
-                <p class="text-center text-gray-500 group-hover:text-gray-700 transition ease-in duration-500">
-                    Closing: ${hours.closingAt ? hours.closingAt : "unavailable"}
+                <p class="text-gray-500 font-light">
+                    ${hours.openingAt.split(':')[0] + ':' + hours.openingAt.split(':')[1]} - 
+                    ${hours.closingAt.split(':')[0] + ':' + hours.closingAt.split(':')[1]}
                 </p>
             </div>`;
     }
 
+    let starsHTML = '';
+    let starsAdded = 0;
+
+    for(let i = 0; i < Math.floor(data.rating / 2); i++)
+    {
+        starsHTML += `
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-300" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M9.049 2.927c.3-.921 1.603-.921
+                    1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371
+                    1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07
+                    3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0
+                    00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1
+                    1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1
+                    0 00.951-.69l1.07-3.292z" />
+            </svg>
+        `;
+        starsAdded += 1;
+    }
+
+    for(let i = 0; i < 5 - starsAdded; i++)
+    {
+        starsHTML += `
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round"
+              stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519
+              4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1
+              1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1
+              1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1
+              1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1
+              1 0 00.951-.69l1.519-4.674z" />
+            </svg>
+        `;
+    }
+
+    let prices = ['', '$', '$$', '$$$', '$$$$'];
+    let priceColours = ['#0ffc03', '#4fc91e', '#d9d516', '#d99e16', '#db5e16'];
+
     let html = `
-        <div class="flex flex-row items-center justify-between mb-2">
-            <p class="font-bold text-2xl text-indigo-400">
-                ${data.name}
-            </p>
-            <button id="poi_add_${data.id}"
-                    class="p-1 text-gray-500 transform focus:outline-none
-                    hover:scale-125 hover:text-green-400 transition ease-out duration-500">
-                <svg class="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                  d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-            </button>
+        <div class="flex flex-col items-start mb-2 mt-2">
+            <div class="w-full h-8 flex truncate relative">
+                <p class="absolute font-bold text-2xl text-indigo-400 cursor-default select-none"
+                   style="transition-timing-function: linear;"
+                   onmouseover="if(this.clientWidth > this.parentNode.clientWidth)
+                                {this.style.transform = 'translateX(calc(' + (this.parentNode.clientWidth) + 'px - 100%))';}
+                                this.style.transition = '${data.name.length / 15}s'; "
+                   onmouseout="this.style.transform = 'translateX(0)'; this.style.transition = '1s';">
+                    ${data.name}
+                </p>
+            </div>
+            <div class="top-3 left-1/2 absolute transform -translate-x-1/2 flex flex-row select-none">
+                <p class="text-sm font-bold leading-tight mr-1" style="color: ${priceColours[data.priceTier]};">
+                    ${prices[data.priceTier]}
+                </p>
+                <p class="text-gray-500 text-sm font-bold leading-tight whitespace-nowrap">
+                    ${data.type ? data.type.length > 20 ? data.type.substring(0, 20) + '...' : data.type : "Unknown type"}
+                </p>
+            </div>
         </div>
         
-        ${data.photoPrefix ? `<img class="rounded-2xl shadow-xl" alt="POI Photo" src="${data.photoPrefix}500${data.photoSuffix}">` : ""}
-         <div class="overflow-auto no-scrollbar max-h-36">
-            <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-500 hover:text-gray-600
-                      hover:border-indigo-400 transition ease-out duration-500">
-                Phone: ${data.formattedPhone ? data.formattedPhone : "unavailable"}
-            </p>
-            <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-500 hover:text-gray-600
-                      hover:border-indigo-400 transition ease-out duration-500">
-                Rating: ${data.rating ? data.rating : "unavailable"}
-            </p>
-            <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-500 hover:text-gray-600
-                      hover:border-indigo-400 transition ease-out duration-500">
-                Type: ${data.type ? data.type : "unavailable"}
-            </p>
-            <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-500 hover:text-gray-600
-                      hover:border-indigo-400 transition ease-out duration-500">
-                Price Tier: ${data.priceTier ? data.priceTier : "unavailable"}
-            </p>
-            ${hoursHTML}
-         </div>`;
+        <div x-data="{showTimeTable: false}"
+             @mouseover="showTimeTable = true"
+             @mouseover.away="showTimeTable = false"
+             style="background-position: center; background-repeat: no-repeat; background-size: cover;
+                    ${data.photoPrefix ? `background-image: url(${data.photoPrefix}500${data.photoSuffix});` : ""}"
+             class="w-48 h-48 rounded-2xl shadow-xl relative">
+             <div class="p-1 absolute top-1 left-1/2 flex flex-row bg-white rounded-xl transform -translate-x-1/2">
+                ${starsHTML}
+             </div>
+             <div x-show="showTimeTable === true"
+                  x-transition:enter="transition duration-500 transform ease-out"
+                  x-transition:enter-start="scale-75 opacity-0"
+                  x-transition:enter-end="opacity-100"
+                  x-transition:leave="transition duration-300 transform ease-in"
+                  x-transition:leave-end="opacity-0 scale-75"
+                  class="absolute top-0 right-0 bottom-0 left-0 w-full h-full rounded-xl bg-white select-none">
+                    <p class="text-center text-sm font-bold text-gray-500 border-b-2 w-full">
+                        Time table
+                    </p>
+                    <div class="p-4">
+                        ${hoursHTML}
+                    </div>
+             </div>
+        </div>
+        `;
+
+    document.getElementById(`poi_marker_loading_${data.id}`).remove();
+
+    let markerZIndex = marker._element.style.zIndex;
+    let markerDivEl = document.getElementById(`poi_marker_${data.id}`);
+    let markerDivElBgImage = `url("${data.iconPrefix}${64}${data.iconSuffix}")`;
 
     let popUp = new mapboxgl.Popup({className: `mapbox-gl-popup-${data.id} z-40`}).setHTML(html).on('open', e => {
-        if(document.getElementById("tabsContainer").__x.$data.tab === 'itinerary')
+        currentShownPopUp = {
+            marker: marker,
+            markerZIndex: markerZIndex,
+            markerDivEl: markerDivEl,
+            markerDivElBgImage: markerDivElBgImage,
+            poiId: data.id
+        };
+
+        marker._element.style.zIndex = 49;
+        marker._element.classList.remove("bring-to-front");
+        markerDivEl.classList.add('scale-125');
+
+        if(document.getElementById("tabsContainer").__x.$data.tab === 'planner')
         {
-            document.getElementById(`poi_add_${data.id}`).classList.add('hidden');
+            markerDivEl.classList.remove('bg-indigo-400');
+            markerDivEl.classList.add('bg-white');
+            markerDivEl.style.backgroundImage = '';
+
+            let el = addedMarkers.find( ({poi}) => poi.id === data.id);
+
+            if(!('colour' in el) || el['colour'] === null)
+            {
+                markerDivEl.innerHTML = `
+                <button id="poi_add_${data.id}"
+                        class="p-1 text-gray-500 transform focus:outline-none scale-125
+                        hover:scale-150 hover:text-green-400 transition ease-out duration-500">
+                    <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                      d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </button>
+                `;
+
+                document.getElementById(`poi_add_${data.id}`).addEventListener('click', function() {
+                    markerDivEl.innerHTML = '';
+                    markerDivEl.style.backgroundImage = markerDivElBgImage;
+                    addPOI(data.id,  '1:00');
+                });
+            }
+            else
+            {
+                markerDivEl.innerHTML = `
+                <button id="poi_add_${data.id}"
+                        class="p-1 focus:outline-none text-green-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-full w-full" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                </button>
+                `;
+            }
         }
-        else
+    }).on("close", e => {
+        marker._element.style.zIndex = markerZIndex;
+        marker._element.classList.add("bring-to-front");
+        markerDivEl.classList.remove('scale-125');
+        markerDivEl.style.backgroundImage = markerDivElBgImage;
+
+        if(document.getElementById("tabsContainer").__x.$data.tab === 'planner')
         {
-            document.getElementById(`poi_add_${data.id}`).classList.remove('hidden');
+            markerDivEl.innerHTML = '';
+            markerDivEl.classList.remove('bg-white');
+            markerDivEl.classList.add('bg-indigo-400');
+        }
+
+        if(currentShownPopUp !== null && markerDivElBgImage === currentShownPopUp.markerDivElBgImage)
+        {
+            currentShownPopUp = null;
         }
     });
 
     marker.setPopup(popUp);
-    marker.togglePopup();
+
+    if(document.getElementsByClassName('mapboxgl-popup').length === 0)
+    {
+        marker.togglePopup();
+    }
 
     addedMarkers.find( ({poi}) => poi.id === data.id)['details'] = data;
-
-    document.getElementById(`poi_add_${data.id}`).addEventListener('click', function() {
-        addPOI(data.id,  '1:00');
-    });
 }
 
 function addPOI(id, visitDuration)
@@ -185,6 +298,7 @@ function addPOI(id, visitDuration)
         addLoadingNotSaved();
 
         let el = addedMarkers.find( ({poi}) => poi.id === id);
+        let markerDivEl = document.getElementById(`poi_marker_${id}`);
 
         let indexOfAdded = addedPOIs.push(el) - 1;
         addedPOIs[indexOfAdded]['visitDuration'] = visitDuration;
@@ -198,7 +312,7 @@ function addPOI(id, visitDuration)
         if(currentSelectedDay === null)
         {
             el['colour'] = '#22d625';
-            el['marker']._element.style.boxShadow = `0 0 0 3px ${el['colour']}`;
+            markerDivEl.style.boxShadow = `0 0 0 3px ${el['colour']}`;
 
             div.innerHTML = `
                 <div :class="{'hover:border-transparent border-transparent transform scale-100 -translate-y-1 transition ease-out duration-500 bg-white shadow-lg': selected === '${id}' && accommodation !== '${id}',
@@ -262,7 +376,7 @@ function addPOI(id, visitDuration)
         else
         {
             el['colour'] = currentSelectedDay.colour;
-            el['marker']._element.style.boxShadow = `0 0 0 3px ${el['colour']}`;
+            markerDivEl.style.boxShadow = `0 0 0 3px ${el['colour']}`;
 
             let poiHoursInfo = el.details.poiHours.find( ({dayNumber}) => dayNumber === currentSelectedDay.dayNumber);
             let openingAt = null;
@@ -392,6 +506,19 @@ function removePOI(id)
 {
     addLoadingNotSaved();
 
+    if(currentShownPopUp !== null && id === currentShownPopUp.poiId)
+    {
+        currentShownPopUp.marker._element.style.zIndex = currentShownPopUp.markerZIndex;
+        currentShownPopUp.marker._element.classList.add("bring-to-front");
+        currentShownPopUp.markerDivEl.innerHTML = '';
+        currentShownPopUp.markerDivEl.style.backgroundImage = currentShownPopUp.markerDivElBgImage;
+        currentShownPopUp.markerDivEl.classList.remove('scale-125', 'bg-white');
+        currentShownPopUp.markerDivEl.classList.add('bg-indigo-400');
+        currentShownPopUp.marker.togglePopup();
+
+        currentShownPopUp = null;
+    }
+
     const poi = addedPOIs.find( ({poi}) => poi.id === id);
     const indexOfPoi = addedPOIs.findIndex(function(poi) { return poi.poi.id === id});
 
@@ -421,11 +548,11 @@ function recalculateColours(el)
 {
     if(('colour' in el))
     {
-        el['marker']._element.style.boxShadow = `0 0 0 3px ${el['colour']}`;
+        document.getElementById(`poi_marker_${el.poi.id}`).style.boxShadow = `0 0 0 3px ${el['colour']}`;
     }
     else
     {
-        el['marker']._element.style.boxShadow = '';
+        document.getElementById(`poi_marker_${el.poi.id}`).style.boxShadow = '';
     }
 }
 
@@ -458,16 +585,19 @@ function addPoiMarker(poi, top)
 
         if(top)
         {
-            el.className = "block bg-indigo-400 rounded-full p-0 border-none cursor-pointer z-20";
+            el.className = "z-20 bring-to-front";
         }
         else
         {
-            el.className = "block bg-indigo-400 rounded-full p-0 border-none cursor-pointer z-10";
+            el.className = "z-10 bring-to-front";
         }
-        el.id = `poi_marker_${poi.id}`;
-        el.style.backgroundImage = `url(${poi.iconPrefix}` + 32 + `${poi.iconSuffix}`;
-        el.style.width = 32 + 'px';
-        el.style.height = 32 + 'px';
+
+        el.innerHTML = `
+            <div style="background-image: url(${poi.iconPrefix}${64}${poi.iconSuffix}); width: 32px; height: 32px; background-size: cover;"
+                 class="block bg-indigo-400 rounded-full p-0 border-none cursor-pointer transform transition hover:scale-125 duration-500"
+                 id="poi_marker_${poi.id}">
+            </div>
+        `;
 
         let marker = new mapboxgl.Marker(el)
             .setLngLat([poi.lng, poi.lat])
@@ -488,6 +618,13 @@ function addPoiMarker(poi, top)
         marker.getElement().addEventListener('click', function() {
             if(marker.getPopup() == null)
             {
+                let markerLoadingDiv = document.createElement("div");
+                markerLoadingDiv.innerHTML = `
+                    <div id="poi_marker_loading_${poi.id}"
+                         class="absolute animate-ping h-full w-full rounded-full bg-indigo-400"></div>
+                `;
+                el.insertBefore(markerLoadingDiv, document.getElementById(`poi_marker_${poi.id}`));
+
                 getPOIDetails(poi.id, marker);
             }
         });
@@ -744,11 +881,17 @@ function constructItinerary(data, switchTab)
     {
         document.getElementById("tabsContainer").__x.$data.tab = 'itinerary';
 
-        let popUpsAddButtons = document.querySelectorAll('*[id^="poi_add_"]');
-
-        for(let i = 0; i < popUpsAddButtons.length; i++)
+        if(currentShownPopUp !== null)
         {
-            popUpsAddButtons[i].classList.add("hidden");
+            currentShownPopUp.marker._element.style.zIndex = currentShownPopUp.markerZIndex;
+            currentShownPopUp.marker._element.classList.add("bring-to-front");
+            currentShownPopUp.markerDivEl.innerHTML = '';
+            currentShownPopUp.markerDivEl.style.backgroundImage = currentShownPopUp.markerDivElBgImage;
+            currentShownPopUp.markerDivEl.classList.remove('scale-125', 'bg-white');
+            currentShownPopUp.markerDivEl.classList.add('bg-indigo-400');
+            currentShownPopUp.marker.togglePopup();
+
+            currentShownPopUp = null;
         }
     }
 }
@@ -1209,7 +1352,6 @@ function cleanShownRoutes()
         for(let i = 0; i < currentShownRoute.length; i++)
         {
             let el = currentShownRoute[i].marker;
-            el.innerHTML = '';
             el.classList.remove('z-30');
             if('colour' in el)
             {
@@ -1219,8 +1361,11 @@ function cleanShownRoutes()
             {
                 el.classList.add('z-10');
             }
-            el.style.backgroundImage = currentShownRoute[i].backgroundImage;
-            el.style.boxShadow = currentShownRoute[i].boxShadow;
+
+            let markerDivEl = document.getElementById(`poi_marker_${currentShownRoute[i].id}`);
+            markerDivEl.innerHTML = '';
+            markerDivEl.style.backgroundImage = currentShownRoute[i].backgroundImage;
+            markerDivEl.style.boxShadow = currentShownRoute[i].boxShadow;
 
             let poi = addedMarkers.find( ({poi}) => poi.id === currentShownRoute[i].id);
 
@@ -1238,6 +1383,19 @@ function cleanShownRoutes()
 
 document.getElementById("plannerTabButton").addEventListener("click", function() {
     document.getElementById("itineraryContainer").__x.$data.selected = null;
+
+    if(currentShownPopUp !== null)
+    {
+        currentShownPopUp.marker._element.style.zIndex = currentShownPopUp.markerZIndex;
+        currentShownPopUp.marker._element.classList.add("bring-to-front");
+        currentShownPopUp.markerDivEl.innerHTML = '';
+        currentShownPopUp.markerDivEl.style.backgroundImage = currentShownPopUp.markerDivElBgImage;
+        currentShownPopUp.markerDivEl.classList.remove('scale-125', 'bg-white');
+        currentShownPopUp.markerDivEl.classList.add('bg-indigo-400');
+        currentShownPopUp.marker.togglePopup();
+
+        currentShownPopUp = null;
+    }
 });
 
 document.getElementById("itineraryTab").addEventListener("click", function () {
@@ -1246,6 +1404,19 @@ document.getElementById("itineraryTab").addEventListener("click", function () {
             [map.getBounds()._sw.lng, map.getBounds()._sw.lat]],
         zoom: map.getZoom()
     };
+
+    if(currentShownPopUp !== null)
+    {
+        currentShownPopUp.marker._element.style.zIndex = currentShownPopUp.markerZIndex;
+        currentShownPopUp.marker._element.classList.add("bring-to-front");
+        currentShownPopUp.markerDivEl.innerHTML = '';
+        currentShownPopUp.markerDivEl.style.backgroundImage = currentShownPopUp.markerDivElBgImage;
+        currentShownPopUp.markerDivEl.classList.remove('scale-125', 'bg-white');
+        currentShownPopUp.markerDivEl.classList.add('bg-indigo-400');
+        currentShownPopUp.marker.togglePopup();
+
+        currentShownPopUp = null;
+    }
 })
 
 window.addEventListener('keydown', function(event) {

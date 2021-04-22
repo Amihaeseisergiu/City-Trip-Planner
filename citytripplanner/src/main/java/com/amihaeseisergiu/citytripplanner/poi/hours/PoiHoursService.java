@@ -11,18 +11,9 @@ import java.util.List;
 public class PoiHoursService {
 
     private final FoursquareUtils foursquareUtils;
-    private final PoiHoursRepository poiHoursRepository;
 
     public List<PoiHours> getPoiHours(String poiId)
     {
-        List<PoiHours> poiHours = foursquareUtils.fetchPoiHours(poiId);
-        poiHoursRepository.saveAll(poiHours);
-
-        return poiHours;
-    }
-
-    public void deleteHours(List<PoiHours> poiHours)
-    {
-        poiHoursRepository.deleteAll(poiHours);
+        return foursquareUtils.fetchPoiHours(poiId);
     }
 }

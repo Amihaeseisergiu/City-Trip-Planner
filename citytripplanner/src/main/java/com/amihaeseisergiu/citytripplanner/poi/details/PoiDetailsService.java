@@ -2,6 +2,8 @@ package com.amihaeseisergiu.citytripplanner.poi.details;
 
 import com.amihaeseisergiu.citytripplanner.poi.hours.PoiHours;
 import com.amihaeseisergiu.citytripplanner.poi.hours.PoiHoursService;
+import com.amihaeseisergiu.citytripplanner.poi.photos.PoiPhotos;
+import com.amihaeseisergiu.citytripplanner.poi.photos.PoiPhotosService;
 import com.amihaeseisergiu.citytripplanner.utils.FoursquareUtils;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,6 +18,7 @@ public class PoiDetailsService {
     private final FoursquareUtils foursquareUtils;
     private final PoiDetailsRepository poiDetailsRepository;
     private final PoiHoursService poiHoursService;
+    private final PoiPhotosService poiPhotosService;
 
     public PoiDetails getPoiDetails(String poiId)
     {
@@ -30,6 +33,9 @@ public class PoiDetailsService {
 
         List<PoiHours> poiHours = poiHoursService.getPoiHours(poiId);
         toAdd.setPoiHours(poiHours);
+
+        List<PoiPhotos> poiPhotos = poiPhotosService.getPoiPhotos(poiId);
+        toAdd.setPoiPhotos(poiPhotos);
 
         poiDetailsRepository.save(toAdd);
 

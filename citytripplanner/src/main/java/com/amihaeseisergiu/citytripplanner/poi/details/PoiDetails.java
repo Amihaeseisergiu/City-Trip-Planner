@@ -1,13 +1,13 @@
 package com.amihaeseisergiu.citytripplanner.poi.details;
 
 import com.amihaeseisergiu.citytripplanner.poi.hours.PoiHours;
+import com.amihaeseisergiu.citytripplanner.poi.photos.PoiPhotos;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
+import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -40,8 +40,13 @@ public class PoiDetails {
 
     private Integer priceTier;
 
-    @OneToMany(fetch = FetchType.EAGER)
+    @Fetch(FetchMode.SELECT)
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PoiHours> poiHours;
+
+    @Fetch(FetchMode.SELECT)
+    @OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PoiPhotos> poiPhotos;
 
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private LocalDateTime expiresAt;

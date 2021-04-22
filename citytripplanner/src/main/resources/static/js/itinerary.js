@@ -40,53 +40,124 @@ function addPoiDetails(data, marker)
     for(const hours of data.poiHours)
     {
         hoursHTML += `
-            <div class="mt-3 bg-gray-50 border-gray-300 border-2 rounded-xl shadow
-                        group hover:border-gray-400 transition ease-in duration-500">
-                <p class="text-center border-b-2 border-gray-200 font-bold text-gray-500
-                          group-hover:border-gray-300 group-hover:text-gray-700 transition ease-in duration-500">
-                    ${hours.dayName ? hours.dayName : "unavailable"}
+            <div class="flex flex-row justify-between">
+                <p class="text-gray-500 font-light">
+                    ${hours.dayName} : 
+                    
                 </p>
-                <p class="text-center text-gray-500 group-hover:text-gray-700 transition ease-in duration-500">
-                    Opening: ${hours.openingAt ? hours.openingAt : "unavailable"}
-                </p>
-                <p class="text-center text-gray-500 group-hover:text-gray-700 transition ease-in duration-500">
-                    Closing: ${hours.closingAt ? hours.closingAt : "unavailable"}
+                <p class="text-gray-500 font-light">
+                    ${hours.openingAt.split(':')[0] + ':' + hours.openingAt.split(':')[1]} - 
+                    ${hours.closingAt.split(':')[0] + ':' + hours.closingAt.split(':')[1]}
                 </p>
             </div>`;
     }
 
+    let starsHTML = '';
+    let starsAdded = 0;
+
+    for(let i = 0; i < Math.floor(data.rating / 2); i++)
+    {
+        starsHTML += `
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-300" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M9.049 2.927c.3-.921 1.603-.921
+                    1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371
+                    1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07
+                    3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0
+                    00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1
+                    1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1
+                    0 00.951-.69l1.07-3.292z" />
+            </svg>
+        `;
+        starsAdded += 1;
+    }
+
+    for(let i = 0; i < 5 - starsAdded; i++)
+    {
+        starsHTML += `
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round"
+              stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519
+              4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1
+              1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1
+              1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1
+              1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1
+              1 0 00.951-.69l1.519-4.674z" />
+            </svg>
+        `;
+    }
+
+    let prices = ['', '$', '$$', '$$$', '$$$$'];
+    let priceColours = ['#0ffc03', '#4fc91e', '#d9d516', '#d99e16', '#db5e16'];
+
     let html = `
-        <div class="flex flex-row items-center justify-center mb-2">
-            <p class="font-bold text-2xl text-indigo-400">
-                ${data.name}
-            </p>
+        <div class="flex flex-row items-center justify-center mb-2 mt-3">
+            <div class="w-full h-8 flex truncate relative">
+                <p class="absolute font-bold text-2xl text-indigo-400 cursor-default select-none"
+                   style="transition-timing-function: linear;"
+                   onmouseover="if(this.clientWidth > this.parentNode.clientWidth)
+                                {this.style.transform = 'translateX(calc(' + (this.parentNode.clientWidth) + 'px - 100%))';}
+                                this.style.transition = '${data.name.length / 15}s'; "
+                   onmouseout="this.style.transform = 'translateX(0)'; this.style.transition = '1s';">
+                    ${data.name}
+                </p>
+            </div>
+            <div class="top-3 left-1/2 absolute transform -translate-x-1/2 flex flex-row select-none">
+                <p class="text-sm font-bold leading-tight mr-1" style="color: ${priceColours[data.priceTier]};">
+                    ${prices[data.priceTier]}
+                </p>
+                <p class="text-gray-500 text-sm font-bold leading-tight whitespace-nowrap">
+                    ${data.type ? data.type.length > 20 ? data.type.substring(0, 20) + '...' : data.type : "Unknown type"}
+                </p>
+            </div>
         </div>
         
-        ${data.photoPrefix ? `<img class="rounded-2xl shadow-xl" alt="POI Photo" src="${data.photoPrefix}500${data.photoSuffix}">` : ""}
-         <div class="overflow-auto no-scrollbar max-h-36">
-            <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-500 hover:text-gray-600
-                      hover:border-indigo-400 transition ease-out duration-500">
-                Phone: ${data.formattedPhone ? data.formattedPhone : "unavailable"}
-            </p>
-            <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-500 hover:text-gray-600
-                      hover:border-indigo-400 transition ease-out duration-500">
-                Rating: ${data.rating ? data.rating : "unavailable"}
-            </p>
-            <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-500 hover:text-gray-600
-                      hover:border-indigo-400 transition ease-out duration-500">
-                Type: ${data.type ? data.type : "unavailable"}
-            </p>
-            <p class="mt-3 w-full text-center border-b-2 font-bold text-gray-500 hover:text-gray-600
-                      hover:border-indigo-400 transition ease-out duration-500">
-                Price Tier: ${data.priceTier ? data.priceTier : "unavailable"}
-            </p>
-            ${hoursHTML}
-         </div>`;
+        <div x-data="{showTimeTable: false}"
+             @mouseover="showTimeTable = true"
+             @mouseover.away="showTimeTable = false"
+             style="background-position: center; background-repeat: no-repeat; background-size: cover;
+                    ${data.photoPrefix ? `background-image: url(${data.photoPrefix}500${data.photoSuffix});` : ""}"
+             class="w-48 h-48 rounded-2xl shadow-xl relative">
+             <div class="p-1 absolute top-1 left-1/2 flex flex-row bg-white rounded-xl transform -translate-x-1/2">
+                ${starsHTML}
+             </div>
+             <div x-show="showTimeTable === true"
+                  x-transition:enter="transition duration-500 transform ease-out"
+                  x-transition:enter-start="scale-75 opacity-0"
+                  x-transition:enter-end="opacity-100"
+                  x-transition:leave="transition duration-300 transform ease-in"
+                  x-transition:leave-end="opacity-0 scale-75"
+                  class="absolute top-0 right-0 bottom-0 left-0 w-full h-full rounded-xl bg-white select-none">
+                    <p class="text-center text-sm font-bold text-gray-500 border-b-2 w-full">
+                        Time table
+                    </p>
+                    <div class="p-4">
+                        ${hoursHTML}
+                    </div>
+             </div>
+        </div>
+         `;
 
-    let popUp = new mapboxgl.Popup({className: `mapbox-gl-popup-${data.id} z-40`}).setHTML(html);
+    document.getElementById(`poi_marker_loading_${data.id}`).remove();
+
+    let markerZIndex = marker._element.style.zIndex;
+    let markerDivEl = document.getElementById(`poi_marker_${data.id}`);
+
+    let popUp = new mapboxgl.Popup({className: `mapbox-gl-popup-${data.id} z-40`}).setHTML(html).on("open", e => {
+        marker._element.style.zIndex = 49;
+        marker._element.classList.remove("bring-to-front");
+        markerDivEl.classList.add('scale-125');
+    }).on("close", e => {
+        marker._element.style.zIndex = markerZIndex;
+        marker._element.classList.add("bring-to-front");
+        markerDivEl.classList.remove('scale-125');
+    });
 
     marker.setPopup(popUp);
-    marker.togglePopup();
+
+    if(document.getElementsByClassName('mapboxgl-popup').length === 0)
+    {
+        marker.togglePopup();
+    }
 
     addedMarkers.find( ({poi}) => poi.id === data.id)['details'] = data;
 }
@@ -96,11 +167,13 @@ function addPoiMarker(poi)
     if(!addedMarkers.some(e => e.poi.id === poi.id))
     {
         let el = document.createElement('div');
-        el.className = "z-10 block bg-indigo-400 rounded-full p-0 border-none cursor-pointer";
-        el.id = `poi_marker_${poi.id}`;
-        el.style.backgroundImage = `url(${poi.iconPrefix}` + 32 + `${poi.iconSuffix}`;
-        el.style.width = 32 + 'px';
-        el.style.height = 32 + 'px';
+        el.className = "z-10 bring-to-front";
+        el.innerHTML = `
+            <div style="background-image: url(${poi.iconPrefix}${64}${poi.iconSuffix}); width: 32px; height: 32px; background-size: cover;"
+                 class="block bg-indigo-400 rounded-full p-0 border-none cursor-pointer transform transition hover:scale-125 duration-500"
+                 id="poi_marker_${poi.id}">
+            </div>
+        `;
 
         let marker = new mapboxgl.Marker(el)
             .setLngLat([poi.lng, poi.lat])
@@ -121,6 +194,13 @@ function addPoiMarker(poi)
         marker.getElement().addEventListener('click', function() {
             if(marker.getPopup() == null)
             {
+                let markerLoadingDiv = document.createElement("div");
+                markerLoadingDiv.innerHTML = `
+                    <div id="poi_marker_loading_${poi.id}"
+                         class="absolute animate-ping h-full w-full rounded-full bg-indigo-400"></div>
+                `;
+                el.insertBefore(markerLoadingDiv, document.getElementById(`poi_marker_${poi.id}`));
+
                 getPOIDetails(poi.id, marker);
             }
         });
@@ -560,11 +640,13 @@ function cleanShownRoutes()
         for(let i = 0; i < currentShownRoute.length; i++)
         {
             let el = currentShownRoute[i].marker;
-            el.innerHTML = '';
             el.classList.remove('z-20');
             el.classList.add('z-10');
-            el.style.backgroundImage = currentShownRoute[i].backgroundImage;
-            el.style.boxShadow = currentShownRoute[i].boxShadow;
+
+            let markerDivEl = document.getElementById(`poi_marker_${currentShownRoute[i].id}`);
+            markerDivEl.innerHTML = '';
+            markerDivEl.style.backgroundImage = currentShownRoute[i].backgroundImage;
+            markerDivEl.style.boxShadow = currentShownRoute[i].boxShadow;
 
             let poi = addedMarkers.find( ({poi}) => poi.id === currentShownRoute[i].id);
 
