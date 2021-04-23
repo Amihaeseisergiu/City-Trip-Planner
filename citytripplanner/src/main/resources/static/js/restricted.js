@@ -72,6 +72,7 @@ function getPOIDetails(id, marker)
             addPoiDetails(data, marker);
         })
         .catch((error) => {
+            document.getElementById(`poi_marker_loading_${id}`).remove();
             console.error('Error:', error);
         });
 }
@@ -194,7 +195,8 @@ function addPoiDetails(data, marker)
             marker: marker,
             markerZIndex: markerZIndex,
             markerDivEl: markerDivEl,
-            markerDivElBgImage: markerDivElBgImage
+            markerDivElBgImage: markerDivElBgImage,
+            poiId: data.id
         };
 
         marker._element.style.zIndex = 49;
@@ -237,7 +239,7 @@ function addPoiDetails(data, marker)
             markerDivEl.classList.add('bg-indigo-400');
         }
 
-        if(currentShownPopUp !== null && markerDivElBgImage === currentShownPopUp.markerDivElBgImage)
+        if(currentShownPopUp !== null && data.id === currentShownPopUp.poiId)
         {
             currentShownPopUp = null;
         }
@@ -568,14 +570,17 @@ function addPoiMarker(poi, top)
         marker.getElement().addEventListener('click', function() {
             if(marker.getPopup() == null)
             {
-                let markerLoadingDiv = document.createElement("div");
-                markerLoadingDiv.innerHTML = `
-                    <div id="poi_marker_loading_${poi.id}"
-                         class="absolute animate-ping h-full w-full rounded-full bg-indigo-400"></div>
-                `;
-                el.insertBefore(markerLoadingDiv, document.getElementById(`poi_marker_${poi.id}`));
+                if(document.getElementById(`poi_marker_loading_${poi.id}`) === null)
+                {
+                    let markerLoadingDiv = document.createElement("div");
+                    markerLoadingDiv.innerHTML = `
+                        <div id="poi_marker_loading_${poi.id}"
+                             class="absolute animate-ping h-full w-full rounded-full bg-indigo-400"></div>
+                    `;
+                    el.insertBefore(markerLoadingDiv, document.getElementById(`poi_marker_${poi.id}`));
 
-                getPOIDetails(poi.id, marker);
+                    getPOIDetails(poi.id, marker);
+                }
             }
         });
     }
