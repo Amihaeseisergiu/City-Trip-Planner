@@ -11,6 +11,80 @@ let initialPoint = null;
 let movedPoint = null;
 let currentBounds = null;
 
+let m_posx = null;
+let m_posy = null;
+let resize_el = document.getElementById("resize");
+let w_bresize = resize_el.parentNode.parentNode.style.width;
+let coming_from_mobile = false;
+
+if(document.body.clientWidth < 1024)
+{
+    resize_el.style.cursor = 'ns-resize';
+}
+
+function resize(e)
+{
+    let parent = resize_el.parentNode.parentNode;
+    let dx =  m_posx - e.x;
+    let dy = m_posy - e.y;
+
+    let newSize = document.body.clientWidth < 1024 ? parseInt(getComputedStyle(parent, '').height) - dy :
+        parseInt(getComputedStyle(parent, '').width) - dx;
+
+    if(document.body.clientWidth < 1024 ? newSize > 100 && (newSize < document.body.clientHeight / 1.25 || dy > 0) :
+        newSize > 330 && (newSize < document.body.clientWidth / 2 || dx > 0))
+    {
+        if(document.body.clientWidth > 1024)
+        {
+            m_posx = e.x;
+            parent.style.width = newSize + "px";
+        }
+        else
+        {
+            m_posy = e.y;
+            parent.style.height = newSize + "px";
+        }
+        map.resize();
+    }
+}
+
+resize_el.addEventListener("mousedown", function(e){
+    m_posx = e.x;
+    m_posy = e.y;
+    document.addEventListener("mousemove", resize, false);
+}, false);
+
+document.addEventListener("mouseup", function(){
+    document.removeEventListener("mousemove", resize, false);
+}, false);
+
+window.addEventListener("resize", function(event) {
+    let parent = resize_el.parentNode.parentNode;
+
+    if(document.body.clientWidth < 1024)
+    {
+        resize_el.style.cursor = 'ns-resize';
+        parent.style.width = '100%';
+        parent.style.height = '50%';
+        coming_from_mobile = true;
+    }
+    else
+    {
+        if(coming_from_mobile === true)
+        {
+            resize_el.style.cursor = 'w-resize';
+            parent.style.width = w_bresize;
+            parent.style.height = '100%';
+            coming_from_mobile = false;
+        }
+        else
+        {
+            w_bresize = parent.style.width;
+        }
+    }
+    map.resize();
+});
+
 let map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/mapbox/light-v10',
