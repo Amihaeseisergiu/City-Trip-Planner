@@ -7,8 +7,7 @@ let currentBounds = null;
 let m_posx = null;
 let m_posy = null;
 let resize_el = document.getElementById("resize");
-let w_bresize = resize_el.parentNode.parentNode.style.width;
-let coming_from_mobile = false;
+let left_panel_resizing = 0;
 
 if(document.body.clientWidth < 1024)
 {
@@ -17,25 +16,116 @@ if(document.body.clientWidth < 1024)
 
 function resize(e)
 {
-    let parent = resize_el.parentNode.parentNode;
+    let parent = resize_el.parentNode;
     let dx =  m_posx - e.x;
     let dy = m_posy - e.y;
 
     let newSize = document.body.clientWidth < 1024 ? parseInt(getComputedStyle(parent, '').height) - dy :
         parseInt(getComputedStyle(parent, '').width) - dx;
 
-    if(document.body.clientWidth < 1024 ? newSize > 100 && (newSize < document.body.clientHeight / 1.25 || dy > 0) :
-        newSize > 330 && (newSize < document.body.clientWidth / 2 || dx > 0))
+    if(document.body.clientWidth < 1024 ? (newSize < document.body.clientHeight / 1.28 || dy > 0) :
+        (newSize < document.body.clientWidth / 2 || dx > 0))
     {
         if(document.body.clientWidth > 1024)
         {
             m_posx = e.x;
-            parent.style.width = newSize + "px";
+
+            if(newSize < 350 && dx >= 0 && (left_panel_resizing === 0 || left_panel_resizing === 1))
+            {
+                parent.style.width = '0px';
+                parent.style.transition = 'width 1s';
+                left_panel_resizing = 1;
+                document.getElementById("tabsContainer").classList.add("hidden");
+                resize_el.classList.remove('hover:bg-indigo-400', 'opacity-0', 'hover:opacity-90');
+                resize_el.classList.add('bg-indigo-500');
+
+                const interval = setInterval(function() {
+                    map.resize();
+                }, 300);
+
+                setTimeout(function () {
+                    left_panel_resizing = 0;
+                    clearInterval(interval);
+                }, 1000);
+            }
+            else if(newSize < 350 && dx < 0 && (left_panel_resizing === 0 || left_panel_resizing === 2))
+            {
+                parent.style.width = '350px';
+                parent.style.transition = 'width 1s';
+                left_panel_resizing = 2;
+                document.getElementById("tabsContainer").classList.remove("hidden");
+                resize_el.classList.add('hover:bg-indigo-400', 'opacity-0', 'hover:opacity-90');
+                resize_el.classList.remove('bg-indigo-500');
+
+                const interval = setInterval(function() {
+                    map.resize();
+                }, 300);
+
+                setTimeout(function () {
+                    left_panel_resizing = 0;
+                    clearInterval(interval);
+                }, 1000);
+            }
+            else if(left_panel_resizing === 0)
+            {
+                parent.style.transition = '';
+                parent.style.width = newSize + "px";
+
+            }
         }
         else
         {
             m_posy = e.y;
-            parent.style.height = newSize + "px";
+            if(newSize < 150 && dy >= 0 && (left_panel_resizing === 0 || left_panel_resizing === 1))
+            {
+                parent.style.height = '0px';
+                parent.style.transition = 'height 1s';
+                left_panel_resizing = 1;
+                document.getElementById("tabsContainer").classList.add("hidden");
+                resize_el.classList.remove('hover:bg-indigo-400', 'opacity-0', 'hover:opacity-90');
+                resize_el.classList.add('bg-indigo-500');
+
+                const interval = setInterval(function() {
+                    map.resize();
+                }, 300);
+
+                setTimeout(function () {
+                    left_panel_resizing = 0;
+                    clearInterval(interval);
+                }, 1000);
+            }
+            else if(newSize < 150 && dy < 0 && (left_panel_resizing === 0 || left_panel_resizing === 2))
+            {
+                parent.style.height = '50%';
+                parent.style.transition = 'height 1s';
+                left_panel_resizing = 2;
+                document.getElementById("tabsContainer").classList.remove("hidden");
+                resize_el.classList.add('hover:bg-indigo-400', 'opacity-0', 'hover:opacity-90');
+                resize_el.classList.remove('bg-indigo-500');
+
+                const interval = setInterval(function() {
+                    map.resize();
+                }, 300);
+
+                setTimeout(function () {
+                    left_panel_resizing = 0;
+                    clearInterval(interval);
+                }, 1000);
+            }
+            else if(left_panel_resizing === 0)
+            {
+                parent.style.transition = '';
+                parent.style.height = newSize + "px";
+
+                if(newSize > document.body.clientWidth / 1.4)
+                {
+                    document.getElementById("map").classList.add("hidden");
+                }
+                else if(document.getElementById("map").classList.contains("hidden"))
+                {
+                    document.getElementById("map").classList.remove("hidden");
+                }
+            }
         }
         map.resize();
     }
@@ -52,29 +142,51 @@ document.addEventListener("mouseup", function(){
 }, false);
 
 window.addEventListener("resize", function(event) {
-    let parent = resize_el.parentNode.parentNode;
+    let parent = resize_el.parentNode;
 
     if(document.body.clientWidth < 1024)
     {
         resize_el.style.cursor = 'ns-resize';
+        parent.style.transition = 'height 1s';
         parent.style.width = '100%';
         parent.style.height = '50%';
-        coming_from_mobile = true;
+
+        const interval = setInterval(function() {
+            map.resize();
+        }, 300);
+
+        setTimeout(function () {
+            clearInterval(interval);
+        }, 1000);
     }
     else
     {
-        if(coming_from_mobile === true)
+        resize_el.style.cursor = 'w-resize';
+        parent.style.transition = 'width 1s';
+        parent.style.width = '33.33%';
+        parent.style.height = '100%';
+
+        if(document.getElementById("map").classList.contains("hidden"))
         {
-            resize_el.style.cursor = 'w-resize';
-            parent.style.width = w_bresize;
-            parent.style.height = '100%';
-            coming_from_mobile = false;
+            document.getElementById("map").classList.remove("hidden");
         }
-        else
-        {
-            w_bresize = parent.style.width;
-        }
+
+        const interval = setInterval(function() {
+            map.resize();
+        }, 300);
+
+        setTimeout(function () {
+            clearInterval(interval);
+        }, 1000);
     }
+
+    if(document.getElementById("tabsContainer").classList.contains("hidden"))
+    {
+        document.getElementById("tabsContainer").classList.remove("hidden");
+        resize_el.classList.add('hover:bg-indigo-400', 'opacity-0', 'hover:opacity-90');
+        resize_el.classList.remove('bg-indigo-500');
+    }
+
     map.resize();
 });
 

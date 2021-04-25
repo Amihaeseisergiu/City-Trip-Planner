@@ -55,28 +55,29 @@
 
     <div style="height:calc(100vh - 5.5rem)!important;" class="flex justify-start items-center flex-col lg:flex-row lg:justify-start">
 
-        <div class="w-full h-1/2 p-5 lg:w-2/6 lg:h-full">
-            <div x-data="{tab: 'planner'}" class="h-full bg-white rounded-3xl shadow-2xl flex flex-col relative" id="tabsContainer">
+        <div class="w-full h-1/2 p-5 lg:w-2/6 lg:h-full relative">
 
-                <div style="cursor: w-resize;"
-                     class="absolute -bottom-3 h-3 w-auto left-5 right-5 bg-transparent hover:bg-indigo-400 transition duration-300
+            <div style="cursor: w-resize;"
+                 class="absolute bottom-2 h-3 w-auto left-10 right-10 bg-transparent hover:bg-indigo-400 transition duration-300
                             rounded-br-full rounded-bl-full opacity-0 hover:opacity-90 lg:rounded-bl-none ease-in-out shadow-2xl
-                            lg:-right-3 lg:left-auto lg:w-3 lg:h-auto lg:top-12 lg:bottom-5 lg:rounded-br-full lg:rounded-tr-full" id="resize">
+                            lg:right-2 lg:left-auto lg:w-3 lg:h-auto lg:top-20 lg:bottom-12 lg:rounded-br-full lg:rounded-tr-full"
+                 id="resize">
+            </div>
 
-                </div>
+            <div x-data="{tab: 'planner'}" class="h-full bg-white rounded-3xl shadow-2xl flex flex-col" id="tabsContainer">
 
                 <div class="flex flex-row justify-between">
                     <div class="flex w-full overflow-auto no-scrollbar break-all">
                         <button :class="{ 'active border-indigo-500 text-gray-600': tab === 'planner' }"
                                 class="p-3 focus:outline-none focus:border-indigo-500 focus:text-gray-600 border-b-2 border-white text-gray-400
-                                hover:border-gray-300 font-bold uppercase tracking-tight transition ease-in duration-200"
+                                hover:border-gray-300 font-bold uppercase tracking-tight transition ease-in duration-200 truncate"
                                 @click="tab = 'planner'" id="plannerTabButton"
                                 onclick="cleanShownRoutes()">
                             Planner
                         </button>
                         <button :class="{ 'active border-indigo-500 text-gray-600': tab === 'itinerary' }"
                                 class="p-3 focus:outline-none focus:border-indigo-500 focus:text-gray-600 border-b-2 border-white text-gray-400
-                                hover:border-gray-300 font-bold uppercase tracking-tight transition ease-in duration-200 hidden"
+                                hover:border-gray-300 font-bold uppercase tracking-tight transition ease-in duration-200 hidden truncate"
                                 @click="tab = 'itinerary'" id="itineraryTab">
                             Itinerary
                         </button>
