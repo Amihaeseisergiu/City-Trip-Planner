@@ -154,37 +154,21 @@ window.addEventListener("resize", function(event) {
     if(document.body.clientWidth < 1024)
     {
         resize_el.style.cursor = 'ns-resize';
-        parent.style.transition = 'height 1s';
+        parent.style.transition = '';
         parent.style.width = '100%';
         parent.style.height = '50%';
-
-        const interval = setInterval(function() {
-            map.resize();
-        }, 300);
-
-        setTimeout(function () {
-            clearInterval(interval);
-        }, 1000);
     }
     else
     {
         resize_el.style.cursor = 'w-resize';
-        parent.style.transition = 'width 1s';
+        parent.style.transition = '';
         parent.style.width = '33.33%';
         parent.style.height = '100%';
+    }
 
-        if(document.getElementById("map").classList.contains("hidden"))
-        {
-            document.getElementById("map").classList.remove("hidden");
-        }
-
-        const interval = setInterval(function() {
-            map.resize();
-        }, 300);
-
-        setTimeout(function () {
-            clearInterval(interval);
-        }, 1000);
+    if(document.getElementById("map").classList.contains("hidden"))
+    {
+        document.getElementById("map").classList.remove("hidden");
     }
 
     if(document.getElementById("tabsContainer").classList.contains("hidden"))
@@ -630,13 +614,13 @@ function addPOI(id, visitDuration)
                 poiContainer.innerHTML = "";
                 poiContainer.appendChild(div);
                 poiContainerParent.style.maxHeight = poiContainerParent.scrollHeight > 0 ? poiContainerParent.scrollHeight + 'px' :
-                    poiContainer.childElementCount * 115 + 'px';
+                    poiContainer.childElementCount * 150 + 'px';
             }
             else
             {
                 poiContainer.appendChild(div);
                 poiContainerParent.style.maxHeight = poiContainerParent.scrollHeight > 0 ? poiContainerParent.scrollHeight + 'px' :
-                    poiContainer.childElementCount * 115 + 'px';
+                    poiContainer.childElementCount * 150 + 'px';
             }
 
             document.getElementById(`poiVisitDurationParent_${id}`).addEventListener('transitionstart', () => {
@@ -1246,6 +1230,16 @@ function addItineraryElement(id, dayName, date, dayStart, dayEnd, colour, pois, 
     }
 }
 
+function getPhotoData(id)
+{
+    let el = addedMarkers.find( ({poi}) => poi.id === id);
+
+    return {
+        activeSlide: el.details.poiPhotos[0],
+        slides: el.details.poiPhotos
+    }
+}
+
 function addPOIToItinerary(poiInfo, dayId, addInfoToNext, accommodationTimeInfo)
 {
     let el = addedMarkers.find( ({poi}) => poi.id === poiInfo.poiId);
@@ -1253,7 +1247,7 @@ function addPOIToItinerary(poiInfo, dayId, addInfoToNext, accommodationTimeInfo)
     const div = document.createElement('div');
 
     div.className = 'w-full border border-gray-300 rounded-xl mt-2';
-    div.id = `poi_${poiInfo.poiId}_day_${dayId}_itinerary`;
+    div.id = `poi_${poiInfo.poiId}_day_${dayId}_itinerary` + (accommodationTimeInfo !== null ? '_' + accommodationTimeInfo[0] : '');
     div.innerHTML = `
         <div class="flex flex-row rounded-xl text-white"
                 style="background-image: url(${el['details'].photoPrefix}${500}${el['details'].photoSuffix});
@@ -1267,7 +1261,24 @@ function addPOIToItinerary(poiInfo, dayId, addInfoToNext, accommodationTimeInfo)
                     ${accommodationTimeInfo !== null ? accommodationTimeInfo : poiInfo.visitTimesStart + ' - ' + poiInfo.visitTimesEnd}
                 </p>
             </div>
-            <div class="p-7 text-white rounded-lg ${accommodationTimeInfo !== null ? '' : 'hidden'} flex flex-col justify-center">
+            <button type="button"
+                    id="poi_${poiInfo.poiId}_day_${dayId}_itineraryPhotoButton${accommodationTimeInfo !== null ? '_' + accommodationTimeInfo[0] : ''}"
+                    class="p-4 text-white focus:outline-none transform hover:scale-125 hover:text-green-500
+                           transition ${el.details.poiPhotos.length > 0 ? '' : 'hidden'} ease-in-out duration-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" 
+                     viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                    <line x1="15" y1="6" x2="15.01" y2="6"></line>
+                    <rect x="3" y="3" width="18" height="14" rx="3"></rect>
+                    <path d="M3 13l4 -4a3 5 0 0 1 3 0l4 4"></path>
+                    <path d="M13 12l2 -2a3 5 0 0 1 3 0l3 3"></path>
+                    <line x1="8" y1="21" x2="8.01" y2="21"></line>
+                    <line x1="12" y1="21" x2="12.01" y2="21"></line>
+                    <line x1="16" y1="21" x2="16.01" y2="21"></line>
+                </svg>
+            </button>
+            <div class="pb-7 pr-7 pt-7 pl-2 text-white rounded-lg ${accommodationTimeInfo !== null ? '' : 'hidden'} flex flex-col justify-center">
                 <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1
                    1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -1278,12 +1289,78 @@ function addPOIToItinerary(poiInfo, dayId, addInfoToNext, accommodationTimeInfo)
 
     document.getElementById(`poiContainerItinerary_${dayId}`).appendChild(div);
 
+    const divGallery = document.createElement('div');
+    divGallery.innerHTML = `
+        <div style="height: 90%;" class="w-full flex flex-col justify-center items-center">
+            <div class="w-full h-full p-10 relative"
+                 x-data="getPhotoData('${poiInfo.poiId}')">
+
+                <template x-for="slide in slides" :key="slide">
+                    <div x-show="activeSlide === slide"
+                         class="font-bold text-5xl h-full flex items-center justify-center bg-transparent text-white
+                                rounded-lg relative">
+                        <img :src="slide.prefix + 'width960' + slide.suffix" class="w-full h-full rounded-2xl object-cover">
+                        <div class="absolute top-2 right-2.5 text-lg text-gray-500 font-bold bg-white bg-opacity-80 rounded-xl p-3">
+                            <span x-text="(slides.indexOf(slide) + 1) + '/' + (slides.length)"></span>
+                        </div>
+                    </div>
+                </template>
+    
+                <div class="absolute inset-10 flex">
+                    <div class="flex items-center justify-start w-1/2">
+                        <button class="bg-indigo-400 text-white font-bold hover:shadow-lg
+                                       border-none rounded-full w-12 h-12 -ml-6 flex items-center justify-center focus:outline-none"
+                                x-on:click="activeSlide = slides.indexOf(activeSlide) === 0 ? slides[slides.length - 1]:
+                                            slides[slides.indexOf(activeSlide) - 1]">
+                            <p class="w-full h-full transform duration-500 hover:-translate-x-1
+                                      flex items-center justify-center">
+                                &#10094;
+                            </p>
+                        </button>
+                    </div>
+                    <div class="flex items-center justify-end w-1/2">
+                        <button class="bg-indigo-400 text-white font-bold hover:shadow-lg
+                                       rounded-full w-12 h-12 -mr-6 flex items-center justify-center focus:outline-none"
+                                x-on:click="activeSlide = slides.indexOf(activeSlide) === slides.length - 1 ? slides[0]:
+                                            slides[slides.indexOf(activeSlide) + 1]">
+                            <p class="w-full h-full transform duration-500 hover:translate-x-1
+                                      flex items-center justify-center">
+                                &#10095;
+                            </p>
+                        </button>
+                    </div>        
+                </div>
+
+                <div class="w-full flex items-center justify-center px-20">
+                    <template x-for="slide in slides" :key="slide">
+                        <button class="flex-1 w-4 h-2 mt-4 mx-2 mb-0 rounded-full overflow-hidden focus:outline-none
+                                       transition-colors duration-200 ease-out hover:bg-indigo-600 hover:shadow-lg"
+                                :class="{'bg-indigo-600': activeSlide === slide,
+                                         'bg-indigo-300': activeSlide !== slide}" 
+                                x-on:click="activeSlide = slide">
+                        </button>
+                    </template>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.getElementById(`poi_${poiInfo.poiId}_day_${dayId}_itineraryPhotoButton`
+        + (accommodationTimeInfo !== null ? '_' + accommodationTimeInfo[0] : ''))
+        .addEventListener("click", function () {
+            document.getElementById("viewItineraryGalleryElementsContainer").innerHTML = '';
+            document.getElementById("viewItineraryGalleryElementsContainer").appendChild(divGallery);
+            document.getElementById("viewItineraryGalleryName").innerHTML = '';
+            document.getElementById("viewItineraryGalleryName").innerHTML = el['poi'].name + " Gallery";
+            document.getElementById("viewItineraryGalleryContainer").__x.$data.open = true;
+        });
+
     if(addInfoToNext)
     {
         const distanceDiv = document.createElement('div');
 
         distanceDiv.className = 'w-full mt-5 mb-5 border-l-4 border-dotted border-gray-500 ml-5';
-        distanceDiv.id = `poi_${poiInfo.poiId}_day_${dayId}_itineraryDistance`;
+        distanceDiv.id = `poi_${poiInfo.poiId}_day_${dayId}_itineraryDistance` + (accommodationTimeInfo !== null ? '_' + accommodationTimeInfo[0] : '');
         distanceDiv.innerHTML = `
             <div class="flex flex-row text-gray-500 uppercase leading-tight">
                 <div class="flex flex-row justify-end w-full mr-2">
@@ -1317,7 +1394,8 @@ function addPOIToItinerary(poiInfo, dayId, addInfoToNext, accommodationTimeInfo)
                 </div>
             `;
 
-            document.getElementById(`poi_${poiInfo.poiId}_day_${dayId}_itineraryDistance`).appendChild(waitingDiv);
+            document.getElementById(`poi_${poiInfo.poiId}_day_${dayId}_itineraryDistance`
+                + (accommodationTimeInfo !== null ? '_' + accommodationTimeInfo[0] : '')).appendChild(waitingDiv);
         }
     }
 }

@@ -56,7 +56,7 @@ public class PlannerService {
         List<Route> routes = new ArrayList<>();
         String constraints = null;
 
-        if(schedule.getScheduleDays().size() > 0 && schedule.getSchedulePois().size() > 0)
+        if(schedule.getScheduleDays().size() > 0 && schedule.getSchedulePois().size() >= 2 && schedule.getSchedulePois().size() <= 25)
         {
             int[][] durationsMatrix = mapboxUtils.fetchDurationsMatrix(schedule.getCoordinatesList());
             DataUnrestricted dataUnrestricted = routeGenerator.getRoutesUnrestricted(schedule, durationsMatrix);
