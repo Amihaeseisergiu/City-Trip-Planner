@@ -138,6 +138,34 @@ function resize(e)
     }
 }
 
+function touchHandler(event)
+{
+    let touches = event.changedTouches,
+        first = touches[0],
+        type = "";
+    switch(event.type)
+    {
+        case "touchstart": type = "mousedown"; break;
+        case "touchmove":  type = "mousemove"; break;
+        case "touchend":   type = "mouseup";   break;
+        default:           return;
+    }
+
+    let simulatedEvent = document.createEvent("MouseEvent");
+    simulatedEvent.initMouseEvent(type, true, true, window, 1,
+        first.screenX, first.screenY,
+        first.clientX, first.clientY, false,
+        false, false, false, 0, null);
+
+    first.target.dispatchEvent(simulatedEvent);
+    event.preventDefault();
+}
+
+resize_el.addEventListener("touchstart", touchHandler, true);
+resize_el.addEventListener("touchmove", touchHandler, true);
+resize_el.addEventListener("touchend", touchHandler, true);
+resize_el.addEventListener("touchcancel", touchHandler, true);
+
 resize_el.addEventListener("mousedown", function(e){
     m_posx = e.x;
     m_posy = e.y;
