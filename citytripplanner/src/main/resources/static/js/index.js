@@ -53,6 +53,7 @@ document.getElementById('addPlannerButton').addEventListener('click', function (
         newPlannerContainer.__x.$data.place = null;
         newPlannerContainer.__x.$data.lng = null;
         newPlannerContainer.__x.$data.lat = null;
+        geocoder.clear();
 
         if (data !== null)
         {
@@ -81,6 +82,14 @@ document.addEventListener('DOMContentLoaded', function () {
                     addPlanner(data[i].id, data[i].name, data[i].type, data[i].place, data[i].lat, data[i].lng);
                 }
             }
+            else
+            {
+                document.getElementById('plannersContainer').innerHTML = `
+                    <p class="text-gray-500 text-lg md:text-xl lg:text-2xl select-none" id="noPlannersAdded">
+                        Your planners will appear here
+                    </p>
+                `;
+            }
         })
         .catch((error) => {
             console.error('Error:', error);
@@ -89,6 +98,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
 function addPlanner(id, name, type, place, lat, lng)
 {
+    if(document.getElementById('noPlannersAdded'))
+    {
+        document.getElementById('noPlannersAdded').remove();
+    }
+
     let plannersContainer = document.getElementById('plannersContainer');
 
     const div = document.createElement('div');
@@ -110,7 +124,7 @@ function addPlanner(id, name, type, place, lat, lng)
                         ${type.charAt(0).toUpperCase() + type.slice(1)}
                     </p>
                 </div>
-                <div class="pl-3 truncate">
+                <div class="hidden pl-3 truncate lg:block">
                     ${id}
                 </div>
             </a>
@@ -154,6 +168,15 @@ function deletePlanner(id)
             if(plannerToRemove)
             {
                 plannerToRemove.remove();
+
+                if(document.getElementById('plannersContainer').childElementCount === 0)
+                {
+                    document.getElementById('plannersContainer').innerHTML = `
+                        <p class="text-gray-500 text-lg md:text-xl lg:text-2xl select-none" id="noPlannersAdded">
+                            Your planners will appear here
+                        </p>
+                    `;
+                }
             }
         }
     })

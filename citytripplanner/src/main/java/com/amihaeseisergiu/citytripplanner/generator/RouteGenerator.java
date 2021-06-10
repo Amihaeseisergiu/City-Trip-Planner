@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import org.chocosolver.solver.Model;
 import org.chocosolver.solver.Solution;
 import org.chocosolver.solver.Solver;
+import org.chocosolver.solver.constraints.Constraint;
 import org.chocosolver.solver.constraints.nary.cnf.LogOp;
 import org.chocosolver.solver.variables.IntVar;
 import org.springframework.stereotype.Component;
@@ -79,11 +80,8 @@ public class RouteGenerator {
                 {
                     if(i != accommodation)
                     {
-                        model.ifThen(
-                                ord[i].add(1).eq(ord[j]).and(ord[i].ne(n - 1)).decompose().reify(),
-                                succCost[i].eq(model.intVar(openingTimes[j]).sub(visitTimesEn[i].add(timeCost[i][j])).max(0)
-                                        .add(timeCost[i][j]).add(visitDurations[i])).decompose()
-                        );
+                        new Constraint("NextVenueConstraint", new NextVenuePropagator(n, i, j, ord, succCost,
+                                visitTimesEn, openingTimes, timeCost, visitDurations)).post();
                     }
                     else
                     {

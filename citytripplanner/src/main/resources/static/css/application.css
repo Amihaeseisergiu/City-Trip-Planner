@@ -24,3 +24,7 @@
 .bring-to-front:hover {
     z-index: 39 !important;
 }
+
+* {
+    -webkit-tap-highlight-color: transparent;
+}

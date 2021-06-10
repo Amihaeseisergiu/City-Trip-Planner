@@ -3,6 +3,7 @@
       xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="/css/application.css"/>
     <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js" defer></script>
     <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v2.2.0/mapbox-gl.js"></script>
@@ -17,22 +18,32 @@
         .mapboxgl-ctrl-geocoder--input:focus {
             outline: none;
         }
+        .view-panel {
+            height: auto;
+        }
+        @media (min-width: 768px) {
+            .view-panel {
+                height:calc(100vh - 12.5rem)!important;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-100 h-screen w-screen">
-    <div class="bg-white border-b-2 flex flex-col justify-center items-center lg:flex-row lg:justify-between">
+    <div class="bg-white border-b-2 flex flex-row justify-center items-center lg:justify-between">
         <div class="flex items-center justify-center lg:justify-start">
             <svg class="w-10 inline-block lg:ml-10" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z" clip-rule="evenodd" />
             </svg>
             <a href="/">
-                <h1 class="text-4xl p-5 font-body text-gray-900 leading-tight inline-block">City Trip Planner</h1>
+                <h1 class="text-xl md:text-4xl p-5 font-body text-gray-900 leading-tight inline-block">City Trip Planner</h1>
             </a>
         </div>
         <th:block th:if="${#authorization.expression('hasRole(''ROLE_USER'')')}">
-            <a class="text-2xl p-5 font-bold text-gray-900 leading-tight inline-block lg:mr-10
+            <a class="text-lg md:text-2xl p-5 font-bold text-gray-900 leading-tight inline-block lg:mr-10
                       cursor-pointer transition duration-500 ease-in-out transform hover:translate-x-4" href="#" th:href="@{/logout}">
-                Logout
+                <p class="hidden md:inline-block">
+                    Logout
+                </p>
                 <svg class="w-8 inline-block hover" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                 </svg>
@@ -73,7 +84,7 @@
     </th:block>
 
     <th:block th:if="${#authorization.expression('hasRole(''ROLE_USER'')')}">
-        <div style="height:calc(100vh - 12.5rem)!important;" class="flex flex-col justify-start items-center">
+        <div class="flex flex-col justify-start items-center">
 
             <div class="w-3/4 lg:w-1/2">
                 <h1 class="mt-6 text-2xl font-bold border-b-2 text-center text-gray-500 leading-tight
@@ -84,7 +95,7 @@
             </div>
 
             <div class="flex flex-col w-full h-full md:flex-row">
-                <div class="w-full h-1/2 flex flex-col items-center md:w-1/2 md:h-full overflow-auto no-scrollbar">
+                <div class="w-full flex flex-col items-center md:w-1/2 md:h-full overflow-auto no-scrollbar">
                     <h1 class="mt-6 text-xl text-center text-gray-500 leading-tight font-thin
                                 sm:text-2xl md:text-3xl lg:text-4xl sm:mt-8 pb-3 select-none">
                         Create
@@ -172,14 +183,13 @@
                     </div>
                 </div>
 
-                <div class="flex flex-col w-full h-1/2 items-center md:w-1/2 md:h-full">
+                <div class="flex flex-col w-full items-center md:w-1/2 view-panel">
                     <h1 class="mt-6 text-xl text-center text-gray-500 font-thin
                                 sm:text-2xl md:text-3xl lg:text-4xl sm:mt-8 pb-3 select-none">
                         View
                     </h1>
 
-                    <div class="w-3/4 h-full overflow-auto no-scrollbar flex flex-col items-center" id="plannersContainer">
-
+                    <div class="w-3/4 h-full pb-5 overflow-auto no-scrollbar flex flex-col items-center md:pb-0" id="plannersContainer">
                     </div>
                 </div>
             </div>
