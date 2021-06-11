@@ -402,7 +402,7 @@ function addPoiMarker(poi)
         el.className = "z-10 bring-to-front";
         el.innerHTML = `
             <div style="background-image: url(${poi.iconPrefix}${64}${poi.iconSuffix}); width: 32px; height: 32px; background-size: cover;"
-                 class="block bg-indigo-400 rounded-full p-0 border-none cursor-pointer transform transition hover:scale-125 duration-500"
+                 class="block bg-indigo-400 shadow-md rounded-full p-0 border-none cursor-pointer transform transition hover:scale-125 duration-500"
                  id="poi_marker_${poi.id}">
             </div>
         `;

@@ -288,9 +288,15 @@
                 </div>
             </div>
 
-            <div class="w-full h-auto p-5 lg:w-auto lg:h-full flex-grow">
+            <div class="w-full h-auto p-5 lg:w-auto lg:h-full flex-grow relative" id="mapParent">
                 <div class="h-full rounded-3xl shadow-2xl focus:outline-none" id="map">
 
+                </div>
+
+                <div class="absolute top-7 left-7 z-40">
+                    <input class="border-2 bg-white m-0 p-2 rounded-lg shadow-md focus:outline-none
+                                  h-8 w-32 md:h-11 md:w-full"
+                           id="filterInput" type="text" name="filter" placeholder="Filter by type">
                 </div>
             </div>
 

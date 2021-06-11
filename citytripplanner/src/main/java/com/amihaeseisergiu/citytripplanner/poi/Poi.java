@@ -22,6 +22,8 @@ public class Poi {
     private Double lat;
     private Double lng;
 
+    private String type;
+
     private String iconPrefix;
     private String iconSuffix;
 

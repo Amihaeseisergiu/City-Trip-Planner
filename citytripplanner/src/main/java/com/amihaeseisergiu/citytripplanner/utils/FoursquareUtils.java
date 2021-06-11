@@ -278,6 +278,7 @@ public class FoursquareUtils {
             Double lat = gson.fromJson(location.get("lat"), Double.class);
             Double lng = gson.fromJson(location.get("lng"), Double.class);
 
+            String type = null;
             String iconPrefix = null;
             String iconSuffix = null;
 
@@ -287,6 +288,8 @@ public class FoursquareUtils {
             {
                 JsonObject categoriesIn = categories.get(0).getAsJsonObject();
 
+                type = gson.fromJson(categoriesIn.get("name"), String.class);
+
                 JsonObject icon = categoriesIn.getAsJsonObject("icon");
                 iconPrefix = gson.fromJson(icon.get("prefix"), String.class);
                 iconSuffix = gson.fromJson(icon.get("suffix"), String.class);
@@ -294,7 +297,7 @@ public class FoursquareUtils {
 
             if(iconPrefix != null)
             {
-                venues.add(new  Poi(id, name, lat, lng, iconPrefix, iconSuffix, LocalDateTime.now().plusDays(1)));
+                venues.add(new  Poi(id, name, lat, lng, type, iconPrefix, iconSuffix, LocalDateTime.now().plusDays(1)));
             }
 
         }
