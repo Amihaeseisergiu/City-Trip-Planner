@@ -416,7 +416,7 @@ function addPoiMarker(poi)
             marker: marker
         }
 
-        if('type' in poi)
+        if('poiHours' in poi)
         {
             toAdd['details'] = poi;
         }
@@ -445,7 +445,7 @@ function addPoiMarker(poi)
         let poiId = poi.id;
         let el = addedMarkers.find( ({poi}) => poi.id === poiId);
 
-        if( ('type' in poi) && !('details' in el))
+        if( ('poiHours' in poi) && !('details' in el))
         {
             el['details'] = poi;
         }

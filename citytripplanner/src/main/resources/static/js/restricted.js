@@ -522,6 +522,20 @@ function addPOItoDay(id, dayId, accommodation, visitDuration)
             closingAt: closingAt
         });
 
+        let totalDayVisitDurations = 0;
+
+        day.visitDurations.forEach(function(poiVisitDuration) {
+           let formattedPoiVisitDuration = parseInt(poiVisitDuration.visitDuration.split(':')[0]) * 60
+               + parseInt(poiVisitDuration.visitDuration.split(':')[1]);
+
+           totalDayVisitDurations += formattedPoiVisitDuration;
+        });
+
+        if(day.dayEnd - day.dayStart < totalDayVisitDurations)
+        {
+            document.getElementById(`dayWarningMessage_${day.id}`).classList.remove('hidden');
+        }
+
         if('colours' in el)
         {
             if(el['colours'].length === 0)
@@ -677,86 +691,71 @@ function addInputDurationRegex(poiId, day)
         addLoadingNotSaved();
 
         let input = document.getElementById(`poiInDayVisit_${poiId}_${day.id}`);
+        let durationData = day.visitDurations.find(({id}) => id === poiId);
 
         if(!input.validity.valid || input.value.length === 0)
         {
             input.classList.remove('focus:ring-green-400');
             input.classList.add('focus:ring-red-400');
 
-            let durationData = day.visitDurations.find(({id}) => id === poiId);
-
             durationData.visitDuration = '1:00';
             document.getElementById(`poiInDayVisitDurationText_${poiId}_${day.id}`).innerText = '1:00';
-
-            let currentPoiOpening = parseInt(durationData.openingAt.split(':')[0]) * 60
-                + parseInt(durationData.openingAt.split(':')[1]);
-            let currentPoiClosing = parseInt(durationData.closingAt.split(':')[0]) * 60
-                + parseInt(durationData.closingAt.split(':')[1]);
-            let currentVisitDuration = parseInt(durationData.visitDuration.split(':')[0]) * 60
-                + parseInt(durationData.visitDuration.split(':')[1]);
-            if(currentPoiClosing < currentPoiOpening)
-            {
-                currentPoiClosing = 1439;
-            }
-
-            let poiWarningMessage = !((currentPoiOpening <= day.dayStart && currentPoiClosing >= day.dayEnd) ?
-                (day.dayEnd - day.dayStart >= currentVisitDuration ? true : false) :
-                (currentPoiOpening >= day.dayStart && currentPoiClosing <= day.dayEnd) ?
-                    (currentPoiClosing - currentPoiOpening >= currentVisitDuration ? true : false) :
-                    (currentPoiOpening <= day.dayStart && currentPoiClosing <= day.dayEnd) ?
-                        (currentPoiClosing - day.dayStart >= currentVisitDuration ? true : false) :
-                        (currentPoiOpening >= day.dayStart && currentPoiClosing >= day.dayEnd) ?
-                            (day.dayEnd - currentPoiOpening >= currentVisitDuration ? true : false) : false);
-            let warningDiv = document.getElementById(`poiInDayWarningMessage_${poiId}_${day.id}`);
-
-            if(poiWarningMessage)
-            {
-                warningDiv.classList.remove('hidden');
-            }
-            else
-            {
-                warningDiv.classList.add('hidden');
-            }
         }
         else
         {
             input.classList.remove('focus:ring-red-400');
             input.classList.add('focus:ring-green-400');
 
-            let durationData = day.visitDurations.find(({id}) => id === poiId);
-
             durationData.visitDuration = input.value;
             document.getElementById(`poiInDayVisitDurationText_${poiId}_${day.id}`).innerText = input.value;
+        }
 
-            let currentPoiOpening = parseInt(durationData.openingAt.split(':')[0]) * 60
-                + parseInt(durationData.openingAt.split(':')[1]);
-            let currentPoiClosing = parseInt(durationData.closingAt.split(':')[0]) * 60
-                + parseInt(durationData.closingAt.split(':')[1]);
-            let currentVisitDuration = parseInt(durationData.visitDuration.split(':')[0]) * 60
-                + parseInt(durationData.visitDuration.split(':')[1]);
-            if(currentPoiClosing < currentPoiOpening)
-            {
-                currentPoiClosing = 1439;
-            }
+        let currentPoiOpening = parseInt(durationData.openingAt.split(':')[0]) * 60
+            + parseInt(durationData.openingAt.split(':')[1]);
+        let currentPoiClosing = parseInt(durationData.closingAt.split(':')[0]) * 60
+            + parseInt(durationData.closingAt.split(':')[1]);
+        let currentVisitDuration = parseInt(durationData.visitDuration.split(':')[0]) * 60
+            + parseInt(durationData.visitDuration.split(':')[1]);
+        if(currentPoiClosing < currentPoiOpening)
+        {
+            currentPoiClosing = 1439;
+        }
 
-            let poiWarningMessage = !((currentPoiOpening <= day.dayStart && currentPoiClosing >= day.dayEnd) ?
-                (day.dayEnd - day.dayStart >= currentVisitDuration ? true : false) :
-                (currentPoiOpening >= day.dayStart && currentPoiClosing <= day.dayEnd) ?
-                    (currentPoiClosing - currentPoiOpening >= currentVisitDuration ? true : false) :
-                    (currentPoiOpening <= day.dayStart && currentPoiClosing <= day.dayEnd) ?
-                        (currentPoiClosing - day.dayStart >= currentVisitDuration ? true : false) :
-                        (currentPoiOpening >= day.dayStart && currentPoiClosing >= day.dayEnd) ?
-                            (day.dayEnd - currentPoiOpening >= currentVisitDuration ? true : false) : false);
-            let warningDiv = document.getElementById(`poiInDayWarningMessage_${poiId}_${day.id}`);
+        let poiWarningMessage = !((currentPoiOpening <= day.dayStart && currentPoiClosing >= day.dayEnd) ?
+            (day.dayEnd - day.dayStart >= currentVisitDuration ? true : false) :
+            (currentPoiOpening >= day.dayStart && currentPoiClosing <= day.dayEnd) ?
+                (currentPoiClosing - currentPoiOpening >= currentVisitDuration ? true : false) :
+                (currentPoiOpening <= day.dayStart && currentPoiClosing <= day.dayEnd) ?
+                    (currentPoiClosing - day.dayStart >= currentVisitDuration ? true : false) :
+                    (currentPoiOpening >= day.dayStart && currentPoiClosing >= day.dayEnd) ?
+                        (day.dayEnd - currentPoiOpening >= currentVisitDuration ? true : false) : false);
+        let warningDiv = document.getElementById(`poiInDayWarningMessage_${poiId}_${day.id}`);
 
-            if(poiWarningMessage)
-            {
-                warningDiv.classList.remove('hidden');
-            }
-            else
-            {
-                warningDiv.classList.add('hidden');
-            }
+        if(poiWarningMessage)
+        {
+            warningDiv.classList.remove('hidden');
+        }
+        else
+        {
+            warningDiv.classList.add('hidden');
+        }
+
+        let totalDayVisitDurations = 0;
+
+        day.visitDurations.forEach(function(poiVisitDuration) {
+            let formattedPoiVisitDuration = parseInt(poiVisitDuration.visitDuration.split(':')[0]) * 60
+                + parseInt(poiVisitDuration.visitDuration.split(':')[1]);
+
+            totalDayVisitDurations += formattedPoiVisitDuration;
+        });
+
+        if(day.dayEnd - day.dayStart < totalDayVisitDurations)
+        {
+            document.getElementById(`dayWarningMessage_${day.id}`).classList.remove('hidden');
+        }
+        else
+        {
+            document.getElementById(`dayWarningMessage_${day.id}`).classList.add('hidden');
         }
     });
 }
@@ -811,6 +810,20 @@ function removePOIFromDay(id, dayId)
 
     document.getElementById(`poiContainerParent_${day.id}`).style.maxHeight =
         document.getElementById(`poiContainerParent_${day.id}`).scrollHeight  + 'px';
+
+    let totalDayVisitDurations = 0;
+
+    day.visitDurations.forEach(function(poiVisitDuration) {
+        let formattedPoiVisitDuration = parseInt(poiVisitDuration.visitDuration.split(':')[0]) * 60
+            + parseInt(poiVisitDuration.visitDuration.split(':')[1]);
+
+        totalDayVisitDurations += formattedPoiVisitDuration;
+    });
+
+    if(day.dayEnd - day.dayStart >= totalDayVisitDurations)
+    {
+        document.getElementById(`dayWarningMessage_${day.id}`).classList.add('hidden');
+    }
 }
 
 function recalculateColours(el)
@@ -868,6 +881,19 @@ function addPoiMarker(poi, top)
             el.className = "z-10 bring-to-front";
         }
 
+        let filterValue = document.getElementById('filterInput').value.trim().toLowerCase()
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        let formattedType = poi.type.trim().toLowerCase()
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+        if(!formattedType.includes(filterValue))
+        {
+            if(!el.classList.contains('hidden'))
+            {
+                el.classList.add('hidden');
+            }
+        }
+
         el.innerHTML = `
             <div style="background-image: url(${poi.iconPrefix}${64}${poi.iconSuffix}); width: 32px; height: 32px; background-size: cover;"
                  class="block bg-indigo-400 shadow-md rounded-full p-0 border-none cursor-pointer transform transition hover:scale-125 duration-500"
@@ -884,7 +910,7 @@ function addPoiMarker(poi, top)
             marker: marker
         }
 
-        if('type' in poi)
+        if('poiHours' in poi)
         {
             toAdd['details'] = poi;
         }
@@ -913,7 +939,7 @@ function addPoiMarker(poi, top)
         let poiId = poi.id;
         let el = addedMarkers.find( ({poi}) => poi.id === poiId);
 
-        if( ('type' in poi) && !('details' in el))
+        if( ('poiHours' in poi) && !('details' in el))
         {
             el['details'] = poi;
         }
@@ -952,6 +978,14 @@ function addDayElement(id, dayName, date, dayStart, dayEnd, colour, accommodatio
              'transform scale-95 -translate-y-0 transition ease-out duration-500 border-gray-200 hover:border-gray-400': selected !== ${id}}"
              class="w-11/12 z-10 group rounded-xl border-2 bg-gray-50 mt-3 cursor-pointer select-none flex flex-row justify-between">
             <div style="background-color: ${colour};" class="absolute top-1 left-1 rounded-full w-3 h-3"></div>
+            <div id="dayWarningMessage_${id}"
+                 style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;"
+                 class="absolute top-1.5 right-0.5 text-red-600 bg-gray-50 rounded-full hidden
+                        flex flex-row items-center select-none transform animate-bounce">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
             <button type="button" class="flex-grow min-w-0 p-6 text-left text-gray-500 leading-tight focus:outline-none"
                 @click="selected !== ${id} ? selected = ${id} : selected = null;
                 selected === ${id} ? currentSelectedDay = addedDays.find( ({id}) => id === ${id}) : currentSelectedDay = null;">

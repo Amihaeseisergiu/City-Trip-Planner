@@ -562,6 +562,14 @@ function addPOI(id, visitDuration)
                             ${visitDuration}
                         </p>
                     </div>
+                    <div id="poiWarningMessage_${id}"
+                         style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;"
+                         class="absolute top-1.5 right-0.5 text-red-600 bg-white rounded-full hidden
+                                flex flex-row items-center select-none transform animate-bounce">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
                     <button type="button" class="flex-grow min-w-0 p-7 text-left focus:outline-none"
                         @click="if(accommodation !== '${id}') selected !== '${id}' ? selected = '${id}' : selected = null">
                         <p class="text-2xl font-bold leading-tight truncate"
@@ -604,6 +612,8 @@ function addPOI(id, visitDuration)
                 </div>
             `;
             document.getElementById("daysPoisContainer").appendChild(div);
+
+            verifyIntervalAcceptance(id, visitDuration);
         }
         else
         {
@@ -722,8 +732,30 @@ function addPOI(id, visitDuration)
             });
 
             addedPOIs[indexOfAdded]['day'] = currentSelectedDay.id;
+
+            let totalDayVisitDurations = 0;
+            addedPOIs.forEach(function(addedPOI) {
+               if(('day' in addedPOI) && addedPOI.day === currentSelectedDay.id)
+               {
+                   let formattedPoiVisitDuration = parseInt(addedPOI.visitDuration.split(':')[0]) * 60
+                       + parseInt(addedPOI.visitDuration.split(':')[1]);
+
+                   totalDayVisitDurations += formattedPoiVisitDuration;
+               }
+
+               if(!('day' in addedPOI))
+               {
+                   verifyIntervalAcceptance(addedPOI.poi.id, addedPOI.visitDuration);
+               }
+            });
+
+            if(currentSelectedDay.dayEnd - currentSelectedDay.dayStart < totalDayVisitDurations)
+            {
+                document.getElementById(`dayWarningMessage_${currentSelectedDay.id}`).classList.remove('hidden');
+            }
         }
 
+        let currentAddedPoi = addedPOIs[indexOfAdded];
         document.getElementById(`poiVisitDurationInput_${id}`).addEventListener('input', () => {
             addLoadingNotSaved();
 
@@ -734,7 +766,7 @@ function addPOI(id, visitDuration)
                 input.classList.remove('focus:ring-green-400');
                 input.classList.add('focus:ring-red-400');
 
-                addedPOIs[indexOfAdded]['visitDuration'] = '1:00';
+                currentAddedPoi.visitDuration = '1:00';
                 document.getElementById(`poiVisitDurationText_${id}`).innerText = '1:00';
             }
             else
@@ -742,13 +774,13 @@ function addPOI(id, visitDuration)
                 input.classList.remove('focus:ring-red-400');
                 input.classList.add('focus:ring-green-400');
 
-                addedPOIs[indexOfAdded]['visitDuration'] = input.value;
+                currentAddedPoi.visitDuration = input.value;
                 document.getElementById(`poiVisitDurationText_${id}`).innerText = input.value;
             }
 
-            if('day' in addedPOIs[indexOfAdded])
+            if('day' in currentAddedPoi)
             {
-                let dayOfPoi = addedDays.find( ({id}) => id === addedPOIs[indexOfAdded]['day']);
+                let dayOfPoi = addedDays.find( ({id}) => id === currentAddedPoi.day);
                 let poiHoursInfo = el.details.poiHours.find( ({dayNumber}) => dayNumber === dayOfPoi.dayNumber);
                 let openingAt = null;
                 let closingAt = null;
@@ -761,8 +793,8 @@ function addPOI(id, visitDuration)
 
                     let currentPoiOpening = parseInt(openingAt.split(':')[0]) * 60 + parseInt(openingAt.split(':')[1]);
                     let currentPoiClosing = parseInt(closingAt.split(':')[0]) * 60 + parseInt(closingAt.split(':')[1]);
-                    let currentVisitDuration = parseInt(addedPOIs[indexOfAdded]['visitDuration'].split(':')[0]) * 60
-                        + parseInt(addedPOIs[indexOfAdded]['visitDuration'].split(':')[1]);
+                    let currentVisitDuration = parseInt(currentAddedPoi.visitDuration.split(':')[0]) * 60
+                        + parseInt(currentAddedPoi.visitDuration.split(':')[1]);
                     if(currentPoiClosing < currentPoiOpening)
                     {
                         currentPoiClosing = 1439;
@@ -787,8 +819,105 @@ function addPOI(id, visitDuration)
                         warningDiv.classList.add('hidden');
                     }
                 }
+
+                let totalDayVisitDurations = 0;
+                addedPOIs.forEach(function(addedPOI) {
+                    if(('day' in addedPOI) && addedPOI.day === dayOfPoi.id)
+                    {
+                        let formattedPoiVisitDuration = parseInt(addedPOI.visitDuration.split(':')[0]) * 60
+                            + parseInt(addedPOI.visitDuration.split(':')[1]);
+
+                        totalDayVisitDurations += formattedPoiVisitDuration;
+                    }
+
+                    if(!('day' in addedPOI))
+                    {
+                        verifyIntervalAcceptance(addedPOI.poi.id, addedPOI.visitDuration);
+                    }
+                });
+
+                if(dayOfPoi.dayEnd - dayOfPoi.dayStart < totalDayVisitDurations)
+                {
+                    document.getElementById(`dayWarningMessage_${dayOfPoi.id}`).classList.remove('hidden');
+                }
+                else
+                {
+                    document.getElementById(`dayWarningMessage_${dayOfPoi.id}`).classList.add('hidden');
+                }
+            }
+            else
+            {
+                verifyIntervalAcceptance(currentAddedPoi.poi.id, currentAddedPoi.visitDuration);
             }
         });
+    }
+}
+
+function verifyIntervalAcceptance(id, visitDuration)
+{
+    let el = addedMarkers.find( ({poi}) => poi.id === id);
+    let poiWarningMessage = true;
+
+    for(let i = 0; i < addedDays.length; i++)
+    {
+        let poiHoursInfo = el.details.poiHours.find( ({dayNumber}) => dayNumber === addedDays[i].dayNumber);
+        let openingAt = null;
+        let closingAt = null;
+        let firstCheck = true;
+
+        if(poiHoursInfo)
+        {
+            openingAt = poiHoursInfo.openingAt.split(':')[0] + ':' + poiHoursInfo.openingAt.split(':')[1];
+            closingAt = poiHoursInfo.closingAt.split(':')[0] + ':' + poiHoursInfo.closingAt.split(':')[1];
+
+            let currentPoiOpening = parseInt(openingAt.split(':')[0]) * 60 + parseInt(openingAt.split(':')[1]);
+            let currentPoiClosing = parseInt(closingAt.split(':')[0]) * 60 + parseInt(closingAt.split(':')[1]);
+            let currentVisitDuration = parseInt(visitDuration.split(':')[0]) * 60 + parseInt(visitDuration.split(':')[1]);
+            if(currentPoiClosing < currentPoiOpening)
+            {
+                currentPoiClosing = 1439;
+            }
+
+            firstCheck = !((currentPoiOpening <= addedDays[i].dayStart && currentPoiClosing >= addedDays[i].dayEnd) ?
+                (addedDays[i].dayEnd - addedDays[i].dayStart >= currentVisitDuration ? true : false) :
+                (currentPoiOpening >= addedDays[i].dayStart && currentPoiClosing <= addedDays[i].dayEnd) ?
+                    (currentPoiClosing - currentPoiOpening >= currentVisitDuration ? true : false) :
+                    (currentPoiOpening <= addedDays[i].dayStart && currentPoiClosing <= addedDays[i].dayEnd) ?
+                        (currentPoiClosing - addedDays[i].dayStart >= currentVisitDuration ? true : false) :
+                        (currentPoiOpening >= addedDays[i].dayStart && currentPoiClosing >= addedDays[i].dayEnd) ?
+                            (addedDays[i].dayEnd - currentPoiOpening >= currentVisitDuration ? true : false) : false);
+        }
+
+        if(!firstCheck)
+        {
+            let totalDayVisitDurations = parseInt(visitDuration.split(':')[0]) * 60 + parseInt(visitDuration.split(':')[1]);
+            addedPOIs.forEach(function(addedPOI) {
+                if(('day' in addedPOI) && addedPOI.day === addedDays[i].id)
+                {
+                    let formattedPoiVisitDuration = parseInt(addedPOI.visitDuration.split(':')[0]) * 60
+                        + parseInt(addedPOI.visitDuration.split(':')[1]);
+
+                    totalDayVisitDurations += formattedPoiVisitDuration;
+                }
+            });
+
+            if(addedDays[i].dayEnd - addedDays[i].dayStart >= totalDayVisitDurations)
+            {
+                poiWarningMessage = false;
+                break;
+            }
+        }
+    }
+
+    let warningDiv = document.getElementById(`poiWarningMessage_${id}`);
+
+    if(poiWarningMessage)
+    {
+        warningDiv.classList.remove('hidden');
+    }
+    else
+    {
+        warningDiv.classList.add('hidden');
     }
 }
 
@@ -837,6 +966,7 @@ function removePOI(id)
     if('day' in addedPOIs[indexOfPoi])
     {
         let poiContainer = document.getElementById(`poiContainer_${addedPOIs[indexOfPoi]['day']}`);
+        let dayOfPoi = addedDays.find( ({id}) => id === addedPOIs[indexOfPoi]['day']);
 
         if(poiContainer.childNodes.length === 0)
         {
@@ -844,6 +974,27 @@ function removePOI(id)
         }
 
         delete addedPOIs[indexOfPoi].day;
+
+        let totalDayVisitDurations = 0;
+        addedPOIs.forEach(function(addedPOI) {
+            if(('day' in addedPOI) && addedPOI.day === dayOfPoi.id)
+            {
+                let formattedPoiVisitDuration = parseInt(addedPOI.visitDuration.split(':')[0]) * 60
+                    + parseInt(addedPOI.visitDuration.split(':')[1]);
+
+                totalDayVisitDurations += formattedPoiVisitDuration;
+            }
+
+            if(!('day' in addedPOI) && addedPOI.poi.id !== addedPOIs[indexOfPoi].poi.id)
+            {
+                verifyIntervalAcceptance(addedPOI.poi.id, addedPOI.visitDuration);
+            }
+        });
+
+        if(dayOfPoi.dayEnd - dayOfPoi.dayStart >= totalDayVisitDurations)
+        {
+            document.getElementById(`dayWarningMessage_${dayOfPoi.id}`).classList.add('hidden');
+        }
     }
 
     addedPOIs.splice(indexOfPoi, 1);
@@ -897,6 +1048,19 @@ function addPoiMarker(poi, top)
             el.className = "z-10 bring-to-front";
         }
 
+        let filterValue = document.getElementById('filterInput').value.trim().toLowerCase()
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        let formattedType = poi.type.trim().toLowerCase()
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+        if(!formattedType.includes(filterValue))
+        {
+            if(!el.classList.contains('hidden'))
+            {
+                el.classList.add('hidden');
+            }
+        }
+
         el.innerHTML = `
             <div style="background-image: url(${poi.iconPrefix}${64}${poi.iconSuffix}); width: 32px; height: 32px; background-size: cover;"
                  class="block bg-indigo-400 shadow-md rounded-full p-0 border-none cursor-pointer transform transition hover:scale-125 duration-500"
@@ -913,7 +1077,7 @@ function addPoiMarker(poi, top)
             marker: marker
         }
 
-        if('type' in poi)
+        if('poiHours' in poi)
         {
             toAdd['details'] = poi;
         }
@@ -942,7 +1106,7 @@ function addPoiMarker(poi, top)
         let poiId = poi.id;
         let el = addedMarkers.find( ({poi}) => poi.id === poiId);
 
-        if( ('type' in poi) && !('details' in el))
+        if( ('poiHours' in poi) && !('details' in el))
         {
             el['details'] = poi;
         }
@@ -961,6 +1125,14 @@ function addDayElement(id, dayName, date, dayStart, dayEnd, colour)
              'transform scale-95 -translate-y-0 transition ease-out duration-500 border-gray-200 hover:border-gray-400': selected !== ${id}}"
              class="w-11/12 z-10 group rounded-xl border-2 bg-gray-50 mt-3 cursor-pointer select-none flex flex-row justify-between">
             <div style="background-color: ${colour};" class="absolute top-1 left-1 rounded-full w-3 h-3"></div>
+            <div id="dayWarningMessage_${id}"
+                 style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;"
+                 class="absolute top-1.5 right-0.5 text-red-600 bg-gray-50 rounded-full hidden
+                        flex flex-row items-center select-none transform animate-bounce">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
             <button type="button" class="flex-grow min-w-0 p-6 text-left text-gray-500 leading-tight focus:outline-none"
                 @click="selected !== ${id} ? selected = ${id} : selected = null;
                 selected === ${id} ? currentSelectedDay = addedDays.find( ({id}) => id === ${id}) : currentSelectedDay = null;">
@@ -1018,6 +1190,13 @@ function addDayElement(id, dayName, date, dayStart, dayEnd, colour)
     {
         document.getElementById('daysPoisContainer').appendChild(div);
     }
+
+    addedPOIs.forEach(function(addedPOI) {
+       if(!('day' in addedPOI))
+       {
+           verifyIntervalAcceptance(addedPOI.poi.id, addedPOI.visitDuration);
+       }
+    });
 }
 
 function removeDayElement(id)
@@ -1044,6 +1223,13 @@ function removeDayElement(id)
     {
         document.getElementById("createItineraryButton").classList.add("hidden");
     }
+
+    addedPOIs.forEach(function(addedPOI) {
+        if(!('day' in addedPOI))
+        {
+            verifyIntervalAcceptance(addedPOI.poi.id, addedPOI.visitDuration);
+        }
+    });
 }
 
 function addDay()
