@@ -563,6 +563,7 @@ function addPOI(id, visitDuration)
                         </p>
                     </div>
                     <div id="poiWarningMessage_${id}"
+                         x-show="accommodation !== '${id}'"
                          style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;"
                          class="absolute top-1.5 right-0.5 text-red-600 bg-white rounded-full hidden
                                 flex flex-row items-center select-none transform animate-bounce">

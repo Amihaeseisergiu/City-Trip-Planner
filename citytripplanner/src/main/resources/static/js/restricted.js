@@ -525,10 +525,13 @@ function addPOItoDay(id, dayId, accommodation, visitDuration)
         let totalDayVisitDurations = 0;
 
         day.visitDurations.forEach(function(poiVisitDuration) {
-           let formattedPoiVisitDuration = parseInt(poiVisitDuration.visitDuration.split(':')[0]) * 60
-               + parseInt(poiVisitDuration.visitDuration.split(':')[1]);
+            if(accommodation !== poiVisitDuration.id)
+            {
+                let formattedPoiVisitDuration = parseInt(poiVisitDuration.visitDuration.split(':')[0]) * 60
+                    + parseInt(poiVisitDuration.visitDuration.split(':')[1]);
 
-           totalDayVisitDurations += formattedPoiVisitDuration;
+                totalDayVisitDurations += formattedPoiVisitDuration;
+            }
         });
 
         if(day.dayEnd - day.dayStart < totalDayVisitDurations)
@@ -599,6 +602,7 @@ function addPOItoDay(id, dayId, accommodation, visitDuration)
                     </p>
                 </div>
                 <div id="poiInDayWarningMessage_${id}_${day.id}"
+                     x-show="accommodation !== '${id}'"
                      style="text-shadow: #000 0px 0px 5px; -webkit-font-smoothing: antialiased;"
                      class="absolute top-1.5 right-0.5 text-red-600 bg-white rounded-full ${poiWarningMessage ? '' : 'hidden'}
                             flex flex-row items-center select-none transform animate-bounce">
@@ -620,8 +624,9 @@ function addPOItoDay(id, dayId, accommodation, visitDuration)
                         :class="{'active text-green-500 scale-125' : accommodation === '${id}'}"
                         class="p-4 focus:outline-none transform hover:scale-125 hover:text-green-500 transition ease-in-out duration-500"
                         onclick="addLoadingNotSaved()"
-                        @click="if(accommodation === '${id}') {accommodation = null; selectedIn = '${id}_${day.id}';} 
-                                else {accommodation = '${id}'; selectedIn = null;}">
+                        @click="if(accommodation === '${id}')
+                                {accommodation = null; selectedIn = '${id}_${day.id}'; verifyDayWarnings(${day.id}, '${id}', false);} 
+                                else {accommodation = '${id}'; selectedIn = null; verifyDayWarnings(${day.id}, '${id}', true);}">
                     <svg class="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1
                        1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -685,6 +690,31 @@ function addPOItoDay(id, dayId, accommodation, visitDuration)
     }
 }
 
+function verifyDayWarnings(dayId, poiId, without)
+{
+    let totalDayVisitDurations = 0;
+    let day = addedDays.find( ({id}) => id === dayId);
+
+    day.visitDurations.forEach(function(poiVisitDuration) {
+        if(without === false ? true : (poiVisitDuration.id === poiId ? false : true))
+        {
+            let formattedPoiVisitDuration = parseInt(poiVisitDuration.visitDuration.split(':')[0]) * 60
+                + parseInt(poiVisitDuration.visitDuration.split(':')[1]);
+
+            totalDayVisitDurations += formattedPoiVisitDuration;
+        }
+    });
+
+    if(day.dayEnd - day.dayStart < totalDayVisitDurations)
+    {
+        document.getElementById(`dayWarningMessage_${day.id}`).classList.remove('hidden');
+    }
+    else
+    {
+        document.getElementById(`dayWarningMessage_${day.id}`).classList.add('hidden');
+    }
+}
+
 function addInputDurationRegex(poiId, day)
 {
     document.getElementById(`poiInDayVisit_${poiId}_${day.id}`).addEventListener('input', () => {
@@ -741,12 +771,16 @@ function addInputDurationRegex(poiId, day)
         }
 
         let totalDayVisitDurations = 0;
+        let dayAccommodation = document.getElementById(`poiContainer_${day.id}`).__x.$data.accommodation;
 
         day.visitDurations.forEach(function(poiVisitDuration) {
-            let formattedPoiVisitDuration = parseInt(poiVisitDuration.visitDuration.split(':')[0]) * 60
-                + parseInt(poiVisitDuration.visitDuration.split(':')[1]);
+            if(dayAccommodation !== poiVisitDuration.id)
+            {
+                let formattedPoiVisitDuration = parseInt(poiVisitDuration.visitDuration.split(':')[0]) * 60
+                    + parseInt(poiVisitDuration.visitDuration.split(':')[1]);
 
-            totalDayVisitDurations += formattedPoiVisitDuration;
+                totalDayVisitDurations += formattedPoiVisitDuration;
+            }
         });
 
         if(day.dayEnd - day.dayStart < totalDayVisitDurations)
@@ -812,12 +846,16 @@ function removePOIFromDay(id, dayId)
         document.getElementById(`poiContainerParent_${day.id}`).scrollHeight  + 'px';
 
     let totalDayVisitDurations = 0;
+    let dayAccommodation = document.getElementById(`poiContainer_${day.id}`).__x.$data.accommodation;
 
     day.visitDurations.forEach(function(poiVisitDuration) {
-        let formattedPoiVisitDuration = parseInt(poiVisitDuration.visitDuration.split(':')[0]) * 60
-            + parseInt(poiVisitDuration.visitDuration.split(':')[1]);
+        if(dayAccommodation !== poiVisitDuration.id)
+        {
+            let formattedPoiVisitDuration = parseInt(poiVisitDuration.visitDuration.split(':')[0]) * 60
+                + parseInt(poiVisitDuration.visitDuration.split(':')[1]);
 
-        totalDayVisitDurations += formattedPoiVisitDuration;
+            totalDayVisitDurations += formattedPoiVisitDuration;
+        }
     });
 
     if(day.dayEnd - day.dayStart >= totalDayVisitDurations)
